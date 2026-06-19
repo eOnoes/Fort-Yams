@@ -1,0 +1,25 @@
+# Large files
+*.wav
+*.ogg
+*.mp3
+*.mp4
+*.pth
+*.onnx
+*.bin
+*.db
+*.sqlite
+
+# Cache
+__pycache__/
+*.pyc
+.cache/
+node_modules/
+.next/
+
+# Env (NEVER commit tokens)
+.env
+*.env
+
+# Logs
+*.log
+logs/
