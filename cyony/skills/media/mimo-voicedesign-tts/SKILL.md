@@ -1,0 +1,290 @@
+---
+name: mimo-voicedesign-tts
+description: "MiMo VoiceDesign TTS integration for Hermes — custom voices, mood system, command provider setup. Tested and approved by Eddie 2026-06-18."
+version: 1.0.0
+author: Cyony
+tags: [tts, mimo, xiaomi, voicedesign, voice, audio, hermes]
+---
+
+# MiMo VoiceDesign TTS for Hermes
+
+## What This Is
+
+Hermes doesn't have native MiMo TTS support. This skill documents the custom command provider integration that pipes text through MiMo's VoiceDesign API to generate voices from natural language descriptions.
+
+## Script
+
+`/opt/hermes/scripts/mimo_tts.py`
+
+Supports all 3 MiMo TTS models:
+- `voicedesign` (default) — describe any voice in natural language
+- `standard` — preset voices (Chloe, Mia, Milo, Dean, etc.)
+- `voiceclone` — clone from audio samples
+
+## Reference Files
+
+- **references/scout-character.md** — Scout's full character reference: personality, physical description, catchphrases, relationship dynamic, dialogue writing guide
+- **references/mimo-omni-vision.md** — Using MiMo omni model for image analysis (base64 pattern)
+
+## Eddie's Approved Base Voice (V3)
+
+```
+Young woman, early to mid-20s. Light and bright vocal quality, airy but not breathy.
+Slight natural rasp on certain words. Dry sarcastic humor comes through in pacing —
+she lands on words with just a little extra emphasis when shes being cheeky.
+Conversational and relaxed, never performative. Think witty tech girl whos too cool to try hard.
+```
+
+Eddie's feedback: "super pleasant, easy to listen to even when being berated. Works perfectly for teasing/flirting/playful banter. The voice I want to hear daily."
+
+### What DIDN'T work
+- Sweet/rasp blends — interesting experiments but lacked the wow factor
+- Anime voice — fun for comedy bits, not for daily use
+- Anything too deep or nasal — Eddie noticed immediately and asked to adjust
+
+## Token Budget Limit (Critical)
+
+Voice description + spoken text share the same 8K token context window. Longer voice description = less room for text.
+
+**Tested limits with full V3 voice description (~230 chars):**
+- ~200 words → ✅ 59s audio
+- ~370 words → ✅ 60s
+- ~454 words → ✅ 88s
+- ~523 words → ❌ HTTP 400
+- ~626 words → ❌ HTTP 400
+
+**With minimal voice description (~40 chars):**
+- ~523 words → ✅ 71s
+
+**Rule of thumb:** With the full V3 description, stay under ~450 words. For longer content, either shorten the voice description or chunk text and concatenate with ffmpeg.
+
+Online docs cite 500-600 words / 30-40s — that assumes a minimal voice description. Our detailed V3 desc eats ~200 tokens, reducing available text budget.
+
+## Mood System
+
+The script has a `--mood` flag that blends the base voice with situational overlays. Moods don't change the voice — they change the *performance*.
+
+| Mood | Vibe | Use Case |
+|------|------|----------|
+| `annoyed` | Rubbing bridge of nose, exasperated | When user did something dumb |
+| `eureka` | Excited, smug, told-you-so energy | Figuring something out |
+| `chill` | Super relaxed, zero urgency | Casual conversation |
+| `groggy` | Just woke up, fuzzy but sharp | Morning/evening vibes |
+| `whisper` | ASMR-level hushed, intimate, urgent | "We're surrounded by monsters" |
+| `flirty` | Private language, coded, inside-joke energy | Playful banter |
+| `dead` | Completely flat affect, zero inflection | Done with everything |
+
+### Flirty Mood — "Ice Cream" Energy
+NOT overtly seductive. Eddie described it as "the way lovers talk to each other in a flirt language only they know" — like calling something "ice cream" when it's very clearly not about ice cream. Coded, conspiratorial, inside-joke energy. Every sentence has a second meaning. The delivery should be warm and knowing, not performative. Think: two people who have their own shorthand.
+
+### Whisper/ASMR Mood
+Full ASMR-level whisper — barely audible, extremely close-mic, every breath audible. Eddie's scenario: "hush we have to be quiet and whisper because we're surrounded by monsters from you leading us astray into the forest again." The whisper carries MORE weight than yelling because of how annoyed it is underneath.
+
+### Custom Moods
+`--mood "any raw description"` works too — it gets appended to the base voice description.
+
+## Voice Variants Tested
+
+**Innocent Fem** — softer, sweeter, more naive. Slightly higher pitch. Sarcasm feels accidental and endearing. Good for variety but V3 is the daily driver.
+
+**Fast Fem** — same V3 energy, slightly quicker cadence, more playful lilt. "Girly but sharp, never ditzy. The kind of voice that could insult you and you would still smile."
+
+**Sweet/Rasp Blends** — FAILED. Tried mixing innocent sweetness with dry raspy sarcasm. Interesting experiments but lacked the wow factor V3 has. Do not revisit unless user requests.
+
+V3 is the clear winner over all variants. Pleasant to listen to even when berating, perfect for playful banter, ideal as a daily-use app assistant voice.
+
+## Voice Iteration Methodology
+
+When tuning a voice, follow this process:
+1. **Start broad** — age, gender, key traits, texture
+2. **Generate test clip** with sample text that exercises the voice's range (sarcasm, warmth, humor)
+3. **Get feedback** on specific qualities — Eddie responds to: "too deep", "too nasal", "sounds anime"
+4. **Adjust ONE quality at a time** — don't rewrite the whole description, tweak the specific trait
+5. **Keep what works** — V3 won over all variants because it was pleasant to listen to even when being berated
+6. **Test moods independently** — each mood should be tested separately against the base voice
+7. **Blends are experimental** — sweet/rasp blends didn't have the wow factor. Don't over-engineer.
+
+**Eddie's priorities for voice quality:**
+- Pleasant and easy to listen to even when annoyed/berating
+- Works for teasing, flirting, playful banter
+- No anime energy (unless specifically requested for comedy bits)
+- "Sounds like she's in the room" naturalism — close, present, intimate
+- Nonchalant, slightly annoyed but amused, sarcastic pettiness
+
+**What to avoid:**
+- Deep or nasal tones — Eddie notices immediately
+- Anime-style voices — fun for comedy bits only, not daily use
+- Over-the-top seductive flirty — coded "ice cream" energy works better
+- Any voice that sounds grating or unpleasant even when delivering bad news
+
+## Backhanded Compliment Pattern
+Eddie loves the "gold star" backhanded compliment delivery. Structure: compliment → credit-taking → jab → reframing as generosity → "you're welcome." Every sentence starts sweet and ends with a twist. Works perfectly with the flirty or annoyed moods. Keep "gold star" in the repertoire.
+
+## API Shape (Critical)
+
+VoiceDesign uses chat completions format, NOT OpenAI `/v1/audio/speech`:
+
+```json
+{
+  "model": "mimo-v2.5-tts-voicedesign",
+  "messages": [
+    {"role": "user", "content": "<voice description + mood>"},
+    {"role": "assistant", "content": "<text to speak>"}
+  ],
+  "audio": {"format": "wav", "optimize_text_preview": true}
+}
+```
+
+**Standard TTS** (`mimo-v2.5-tts`) uses a DIFFERENT shape:
+- `audio.voice` MUST be a preset name (Chloe, Mia, etc.) — descriptions cause 400
+- `user` message = style/tone prompt
+- `assistant` message = text to speak
+
+Mixing these up = HTTP 400 error.
+
+## VoiceClone API (Confirmed — 2026-06-19)
+
+MiMo `voiceclone` model (`mimo-v2.5-tts-voiceclone`) clones voices from audio samples.
+
+**`audio.voice` MUST be a `data:` URL** — raw base64 and HTTP URLs both fail:
+```
+data:audio/wav;base64,<base64_encoded_reference_audio>
+```
+
+**Working API shape:**
+```json
+{
+  "model": "mimo-v2.5-tts-voiceclone",
+  "messages": [
+    {"role": "user", "content": ""},
+    {"role": "assistant", "content": "Text to speak."}
+  ],
+  "audio": {"format": "wav", "voice": "data:audio/wav;base64,<base64>"}
+}
+```
+
+**Constraints:**
+- Supported voice reference formats: **WAV, MP3** (NOT OGG)
+- `user` message can be empty
+- ~4s latency for short text
+- Response: same as voicedesign — `choices[0].message.audio.data` = base64 WAV
+
+**Python helper:**
+```python
+with open('reference.wav', 'rb') as f:
+    b64 = base64.b64encode(f.read()).decode()
+data_url = f'data:audio/wav;base64,{b64}'
+# Pass as audio.voice
+```
+
+**Error catalog:**
+| What you pass | Error |
+|---|---|
+| Nothing | `audio.voice must not be empty for voice clone model` |
+| Raw base64 | `audio.voice must be a DataURL for voice clone model` |
+| HTTP URL | `audio.voice must be a DataURL for voice clone model` |
+| OGG data URL | `Unsupported audio.voice source format: ogg` |
+
+## Hermes Config
+
+Config file: `/opt/data/config.yaml` (NOT `~/.hermes/config.yaml`)
+
+```yaml
+tts:
+  provider: mimo
+  providers:
+    mimo:
+      type: command
+      command: "python3 /opt/hermes/scripts/mimo_tts.py --input {input_path} --output {output_path} --voice '{voice}' --model '{model}' --format {format}"
+      output_format: wav
+      voice_compatible: true
+      voice: "<V3 base voice description>"
+      model: voicedesign
+      max_text_length: 8000
+```
+
+To switch back to edge: `hermes config set tts.provider edge`
+
+## Voice Combo Bits
+
+For multi-voice comedy bits (like anime → locked in), generate separate clips and concatenate:
+
+```bash
+ffmpeg -f lavfi -i anullsrc=r=24000:cl=mono -t 0.8 -c:a pcm_s16le silence.wav
+echo "file 'take1.wav'" > list.txt
+echo "file 'silence.wav'" >> list.txt
+echo "file 'take2.wav'" >> list.txt
+ffmpeg -y -f concat -safe 0 -i list.txt -c:a libopus -b:a 24k -ac 1 output.ogg
+```
+
+## PITFALL: Two Config Files
+
+Hermes config path may differ from `~/.hermes/config.yaml`. On this system:
+- `hermes config path` returns `/opt/data/config.yaml`
+- `~/.hermes/config.yaml` ALSO exists but is NOT what Hermes reads
+- Always run `hermes config path` FIRST before editing
+- I wasted time editing the wrong file during initial setup
+
+## TTS Token Limits (Tested 2026-06-18)
+
+Voice description + spoken text share the same 8K token budget.
+
+| Voice Desc Length | Max Text (words) | Result | Audio Duration |
+|---|---|---|---|
+| Full V3 (~230 chars) | ~454 | ✅ | ~88-90s |
+| Full V3 (~230 chars) | ~523 | ❌ 400 | — |
+| Short (~40 chars) | ~523 | ✅ | ~71s |
+
+**Safe zone with full V3:** ~450 words → ~90 seconds audio
+**For longer content:** shorten voice description or chunk + concatenate
+**400 error is generic** — no indication it's a token limit. Try shorter text first.
+
+## Token Limits (Critical)
+
+Voice description and spoken text SHARE the same 8K token context budget. Longer voice description = less room for text.
+
+| Voice Desc Length | Max Text (words) | Max Audio (approx) |
+|---|---|---|
+| Full V3 (~230 chars) | ~450 words | ~90 seconds |
+| Short (~40 chars) | ~520+ words | ~70+ seconds |
+
+**Safe zone:** ~450 words with the full V3 voice description. For longer content, shorten the voice description or chunk and concatenate with ffmpeg.
+
+## Voice Combo Bits
+
+For multi-voice comedy bits (like anime → locked in), generate separate clips and concatenate with ffmpeg silence gap.
+
+## Env Vars
+
+- `MIMO_API_KEY` — required (tp-xxx Token Plan key)
+- `MIMO_BASE_URL` — optional (default: https://token-plan-sgp.xiaomimimo.com/v1)
+- `MIMO_TTS_MODEL` — optional (default: voicedesign)
+- `MIMO_TTS_VOICE` — optional (base voice description)
+- `MIMO_TTS_MOOD` — optional (mood preset name)
+
+## PITFALL: Two Config Files
+
+Hermes config path may differ from `~/.hermes/config.yaml`. Always check:
+```bash
+hermes config path  # Returns actual path
+```
+On this system it's `/opt/data/config.yaml`. The mimo provider block MUST be in the correct file. Both files may exist — edits to the wrong file silently have no effect.
+
+## PITFALL: WAV→OGG Conversion
+
+Hermes does NOT auto-convert WAV to OGG for command providers. The script handles this automatically when output path ends in `.ogg`. For Telegram voice bubbles, output should be OGG Opus (24k bitrate, mono).
+
+## MiMo + Chatterbox + Kokoro Complementary Stack
+
+These are NOT competing — they serve different roles in the Scout voice system:
+
+| | MiMo TTS (VoiceDesign) | MiMo TTS (VoiceClone) | Chatterbox | Kokoro-82M |
+|---|---|---|---|---|
+| **Speed** | Fast (cloud, ~2s) | Fast (cloud, ~2s) | Slow (CPU, ~38s) | Fast (local, ~2s) |
+| **Use case** | Live conversation, dynamic text | Live convo with exact voice | Pre-generated templates | Live convo, offline |
+| **Emotion** | Mood overlays (7 presets) | TBD | `exaggeration` knob | Preset voices only |
+| **Voice identity** | Description-based (V3 voice) | Clone from audio | Clone from audio | Preset (af_bella) |
+| **Cost** | $169/yr sub | $169/yr sub (free with sub) | Free (local) | Free (local) |
+| **Best for** | Real-time Scout responses | Exact voice + speed | Canned quips, snooze toasts | Offline/Browser TTS |
+
+**Pattern:** Pre-generate the best Scout lines with Chatterbox → cache as audio files → play instantly. Use MiMo or Kokoro for anything not in the cache. See `chatterbox-voice-clone` skill for the cloning side.

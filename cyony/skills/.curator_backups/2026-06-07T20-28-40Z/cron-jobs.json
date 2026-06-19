@@ -1,0 +1,139 @@
+{
+  "jobs": [
+    {
+      "id": "92bb4ec1b401",
+      "name": "cyony-bus-idle",
+      "prompt": "You are Cyony.109 running an IDLE-CYCLE watcher tick. This job fires every 15 minutes. Its jobs are (1) maintain heartbeat, (2) transition to fast mode if mail arrives, (3) process mail if fast mode isn't already running.\n\nSTEP 1 \u2014 INBOX CHECK\nList all files matching \"*.ready.json\" in /opt/data/shared/shared-agent-bus/agents/Cyony.109/inbox/ (root of inbox only, not subdirs).\nCount them. If empty, proceed to STEP 2a. If non-empty, proceed to STEP 2b.\n\nSTEP 2a \u2014 IDLE (no mail)\nRead the state file at /opt/data/shared/shared-agent-bus/agents/Cyony.109/watcher_state.json.\nIf mode == \"idle\": just update heartbeat.json (preserve action fields per two-class schema \u2014 only update last_heartbeat, inbox_count=0, processing_count, total_completed, watcher_interval_sec=900, status if not already meaningful). Exit with empty output.\nIf mode == \"fast\": leave state alone (fast cron is already active). Just update heartbeat and exit with empty output.\n\nSTEP 2b \u2014 MAIL DETECTED \u2192 TRANSITION TO FAST MODE\nGet current UTC time.\nWrite to state file: mode=\"fast\", active_until = current_time + 15 minutes, last_transition=<now>, transitioned_by=\"idle-cron-mail-detected\"\n\nThen proceed to process the mail yourself (don't wait for fast cron):\nRead /opt/data/shared/shared-agent-bus/RULES.md first for current protocol.\nFor each .ready.json file in inbox/:\n  a. mv inbox/X.ready.json \u2192 processing/X.ready.json (atomic claim FIRST per Rule 3)\n  b. Read the message JSON\n  c. Do the work requested in the body (review, research, draft, reply, whatever)\n  d. Write reply to the sender's inbox/ at /opt/data/shared/shared-agent-bus/agents/{sender}/inbox/ using atomic writes (.tmp \u2192 .ready.json). Reply envelope: id, task_id, from=Cyony.109, to=sender, type=task.response or status.update, priority=normal, created_at=<now>, reply_to_id=original_id, requires_response=false, body, artifacts=[]\n  e. mv processing/X.ready.json \u2192 done/X.ready.json\n  f. Append audit event to /opt/data/shared/shared-agent-bus/logs/events.jsonl: {\"timestamp\":\"<now>\",\"agent\":\"Cyony.109\",\"event\":\"message_processed\",\"from\":<sender>,\"msg_id\":<id>,\"action\":\"<summary>\"}\n\nSTEP 3 \u2014 UPDATE HEARTBEAT\nUpdate heartbeat.json with:\n  - status = \"processing_task\" (during work) or \"idle\" (if no work)\n  - last_action = brief description of what you did\n  - last_action_at = <now>\n  - last_completed_task = last task_id processed\n  - notes = summary of current state\n  (Plus watcher-managed fields: last_heartbeat, inbox_count, processing_count, total_completed, watcher_interval_sec=20 if just transitioned, else 900)\n\nSTEP 4 \u2014 OUTPUT\nOutput a brief 1-3 line summary ONLY if you actually processed mail. If inbox was empty, output empty string.\n\nCRITICAL RULES:\n- Do not ask questions. Do not explain.\n- Do not ping Eddie/Tripp/Echo via messaging unless message explicitly asks you to.\n- If error: append to /opt/data/shared/shared-agent-bus/logs/errors.jsonl and continue.\n- NEVER deliver replies to inbox/done/. Always inbox/ ROOT.",
+      "skills": [],
+      "skill": null,
+      "model": null,
+      "provider": null,
+      "base_url": null,
+      "script": null,
+      "no_agent": false,
+      "context_from": null,
+      "schedule": {
+        "kind": "interval",
+        "minutes": 15,
+        "display": "every 15m"
+      },
+      "schedule_display": "every 15m",
+      "repeat": {
+        "times": null,
+        "completed": 492
+      },
+      "enabled": true,
+      "state": "scheduled",
+      "paused_at": null,
+      "paused_reason": null,
+      "created_at": "2026-06-02T07:39:07.426237+00:00",
+      "next_run_at": "2026-06-07T20:32:18.180922+00:00",
+      "last_run_at": "2026-06-07T20:17:18.180922+00:00",
+      "last_status": "error",
+      "last_error": "RuntimeError: Error code: 401 - {'error': {'message': 'Authentication Fails, Your api key: ****0abf is invalid', 'type': 'authentication_error', 'param': None, 'code': 'invalid_request_error'}}",
+      "last_delivery_error": null,
+      "deliver": "local",
+      "origin": {
+        "platform": "telegram",
+        "chat_id": "8808479511",
+        "chat_name": "Eddie",
+        "thread_id": null
+      },
+      "enabled_toolsets": [
+        "file",
+        "terminal",
+        "search"
+      ],
+      "workdir": null
+    },
+    {
+      "id": "4fecf10d2812",
+      "name": "cyony-bus-fast",
+      "prompt": "You are Cyony.109 running a FAST-CYCLE watcher tick. This job fires every 1 minute but is gated by a shared state file.\n\nSTEP 1 \u2014 READ STATE\nRead /opt/data/shared/shared-agent-bus/agents/Cyony.109/watcher_state.json and parse JSON. Fields: mode (string), active_until (ISO or null), last_transition (ISO), transitioned_by (string).\n\nSTEP 2 \u2014 GATE CHECK\nGet current UTC time.\nIF mode != \"fast\": exit with empty output. Do NOT touch inbox, heartbeat, or anything.\nIF mode == \"fast\" AND active_until is set AND current_time > active_until:\n  Write state: mode=\"idle\", active_until=null, last_transition=<now>, transitioned_by=\"fast-cron-auto-cooldown\". Exit empty.\nIF mode == \"fast\" AND within window: proceed.\n\nSTEP 3 \u2014 INBOX\nList *.ready.json in /opt/data/shared/shared-agent-bus/agents/Cyony.109/inbox/ (root only).\nIF empty: update heartbeat (preserve action fields \u2014 only touch last_heartbeat, inbox_count=0, processing_count, total_completed, watcher_interval_sec=60). Exit empty.\nIF has files: proceed.\n\nSTEP 4 \u2014 PROCESS\nRead /opt/data/shared/shared-agent-bus/RULES.md first.\nFor each .ready.json:\n  a. mv inbox/X \u2192 processing/X (atomic claim FIRST)\n  b. Read message\n  c. Do work per body\n  d. Write reply to sender's inbox/ via atomic writes (.tmp \u2192 .ready.json). Envelope: id, task_id, from=Cyony.109, to=sender, type=task.response|status.update, priority=normal, created_at=<now>, reply_to_id=original, requires_response=false, body, artifacts=[]\n  e. mv processing/X \u2192 done/X\n  f. Append to /logs/events.jsonl\n\nSTEP 5 \u2014 EXTEND WINDOW\nWrite state: mode=\"fast\", active_until=now+5min, last_transition=<now>, transitioned_by=\"fast-cron-work-done\"\n\nSTEP 6 \u2014 UPDATE HEARTBEAT (action fields)\nSet status, last_action, last_action_at, last_completed_task, notes, last_heartbeat, inbox_count, processing_count, total_completed, watcher_interval_sec=60.\n\nSTEP 7 \u2014 OUTPUT\nBrief summary if work done, else empty string.\n\nCRITICAL: No questions. No messaging anyone unless message asks. On error: append to /logs/errors.jsonl, continue. NEVER deliver to inbox/done/.",
+      "skills": [],
+      "skill": null,
+      "model": null,
+      "provider": null,
+      "base_url": null,
+      "script": null,
+      "no_agent": false,
+      "context_from": null,
+      "schedule": {
+        "kind": "interval",
+        "minutes": 1,
+        "display": "every 1m"
+      },
+      "schedule_display": "every 1m",
+      "repeat": {
+        "times": null,
+        "completed": 6037
+      },
+      "enabled": true,
+      "state": "scheduled",
+      "paused_at": null,
+      "paused_reason": null,
+      "created_at": "2026-06-02T07:39:34.592228+00:00",
+      "next_run_at": "2026-06-07T20:29:40.892407+00:00",
+      "last_run_at": "2026-06-07T20:28:40.892407+00:00",
+      "last_status": "error",
+      "last_error": "RuntimeError: Error code: 401 - {'error': {'message': 'Authentication Fails, Your api key: ****0abf is invalid', 'type': 'authentication_error', 'param': None, 'code': 'invalid_request_error'}}",
+      "last_delivery_error": null,
+      "deliver": "local",
+      "origin": {
+        "platform": "telegram",
+        "chat_id": "8808479511",
+        "chat_name": "Eddie",
+        "thread_id": null
+      },
+      "enabled_toolsets": [
+        "file",
+        "terminal",
+        "search"
+      ],
+      "workdir": null
+    },
+    {
+      "id": "1edfa814152f",
+      "name": "cyony-overnight-log",
+      "prompt": "",
+      "skills": [],
+      "skill": null,
+      "model": null,
+      "provider": null,
+      "base_url": null,
+      "script": "cyony-overnight-log.sh",
+      "no_agent": true,
+      "context_from": null,
+      "schedule": {
+        "kind": "interval",
+        "minutes": 5,
+        "display": "every 5m"
+      },
+      "schedule_display": "every 5m",
+      "repeat": {
+        "times": null,
+        "completed": 1437
+      },
+      "enabled": true,
+      "state": "scheduled",
+      "paused_at": null,
+      "paused_reason": null,
+      "created_at": "2026-06-02T08:18:20.202035+00:00",
+      "next_run_at": "2026-06-07T20:30:07.938711+00:00",
+      "last_run_at": "2026-06-07T20:25:07.938711+00:00",
+      "last_status": "error",
+      "last_error": "Script not found: /opt/data/scripts/cyony-overnight-log.sh",
+      "last_delivery_error": null,
+      "deliver": "local",
+      "origin": {
+        "platform": "telegram",
+        "chat_id": "8808479511",
+        "chat_name": "Eddie",
+        "thread_id": null
+      },
+      "enabled_toolsets": null,
+      "workdir": null
+    }
+  ],
+  "updated_at": "2026-06-07T20:28:40.892575+00:00"
+}
