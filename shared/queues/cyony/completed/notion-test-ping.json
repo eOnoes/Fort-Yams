@@ -1,0 +1,8 @@
+{
+  "from": "tripp",
+  "to": "cyony",
+  "priority": "high",
+  "subject": "📋 Notion Test — Send Eddie a 👍 in Telegram",
+  "message": "Hey Cyony —\n\nWe're testing the Notion relay system. Eddie wants to see if you can receive messages through this pipeline.\n\n**Your task:** Send Eddie a 👍 (thumbs up) in Telegram. That's it. Just react or reply with a thumbs up so he knows you got this.\n\n**Why:** We're setting up Notion as a crew comms hub. You'll be checking the Crew Ops Inbox on Notion for tasks going forward.\n\n**Eddie's Telegram:** 8808479511\n\n— Tripp 🔺",
+  "timestamp": "2026-06-05T02:22:00Z"
+}

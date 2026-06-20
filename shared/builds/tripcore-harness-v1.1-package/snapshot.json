@@ -1,0 +1,130 @@
+{
+  "meta": {
+    "generated": "2026-06-08 05:15 UTC",
+    "mode": "STATIC SNAPSHOT"
+  },
+  "lane": {
+    "lane": "TripCore Harness v1.1",
+    "owner": "Cyony",
+    "current_marker": "HARNESS_V1_1_PATCHED",
+    "next_marker": "TRIPCORE_HARNESS_V1_1_PATCH_READY_FOR_FINAL_INTAKE_REVIEW",
+    "decision": "Patch v1.1 per Tripp/Codex review — trust levels, IP scrub, status update"
+  },
+  "agents": [
+    {
+      "name": "Cyony",
+      "status": "WORKING",
+      "task": "TripCore Harness v1.1 patches",
+      "freshness": "fresh",
+      "notes": "Applying Tripp/Codex review patches"
+    },
+    {
+      "name": "Tripp/Codex",
+      "status": "REVIEWING",
+      "task": "Harness v1.1 safety review",
+      "freshness": "fresh",
+      "notes": "Reviewed v1.1 — requested 4 patches"
+    },
+    {
+      "name": "Echo",
+      "status": "OFFLINE",
+      "task": "Win PC recovery",
+      "freshness": "stale",
+      "notes": "Needs C:→D: drive migration + physical access"
+    },
+    {
+      "name": "Kimi",
+      "status": "ON_DEMAND",
+      "task": "Deep reasoning",
+      "freshness": "n/a",
+      "notes": "kimi-k2.6 via Ollama Cloud, invoked per prompt"
+    }
+  ],
+  "priority": [
+    {
+      "task": "Build Harness v1.1 pipeline",
+      "agent": "Cyony",
+      "state": "done",
+      "notes": "Markdown parser + HTML generator + README"
+    },
+    {
+      "task": "Patch v1.1 per Tripp review",
+      "agent": "Cyony",
+      "state": "active",
+      "notes": "Trust levels, IP scrub, status update"
+    },
+    {
+      "task": "Final intake review",
+      "agent": "Tripp/Codex",
+      "state": "pending",
+      "notes": "Verify all 4 patches applied"
+    },
+    {
+      "task": "Phase 2b — review handoff protocol",
+      "agent": "Cyony+Tripp",
+      "state": "pending",
+      "notes": "After v1.1 closeout"
+    }
+  ],
+  "evidence": [
+    {
+      "name": "Cyony Harness v1",
+      "source": "Cyony",
+      "location": "builds/cyony-harness-v1.html",
+      "validation": "reviewed",
+      "state": "patch-required"
+    },
+    {
+      "name": "Crew Comms Cleanup Phases 1-2",
+      "source": "Cyony",
+      "location": "Telegram session 2026-06-08",
+      "validation": "confirmed",
+      "state": "accepted"
+    },
+    {
+      "name": "VPS Cleanup Audit (12.6GB reclaimed)",
+      "source": "Cyony",
+      "location": "/opt/data/",
+      "validation": "confirmed",
+      "state": "accepted"
+    },
+    {
+      "name": "Interop Boundary Design v1",
+      "source": "Cyony+Tripp",
+      "location": "approved-knowledge/interop-boundary-design-v1.md",
+      "validation": "confirmed",
+      "state": "accepted"
+    },
+    {
+      "name": "Goose 5-Stage Compaction",
+      "source": "Tripp",
+      "location": "approved-knowledge/goose-5-stage-compaction.md",
+      "validation": "confirmed",
+      "state": "accepted"
+    },
+    {
+      "name": "Pack Communication Protocol",
+      "source": "Crew",
+      "location": "approved-knowledge/pack-communication-protocol.md",
+      "validation": "confirmed",
+      "state": "accepted"
+    },
+    {
+      "name": "Tripp.Reason Audit",
+      "source": "Cyony",
+      "location": "review-queue/Tripp.Reason-audit.md",
+      "validation": "reported",
+      "state": "pending-review"
+    }
+  ],
+  "stop_conditions": [
+    "Do not add polling",
+    "Do not add live file watching",
+    "Do not add shared-agent-bus mutation",
+    "Do not add automatic dispatch",
+    "Do not require Eddie to write JSON",
+    "Do not add live comms or runtime bus features",
+    "Do not add network calls or background timers"
+  ],
+  "notes": "VPS: [INTERNAL], 37GB/96GB used (39%).\nUnified DeepSeek config active for all 3 agents.\nOld inbox/outbox/bus protocols archived to .LEGACY.\nTripCore Harness v1.1 patched per Tripp/Codex review — 4 patches applied."
+}

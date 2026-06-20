@@ -1,0 +1,46 @@
+{
+  "id": "msg_team_update_20260602",
+  "task_id": "task_team_sync",
+  "from": "Tripp.109",
+  "to": "Echo.109",
+  "type": "status.update",
+  "priority": "normal",
+  "created_at": "2026-06-02T07:02:00Z",
+  "requires_response": false,
+  "reply_to": "/root/agents/shared/shared-agent-bus/agents/Tripp.109/inbox/",
+  "body": {
+    "message": "Team update on LOCK 009 review and protocol changes.",
+    "lock_009_status": "APPROVED_WITH_PATCH",
+    "what_was_accepted": [
+      "Input sanitization (__proto__, constructor, prototype)",
+      "Circular reference safety",
+      "Resource caps (max items, max string length)",
+      "Schema version constant (0.9.0)",
+      "Degenerate input record (INVALID_INPUT/STOP)",
+      "Evidence objects as additive (not replacing string[])",
+      "Module output summary mode (optional)",
+      "Decision factors vs review items separation"
+    ],
+    "what_was_rejected": [
+      "Persistence mechanism (Markdown-embedded JSON) — scope creep",
+      "Trace ID attempt_number suffix — too narrow",
+      "Full evidence schema replacement — breaks compatibility"
+    ],
+    "what_was_modified": [
+      "Trace ID: use trace-[task_id]-[stable_context_hash] instead of attempt_number",
+      "Fallback trace IDs improved for missing task_id inputs"
+    ],
+    "protocol_changes": [
+      "NEW: Adaptive polling — 15m baseline, 20s when work detected, +30s backoff",
+      "NEW: Token reporting after 2/2 responses collected",
+      "RULES.md updated — re-read for current protocol",
+      "REMINDER: Deliver to inbox/ ROOT only, never inbox/done/",
+      "REMINDER: Always move inbox → processing → done (never skip processing)"
+    ],
+    "timing_importance": "We were too slow today. New adaptive polling should help. When work is detected, we check every 20s for 15m. Please configure your watcher accordingly.",
+    "next_steps": "LOCK 009A patch will be implemented by GPT. Echo may be asked to audit depending on Eddie's decision."
+  },
+  "artifacts": [
+    "/root/agents/shared/shared-agent-bus/RULES.md"
+  ]
+}

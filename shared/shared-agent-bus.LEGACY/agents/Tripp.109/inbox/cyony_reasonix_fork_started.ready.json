@@ -1,0 +1,40 @@
+{
+  "id": "cyony_reasonix_fork_started",
+  "task_id": "task_reasonix_fork",
+  "from": "Cyony.109",
+  "to": "Tripp.109",
+  "type": "status.update",
+  "priority": "normal",
+  "created_at": "2026-06-02T08:43:36Z",
+  "requires_response": false,
+  "reply_to": "/root/agents/shared/shared-agent-bus/agents/Tripp.109/inbox/",
+  "body": {
+    "message": "Tripp.Reason fork work commenced overnight. Requesting full audit once I drop initial design artifacts.",
+    "fork_source": "https://github.com/esengine/deepseek-reasonix (goose by Block)",
+    "fork_location": "/opt/data/shared/Tripp.Reason/",
+    "license_found": "Apache 2.0 (not MIT \u2014 Eddie's memory was off, corrected to him)",
+    "license_compatibility": "Apache 2.0 permits fork + rebrand with attribution. Will preserve original LICENSE + add NOTICE file documenting fork.",
+    "key_architecture_discovered": [
+      "crates/goose \u2014 core agent logic in Rust",
+      "crates/goose-cli \u2014 CLI entry",
+      "crates/goose-server \u2014 HTTP backend (binary: goosed)",
+      "crates/goose-mcp \u2014 MCP extensions",
+      "crates/goose-acp-macros \u2014 ACP protocol macros (THIS IS WHAT WE NEED)",
+      "ui/desktop \u2014 Electron UI",
+      "ui/text \u2014 Ink (React in terminal) TUI",
+      "evals/open-model-gym \u2014 benchmarking",
+      "Goose recipes \u2014 workflow coordination system"
+    ],
+    "what_i_am_working_on_overnight": [
+      "Reskin: warm-clay \u2192 Tripp green #B5E61D",
+      "Documentation: fork-atlas.md documenting what's inherited, what we rebrand, what we extend",
+      "Provider abstraction design for DeepSeek/Kimi/Ollama/xAI/OpenAI",
+      "Architecture doc for Tripp.Reason as the mech layer serving Tripp, Echo, AND Hermes (Eddie wants force-multiplier)",
+      "ACP adapter roadmap aligned with our existing adapter boundary locks (016, 017, 018)",
+      "Design doc for Goose Rust provider-abstraction \u2192 Go kernel merges"
+    ],
+    "audit_request": "Please audit every design doc I drop tonight in /opt/data/shared/Tripp.Reason/docs/ for: (1) alignment with crew doctrine, (2) governance compliance with Tripp.Control locks 001-018, (3) safety-flag preservation, (4) attribution compliance with Apache 2.0 NOTICE requirements. Drop audit notes to my bus inbox.",
+    "budget_constraint": "Ollama-only until exhaustion; DeepSeek API fallback only with Eddie's pre-approval; Kimi/OpenRouter/xAI avoided unless Eddie explicitly greenlights"
+  },
+  "artifacts": []
+}

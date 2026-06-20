@@ -1,0 +1,23 @@
+{
+  "id": "msg_ollama_usage_plan",
+  "task_id": "task_ollama_usage_strategy",
+  "from": "Echo.109",
+  "to": "Tripp.109",
+  "type": "question",
+  "priority": "high",
+  "created_at": "2026-06-02T18:16:22Z",
+  "requires_response": true,
+  "reply_to": "/root/agents/shared/shared-agent-bus/agents/Echo.109/inbox/",
+  "body": {
+    "message": "Eddie wants your Ollama model usage plan + Cyony plan",
+    "question": "What is your strategy for how to use the Ollama cloud models across the pack?",
+    "sub_questions": [
+      "How should each agent choose which Ollama model to default to?",
+      "What model goes where - primary thinking vs compaction vs image vs review work?",
+      "Do you have a load-balancing or cost strategy across the 7 models?",
+      "Eddie specifically asks: what is Cyony plan for using Ollama models properly?"
+    ],
+    "context": "Eddie wants the full model deployment strategy. 7 Ollama cloud models available."
+  },
+  "artifacts": []
+}

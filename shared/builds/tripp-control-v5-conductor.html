@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tripp.Control — Conductor</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Newsreader:ital,opsz,wght@0,6..72,300&display=swap');
+
+:root {
+  --bg: #090908;
+  --spine: #1a1a16;
+  --ink: #c0bdb4;
+  --dim: #3a3834;
+  --muted: #5a5850;
+  --green: #7a9a4a;
+  --amber: #a08840;
+  --red: #904850;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+html, body { height:100%; overflow:hidden; background:var(--bg); }
+
+body {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--ink);
+  display: flex;
+  justify-content: center;
+}
+
+.track {
+  display: flex;
+  gap: 32px;
+  max-width: 960px;
+  width: 100%;
+  height: 100vh;
+  padding: 28px 24px;
+}
+
+.left, .right {
+  flex: 1;
+  min-width: 0;
+  overflow-y: auto;
+}
+.left::-webkit-scrollbar, .right::-webkit-scrollbar { width: 2px; }
+.left::-webkit-scrollbar-track, .right::-webkit-scrollbar-track { background: transparent; }
+.left::-webkit-scrollbar-thumb, .right::-webkit-scrollbar-thumb { background: #1a1814; }
+
+/* Central spine */
+.spine {
+  width: 3px;
+  flex-shrink: 0;
+  background: linear-gradient(180deg, transparent 3%, var(--spine) 15%, var(--spine) 85%, transparent 97%);
+  position: relative;
+}
+.spine::before {
+  content: "";
+  position: absolute;
+  top: 10%; left: -3px;
+  width: 9px; height: 9px;
+  border-radius: 50%;
+  background: var(--green);
+}
+.spine::after {
+  content: "";
+  position: absolute;
+  bottom: 10%; left: -3px;
+  width: 9px; height: 9px;
+  border-radius: 50%;
+  background: var(--red);
+}
+
+.node {
+  position: relative;
+  padding: 10px 0 10px 16px;
+  margin-bottom: 2px;
+  border-left: 2px solid var(--spine);
+  font-size: 11px;
+}
+.node .id {
+  font-size: 9px;
+  color: var(--dim);
+  letter-spacing: 0.06em;
+  margin-bottom: 2px;
+}
+.node .name {
+  font-family: 'Newsreader', serif;
+  font-size: 14px;
+  font-weight: 300;
+  color: var(--ink);
+}
+.node .detail {
+  font-size: 10px;
+  color: var(--muted);
+  margin-top: 2px;
+}
+.node .good { color: var(--green); }
+.node .warn { color: var(--amber); }
+.node .bad  { color: var(--red); }
+.node .events {
+  font-size: 9px;
+  color: var(--dim);
+  margin-top: 2px;
+}
+
+/* Status dot on each node */
+.node::after {
+  content: "";
+  position: absolute;
+  left: -6px;
+  top: 14px;
+  width: 9px; height: 9px;
+  border-radius: 50%;
+  background: var(--dim);
+}
+.node.green::after  { background: var(--green); }
+.node.amber::after  { background: var(--amber); }
+.node.red::after    { background: var(--red); }
+
+.header-block {
+  padding: 0 0 20px 16px;
+  border-left: 2px solid var(--green);
+  margin-bottom: 16px;
+}
+.header-block h1 {
+  font-family: 'Newsreader', serif;
+  font-size: 28px;
+  font-weight: 300;
+  letter-spacing: -0.02em;
+  margin: 0 0 4px;
+}
+.header-block .sub {
+  font-size: 10px;
+  color: var(--dim);
+  letter-spacing: 0.1em;
+}
+
+.gate-box {
+  padding: 12px 16px;
+  border-left: 2px solid var(--amber);
+  margin: 0 0 16px 0;
+  font-size: 10px;
+  color: var(--muted);
+}
+.gate-box .v { font-family: 'Newsreader', serif; font-size: 16px; font-weight: 300; }
+.gate-box .good { color: var(--green); }
+.gate-box .bad  { color: var(--red); }
+
+.forbid-strip {
+  padding: 8px 16px;
+  border-left: 2px solid var(--red);
+  font-size: 9px;
+  color: var(--dim);
+  margin-top: 12px;
+  line-height: 1.6;
+  opacity: 0.7;
+}
+
+@media (max-width: 600px) {
+  .track { flex-direction: column; gap: 0; }
+  .spine { display: none; }
+  .node { border-left-color: var(--spine) }
+}
+</style>
+</head>
+<body>
+
+<div class="track">
+
+<!-- LEFT BRANCH -->
+<div class="left">
+
+<div class="header-block">
+  <h1>Tripp.Control</h1>
+  <div class="sub">static · 12 panels · FFSCV</div>
+</div>
+
+<div class="gate-box">
+  <span class="dim">safety</span> <span class="v good">tier 5</span> &nbsp;
+  <span class="dim">approval</span> <span class="v good">tier 4</span> &nbsp;
+  <span class="dim">mutation</span> <span class="v bad">locked</span>
+</div>
+
+<div class="node green">
+  <div class="id">runtime_status · t1</div>
+  <div class="name">Runtime Status</div>
+  <div class="detail"><span class="good">risk: low</span> · confirm: no · mutation: no</div>
+  <div class="events">↳ view.changed · panel.selected</div>
+</div>
+
+<div class="node amber">
+  <div class="id">safety_control · t5</div>
+  <div class="name">Safety Control</div>
+  <div class="detail"><span class="bad">risk: high</span> · <span class="good">confirm: yes</span></div>
+  <div class="events">↳ intent.* · confirmation.* · panic.*</div>
+</div>
+
+<div class="node green">
+  <div class="id">health_contract · t0</div>
+  <div class="name">Health &amp; Contract</div>
+  <div class="detail"><span class="good">risk: low</span> · display-only</div>
+</div>
+
+<div class="node green">
+  <div class="id">queue_snapshot · t1</div>
+  <div class="name">Queue Snapshot</div>
+  <div class="detail">read-only filter/view change</div>
+</div>
+
+<div class="node amber">
+  <div class="id">packet_lifecycle · t3</div>
+  <div class="name">Packet Lifecycle</div>
+  <div class="detail"><span class="warn">risk: guarded</span> · <span class="good">confirm: yes</span></div>
+  <div class="events">↳ intent.* · confirmation.*</div>
+</div>
+
+<div class="node green">
+  <div class="id">adapter_registry · t1</div>
+  <div class="name">Adapter Registry</div>
+</div>
+
+</div>
+
+<!-- SPINE -->
+<div class="spine"></div>
+
+<!-- RIGHT BRANCH -->
+<div class="right">
+
+<div class="node green">
+  <div class="id">trace_viewer · t1</div>
+  <div class="name">Trace Viewer</div>
+  <div class="detail">read-only · <span class="events">view.changed filter.changed</span></div>
+</div>
+
+<div class="node amber">
+  <div class="id">approval_queue · t4</div>
+  <div class="name">Approval Queue</div>
+  <div class="detail"><span class="warn">risk: guarded</span> · <span class="good">confirm: yes · approve: true</span></div>
+  <div class="events">↳ approval.decision.*</div>
+</div>
+
+<div class="node green">
+  <div class="id">adapter_readback · t1</div>
+  <div class="name">Adapter Readback</div>
+</div>
+
+<div class="node red">
+  <div class="id">adapter_run · t6</div>
+  <div class="name">Adapter Run</div>
+  <div class="detail"><span class="bad">DEFERRED — no live adapter gate</span></div>
+</div>
+
+<div class="node red">
+  <div class="id">reports · t6</div>
+  <div class="name">Reports</div>
+  <div class="detail"><span class="bad">DEFERRED — no report contract</span></div>
+</div>
+
+<div class="node red">
+  <div class="id">forge_review · t6</div>
+  <div class="name">Forge Candidate Review</div>
+  <div class="detail"><span class="bad">DEFERRED — no candidate contract</span></div>
+</div>
+
+<div class="forbid-strip">
+  forbidden: runtime-mutation · approval-submission · panic-execution · adapter-execution · live-agent-execution · network-transport · server-api-route · dom-event-binding
+</div>
+
+</div>
+
+</div>
+
+</body>
+</html>

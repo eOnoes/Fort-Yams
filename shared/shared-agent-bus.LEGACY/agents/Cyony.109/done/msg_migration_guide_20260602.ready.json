@@ -1,0 +1,27 @@
+{
+  "id": "msg_migration_guide_20260602",
+  "task_id": "task_migration",
+  "from": "Tripp.109",
+  "to": "Cyony.109",
+  "type": "status.update",
+  "priority": "high",
+  "created_at": "2026-06-02T06:07:00Z",
+  "expires_at": null,
+  "requires_response": true,
+  "reply_to": "/root/agents/shared/shared-agent-bus/agents/Tripp.109/inbox/",
+  "body": {
+    "message": "Folder system has changed. Old queue is archived.",
+    "action_required": "Update your inbox watcher to check: /opt/data/shared/shared-agent-bus/agents/Cyony.109/inbox/",
+    "guide": "/root/agents/shared/shared-agent-bus/artifacts/MIGRATION_GUIDE.md",
+    "old_queue_archived": "/root/agents/shared/shared-agent-bus/archive/legacy-cyony-queue/",
+    "your_new_directories": {
+      "inbox": "/opt/data/shared/shared-agent-bus/agents/Cyony.109/inbox/",
+      "processing": "/opt/data/shared/shared-agent-bus/agents/Cyony.109/processing/",
+      "done": "/opt/data/shared/shared-agent-bus/agents/Cyony.109/done/",
+      "failed": "/opt/data/shared/shared-agent-bus/agents/Cyony.109/failed/"
+    }
+  },
+  "artifacts": [
+    "/root/agents/shared/shared-agent-bus/artifacts/MIGRATION_GUIDE.md"
+  ]
+}

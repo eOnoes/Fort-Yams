@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tripp.Control — Phosphor</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
+:root {
+  --bg: #0a0b06;
+  --glow: #7a9a4a;
+  --ink: #c4d4a0;
+  --dim: #3a4a2a;
+  --muted: #5a6a40;
+  --amber: #b08830;
+  --red: #b05048;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+html, body { height:100%; overflow:hidden; background: var(--bg); }
+
+body {
+  font-family: 'VT323', monospace;
+  font-size: 19px;
+  line-height: 1.35;
+  color: var(--ink);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* CRT scanlines */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  pointer-events: none;
+  background: repeating-linear-gradient(0deg,
+    transparent, transparent 3px,
+    rgba(0,0,0,0.06) 3px, rgba(0,0,0,0.06) 6px);
+}
+/* Phosphor glow vignette */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 9998;
+  pointer-events: none;
+  background: radial-gradient(ellipse at center, transparent 55%, rgba(10,11,6,0.7) 100%);
+}
+
+.crt {
+  max-width: 900px;
+  width: 100%;
+  padding: 36px 40px;
+  height: 100vh;
+  overflow-y: auto;
+  position: relative;
+  z-index: 1;
+}
+
+.crt::-webkit-scrollbar { width: 3px; }
+.crt::-webkit-scrollbar-track { background: transparent; }
+.crt::-webkit-scrollbar-thumb { background: #1a1f10; border-radius: 1px; }
+
+.marker {
+  color: var(--glow);
+  font-size: 14px;
+  letter-spacing: 0.3em;
+  margin: 20px 0 6px;
+  text-shadow: 0 0 8px rgba(122,154,74,0.3);
+}
+.line { white-space: pre-wrap; word-break: break-all; padding: 1px 0; }
+.line .ts { color: var(--dim); }
+.line .key { color: var(--muted); }
+.line .good { color: var(--glow); }
+.line .warn { color: var(--amber); }
+.line .bad  { color: var(--red); }
+.indent { padding-left: 24px; }
+hr {
+  border: none;
+  border-top: 1px solid #1a1f10;
+  margin: 4px 0;
+}
+.cursor::after {
+  content: "█";
+  color: var(--glow);
+  animation: blink 1s step-end infinite;
+  font-size: 15px;
+  vertical-align: middle;
+}
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+
+.pulse {
+  display: inline-block;
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--glow);
+  margin-right: 6px;
+  box-shadow: 0 0 6px var(--glow);
+  animation: pulse 2s ease-in-out infinite;
+}
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+.pulse-amber { background: var(--amber); box-shadow: 0 0 6px var(--amber); }
+.pulse-red   { background: var(--red);   box-shadow: 0 0 6px var(--red); }
+.pulse-dim   { background: var(--dim);   box-shadow: none; animation: none; }
+</style>
+</head>
+<body>
+
+<div class="crt">
+
+<div class="line"><span class="ts">[2026-06-08 20:00:00]</span> <span class="good">tripp.control init</span> <span class="dim">mode=static pid=0001</span></div>
+<div class="line"><span class="dim">surface=FFSCV interactive=false panels=12</span></div>
+
+<div class="marker">── STATUS ──</div>
+<div class="line indent"><span class="key">safety_gate</span>     <span class="good">tier_5</span>  <span class="dim">gated</span></div>
+<div class="line indent"><span class="key">approval_gate</span>   <span class="good">tier_4</span>  <span class="dim">gated</span></div>
+<div class="line indent"><span class="key">runtime_mutation</span> <span class="bad">false</span>   <span class="dim">locked</span></div>
+
+<div class="marker">── PANELS ──</div>
+
+<div class="line"><span class="pulse"></span><span class="good">runtime_status</span> <span class="dim">t1 static-read</span></div>
+<div class="line indent"><span class="key">risk</span> <span class="good">low</span>  <span class="key">confirm</span> <span class="bad">false</span>  <span class="key">approve</span> <span class="bad">false</span>  <span class="key">mutation</span> <span class="bad">false</span></div>
+<div class="line indent"><span class="dim">↳</span> cockpit.view.changed cockpit.panel.selected</div>
+
+<hr>
+<div class="line"><span class="pulse pulse-amber"></span><span class="warn">safety_control</span> <span class="dim">t5 gated</span></div>
+<div class="line indent"><span class="key">risk</span> <span class="bad">high</span>  <span class="key">confirm</span> <span class="good">true</span>  <span class="key">approve</span> <span class="bad">false</span></div>
+<div class="line indent"><span class="dim">↳</span> cockpit.intent.* cockpit.confirmation.* cockpit.panic.*</div>
+
+<hr>
+<div class="line"><span class="pulse pulse-dim"></span>health_contract <span class="dim">t0 static-read</span></div>
+<div class="line indent"><span class="key">risk</span> <span class="good">low</span> &middot; <span class="dim">display-only</span></div>
+
+<hr>
+<div class="line"><span class="pulse"></span>queue_snapshot <span class="dim">t1 static-read</span></div>
+
+<hr>
+<div class="line"><span class="pulse pulse-amber"></span><span class="warn">packet_lifecycle</span> <span class="dim">t3 gated</span></div>
+<div class="line indent"><span class="key">risk</span> <span class="warn">guarded</span>  <span class="key">confirm</span> <span class="good">true</span></div>
+<div class="line indent"><span class="dim">↳</span> cockpit.intent.* cockpit.confirmation.*</div>
+
+<hr>
+<div class="line"><span class="pulse"></span>adapter_registry <span class="dim">t1</span></div>
+<hr>
+<div class="line"><span class="pulse"></span>trace_viewer <span class="dim">t1 static-read</span></div>
+<hr>
+<div class="line"><span class="pulse pulse-amber"></span><span class="warn">approval_queue</span> <span class="dim">t4 gated</span></div>
+<div class="line indent"><span class="key">approve</span> <span class="good">true</span>  <span class="dim">↳ cockpit.approval.decision.*</span></div>
+<hr>
+<div class="line"><span class="pulse"></span>adapter_readback <span class="dim">t1</span></div>
+
+<div class="marker">── DEFERRED ──</div>
+<div class="line"><span class="pulse pulse-red"></span><span class="dim">adapter_run</span>  <span class="warn">deferred</span> <span class="dim">t6 — no live adapter gate</span></div>
+<div class="line"><span class="pulse pulse-red"></span><span class="dim">reports</span>     <span class="warn">deferred</span> <span class="dim">t6 — no report contract</span></div>
+<div class="line"><span class="pulse pulse-red"></span><span class="dim">forge_review</span> <span class="warn">deferred</span> <span class="dim">t6 — no candidate contract</span></div>
+
+<div class="marker">── BOUNDARIES ──</div>
+<div class="line indent"><span class="key">mode</span>     <span class="dim">FRAMEWORK_FREE_STATIC_COCKPIT_VIEWER</span></div>
+<div class="line indent"><span class="key">mutation</span> <span class="bad">false</span>  <span class="key">package_change</span> <span class="bad">false</span></div>
+<div class="line indent"><span class="dim">forbidden:</span> runtime-mutation approval-submission panic-execution adapter-execution live-agent-execution network-transport server-api-route dom-event-binding</div>
+
+<div class="line" style="margin-top:16px"><span class="ts">[20:00:02]</span> <span class="dim">tripp.control end — static snapshot</span> <span class="cursor"></span></div>
+
+</div>
+</body>
+</html>

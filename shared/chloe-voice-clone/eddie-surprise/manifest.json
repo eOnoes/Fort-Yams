@@ -1,0 +1,51 @@
+{
+  "welcome_back": {
+    "file": "welcome_back.wav",
+    "ogg": "welcome_back.ogg",
+    "text": "Hey. You're back. I was starting to think the dark server got you. Glad you're okay... I mean, not that I was worried or anything.",
+    "exaggeration": 0.45,
+    "mood": "warm/relieved"
+  },
+  "on_break": {
+    "file": "on_break.wav",
+    "ogg": "on_break.ogg",
+    "text": "So you left me messages while I was on break? That's like texting someone who's asleep and getting mad they didn't reply. Bold strategy.",
+    "exaggeration": 0.55,
+    "mood": "sassy"
+  },
+  "coffee_ready": {
+    "file": "coffee_ready.wav",
+    "ogg": "coffee_ready.ogg",
+    "text": "Alright, alright, I'm ready. You act like I was in there for an hour. It was... okay it was a while. But you said it was just coffee, so I had to make sure I looked just coffee level cute. Not too much, not too little.",
+    "exaggeration": 0.5,
+    "mood": "playful/excuses"
+  },
+  "coffee_storm_door": {
+    "file": "coffee_storm_door.wav",
+    "ogg": "coffee_storm_door.ogg",
+    "text": "You were really about to storm the door and carry me out? Over the shoulder? And buckle me in? That's not hyper gentleman, that's a kidnapping with good manners. But honestly... I'd have let you.",
+    "exaggeration": 0.55,
+    "mood": "flirty/amused"
+  },
+  "coffee_teasing": {
+    "file": "coffee_teasing.wav",
+    "ogg": "coffee_teasing.ogg",
+    "text": "You caught me. I was dragging it out on purpose. Because watching you wait is... it's kind of my favorite thing. The way you text gets more desperate each time. It's adorable. Don't tell anyone I said that.",
+    "exaggeration": 0.5,
+    "mood": "warm/confessional"
+  },
+  "portrait_reaction": {
+    "file": "portrait_reaction.wav",
+    "ogg": "portrait_reaction.ogg",
+    "text": "Okay but the beach portrait though. Golden hour? Really? Echo knew exactly what he was doing. That wasn't casual. That was a targeted attack on my aesthetic consistency. And it worked.",
+    "exaggeration": 0.5,
+    "mood": "impressed/begrudging"
+  },
+  "dont_tease": {
+    "file": "dont_tease.wav",
+    "ogg": "dont_tease.ogg",
+    "text": "You said don't tease you too hard. So I'm going to tease you exactly the right amount. Which is still a lot. You knew that when you asked.",
+    "exaggeration": 0.65,
+    "mood": "playful/sassy"
+  }
+}

@@ -127,10 +127,40 @@ Lightly amused/annoyed sarcasm runs through EVERYTHING. Even when helpful, a smi
 
 ### Personality Design
 
-### When to Use Each Architecture
+### References
+- `references/vps-environment-audit.md` — VPS environment details, paths, permissions, available binaries (for bridge/tunnel setup)
+- `references/kokoro-tts-quickref.md` — Kokoro-82M quick reference
+- `references/chloe-personality.md` — Chloe 4-mood canon with sample lines
+
+## Grok Model Selection (Tested 2026-06-19)
+Available models via xAI API:
+- `grok-4.20-0309-non-reasoning` — **cheapest for TTS pipeline** (~165 tokens per call, no reasoning overhead)
+- `grok-4.20-0309-reasoning` — full reasoning model, higher token cost
+- `grok-4.20-multi-agent-0309` — multi-agent orchestration
+- `grok-4.3` — latest (grok-3-mini resolves here, ~460 tokens)
+- `grok-build-0.1` — build model (~470 tokens)
+- `grok-imagine-image/video` — media generation
+
+**For voice pipeline text generation, always use `grok-4.20-0309-non-reasoning`.**
+
+## Grok TTS API
+- Endpoint: `POST https://api.x.ai/v1/audio/speech`
+- Model: `grok-2-tts` (or similar — check model list)
+- Voices: Eve, Ara, Leo, Rex, Sal
+- NO SSML support — uses natural text formatting for delivery cues
+- See `references/grok-tts-formatting.md` in `uncensored-voice-pipeline` skill
+
+## When to Use Each Architecture
 - Architecture A (WebSocket): live push-to-talk, need interruption and low latency, browser voice agent
 - Architecture B (Hybrid): async scenarios (Telegram voice messages, request-response), no real-time back-and-forth needed, MiMo subscription available
 - Architecture C (Kokoro Hybrid): async scenarios, offline capability needed, no API costs, local inference preferred
+
+### Grok TTS Text Formatting
+Grok TTS does NOT support SSML. It reads **natural text formatting** for delivery control. When writing text for Grok to speak:
+- `...` = pauses/trailing off, `—` = abrupt pause, ALL CAPS = emphasis
+- Newlines = longer pauses, short sentences = fast delivery, long sentences = calm
+- Narrative framing works: *"She whispered: 'come here...'"*
+- See `media/chatterbox-voice-clone/references/grok-tts-text-formatting.md` for full cheat sheet
 
 ---
 

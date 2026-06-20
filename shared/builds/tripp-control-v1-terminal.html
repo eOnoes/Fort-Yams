@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tripp.Control — Terminal</title>
+<style>
+:root {
+  --bg: #0a0a0a;
+  --ink: #c4c4c0;
+  --muted: #7a7a74;
+  --dim: #4a4a46;
+  --green: #b4d94a;
+  --blue: #65a8ff;
+  --amber: #d6a84f;
+  --red: #ff5f73;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: ui-monospace, 'SF Mono', 'Fira Code', 'Cascadia Code', Consolas, monospace;
+  font-size: 13px;
+  line-height: 1.6;
+  padding: 40px;
+  max-width: 900px;
+  margin: 0 auto;
+}
+.log-line { white-space: pre-wrap; word-break: break-all; }
+.log-line .ts { color: var(--dim); }
+.log-line .key { color: var(--muted); }
+.log-line .val { color: var(--ink); }
+.log-line .good { color: var(--green); }
+.log-line .warn { color: var(--amber); }
+.log-line .bad  { color: var(--red); }
+.log-line .info { color: var(--blue); }
+hr { border: none; border-top: 1px solid #1a1a18; margin: 16px 0; }
+.section-marker { color: var(--dim); margin: 24px 0 8px; font-size: 11px; letter-spacing: 0.04em; }
+.indent { padding-left: 24px; }
+</style>
+</head>
+<body>
+
+<div class="log-line"><span class="ts">2026-06-08T20:00:00Z</span> <span class="good">tripp.control started</span> <span class="dim">pid=0001 mode=static</span></div>
+<div class="log-line"><span class="ts">20:00:01</span> <span class="dim">surface=FRAMEWORK_FREE_STATIC_COCKPIT_VIEWER interactive=false</span></div>
+
+<div class="section-marker">── status ──</div>
+<div class="log-line indent"><span class="key">safety_gate</span>     <span class="good">tier_5</span>  <span class="dim">gated</span></div>
+<div class="log-line indent"><span class="key">approval_gate</span>   <span class="good">tier_4</span>  <span class="dim">gated</span></div>
+<div class="log-line indent"><span class="key">runtime_mutation</span> <span class="bad">false</span>   <span class="dim">locked</span></div>
+
+<div class="section-marker">── panels ──</div>
+
+<div class="log-line"><span class="info">runtime_status</span> <span class="dim">tier_1 static-read</span></div>
+<div class="log-line indent"><span class="key">risk</span> <span class="good">low</span>  <span class="key">confirm</span> <span class="bad">false</span>  <span class="key">approve</span> <span class="bad">false</span>  <span class="key">mutation</span> <span class="bad">false</span></div>
+<div class="log-line indent"><span class="key">interaction</span> <span class="dim">READ_ONLY_FILTER_OR_VIEW_CHANGE</span></div>
+<div class="log-line indent"><span class="dim">events:</span> cockpit.view.changed cockpit.panel.selected</div>
+
+<hr>
+
+<div class="log-line"><span class="warn">safety_control</span> <span class="dim">tier_5 gated</span></div>
+<div class="log-line indent"><span class="key">risk</span> <span class="bad">high</span>  <span class="key">confirm</span> <span class="good">true</span>  <span class="key">approve</span> <span class="bad">false</span>  <span class="key">mutation</span> <span class="bad">false</span></div>
+<div class="log-line indent"><span class="key">interaction</span> <span class="dim">PANIC_OR_SAFE_MODE_CONTROL</span></div>
+<div class="log-line indent"><span class="dim">events:</span> cockpit.panel.selected cockpit.intent.* cockpit.confirmation.* cockpit.panic.*</div>
+
+<hr>
+
+<div class="log-line"><span class="info">health_contract_metadata</span> <span class="dim">tier_0 static-read</span></div>
+<div class="log-line indent"><span class="key">risk</span> <span class="good">low</span>  <span class="key">confirm</span> <span class="bad">false</span>  <span class="key">approve</span> <span class="bad">false</span>  <span class="key">mutation</span> <span class="bad">false</span></div>
+<div class="log-line indent"><span class="dim">events:</span> cockpit.panel.selected</div>
+
+<div class="section-marker">── queue ──</div>
+
+<div class="log-line"><span class="info">queue_snapshot</span> <span class="dim">tier_1 static-read</span></div>
+<div class="log-line indent"><span class="key">interaction</span> <span class="dim">READ_ONLY_FILTER_OR_VIEW_CHANGE</span></div>
+
+<hr>
+
+<div class="log-line"><span class="warn">packet_lifecycle</span> <span class="dim">tier_3 gated</span></div>
+<div class="log-line indent"><span class="key">risk</span> <span class="warn">guarded</span>  <span class="key">confirm</span> <span class="good">true</span></div>
+<div class="log-line indent"><span class="dim">events:</span> cockpit.panel.selected cockpit.intent.* cockpit.confirmation.*</div>
+
+<hr>
+
+<div class="log-line"><span class="info">adapter_registry</span> <span class="dim">tier_1 static-read</span></div>
+
+<div class="section-marker">── trace & approval ──</div>
+
+<div class="log-line"><span class="info">trace_viewer</span> <span class="dim">tier_1 static-read</span></div>
+
+<hr>
+
+<div class="log-line"><span class="warn">approval_queue</span> <span class="dim">tier_4 gated</span></div>
+<div class="log-line indent"><span class="key">interaction</span> <span class="dim">APPROVAL_REQUIRED_CONTROL</span></div>
+<div class="log-line indent"><span class="dim">events:</span> cockpit.approval.decision.*</div>
+
+<hr>
+
+<div class="log-line"><span class="info">adapter_readback</span> <span class="dim">tier_1 static-read</span></div>
+
+<div class="section-marker">── deferred ──</div>
+
+<div class="log-line"><span class="dim">adapter_run</span> <span class="warn">deferred</span> <span class="dim">tier_6 — no live adapter gate</span></div>
+<div class="log-line"><span class="dim">reports</span> <span class="warn">deferred</span> <span class="dim">tier_6 — no report contract exists</span></div>
+<div class="log-line"><span class="dim">forge_candidate_review</span> <span class="warn">deferred</span> <span class="dim">tier_6 — no candidate contract exists</span></div>
+
+<div class="section-marker">── boundaries ──</div>
+<div class="log-line indent"><span class="key">presentation_mode</span>     <span class="dim">FRAMEWORK_FREE_STATIC_COCKPIT_VIEWER</span></div>
+<div class="log-line indent"><span class="key">runtime_mutation</span>      <span class="bad">false</span></div>
+<div class="log-line indent"><span class="key">package_change</span>        <span class="bad">false</span></div>
+<div class="log-line indent"><span class="dim">forbidden:</span> runtime-mutation approval-submission panic-execution adapter-execution live-agent-execution network-transport server-api-route dom-event-binding</div>
+
+<hr>
+
+<div class="log-line"><span class="ts">20:00:02</span> <span class="dim">tripp.control end — static snapshot — no runtime attached</span></div>
+
+</body>
+</html>

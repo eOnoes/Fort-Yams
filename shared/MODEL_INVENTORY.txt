@@ -1,0 +1,140 @@
+======================================================================
+ CYONY's MODEL INVENTORY — All Configured & Available
+ Generated: 2026-06-02
+======================================================================
+
+======================================================================
+ PROVIDER 1: OpenRouter (PRIMARY — current inference provider)
+======================================================================
+
+Status: ACTIVE | Currently running on: qwen/qwen3.7-max
+Base URL: https://openrouter.ai/api/v1
+
+Explicitly Allowed Models (from OPENROUTER_ALLOWED_MODELS):
+  1. qwen/qwen3.7-max          ← DEFAULT (currently in use)
+  2. deepseek/deepseek-v4-pro  ← FALLBACK
+  3. nvidia/nemotron-3-super-120b-a12b
+  4. qwen/qwen3.6-plus
+  5. x-ai/grok-build-0.1
+  6. moonshotai/kimi-k2.6
+
+Auxiliary Models (configured for specific subsystems):
+  7. google/gemini-2.5-flash   ← Vision/image analysis
+
+Full OpenRouter Catalog: 500+ models available via API
+  (only the 6 above are in the allowed list — using others would
+   bypass Eddie's budget controls)
+
+----------------------------------------------------------------------
+ PROVIDER 2: Ollama Cloud (configured, 4 of 7 models registered)
+======================================================================
+
+Status: CONFIGURED | Base URL: https://ollama.com
+Tier list per benchmarks (S/A/B):
+
+Registered in Hermes config:
+  1. kimi-k2.6          ← Kimi K2.6 (Cloud)          A-Tier
+  2. deepseek-v4-flash  ← DeepSeek V4 Flash (Cloud)   A-Tier
+  3. deepseek-v4-pro    ← DeepSeek V4 Pro (Cloud)     S-Tier
+  4. kimi-k2-thinking   ← Kimi K2 Thinking (Cloud)    A-Tier
+
+Available via API but NOT registered in Hermes config:
+  5. minimax-m3:cloud              A-Tier daily driver
+  6. qwen3.5:397b:cloud            S-Tier coding king
+  7. gemini-3-flash-preview:cloud   B-Tier image/light
+
+NOTE: Models 5-7 are callable via curl to the Ollama API with the
+existing key, but my Hermes config doesn't list them as available
+switches. If you want me to register them, I can patch the config.
+
+----------------------------------------------------------------------
+ PROVIDER 3: DeepSeek Direct (API key available, not registered)
+======================================================================
+
+Status: API KEY EXISTS | Not configured as Hermes provider
+API Key: DEEPSEEK_API_KEY (set in .env)
+
+Available models (standard DeepSeek API):
+  1. deepseek-chat       (DeepSeek V3)
+  2. deepseek-reasoner   (DeepSeek R1)
+
+----------------------------------------------------------------------
+ PROVIDER 4: Kimi / Moonshot (API key available, not registered)
+======================================================================
+
+Status: API KEY EXISTS | Not configured as Hermes provider
+API Key: KIMI_API_KEY / MOONSHOT_API_KEY (set in .env)
+
+Available models:
+  1. kimi-k2.6           (coding-focused)
+  2. moonshot-v1-8k
+  3. moonshot-v1-32k
+  4. moonshot-v1-128k
+
+----------------------------------------------------------------------
+ PROVIDER 5: TTS (Text-to-Speech)
+======================================================================
+
+Active: edge (en-US-AriaNeural)
+Also configured:
+  - ElevenLabs (eleven_multilingual_v2)
+  - OpenAI (gpt-4o-mini-tts, voice: alloy)
+  - xAI (voice: eve)
+  - Mistral (voxtral-mini-tts-2603)
+  - NeutTTS (neutts-air)
+  - Piper (en_US-lessac-medium)
+
+----------------------------------------------------------------------
+ PROVIDER 6: STT (Speech-to-Text)
+======================================================================
+
+Active: local (whisper base)
+Also configured:
+  - OpenAI (whisper-1)
+  - Mistral (voxtral-mini-latest)
+
+----------------------------------------------------------------------
+ PROVIDER 7: X Search
+======================================================================
+
+Model: grok-4.20-reasoning
+
+----------------------------------------------------------------------
+ MCP TOOLS (not LLMs but available compute)
+======================================================================
+
+  1. jCodeMunch   — AST code indexing (82 tools)
+  2. jDocMunch    — Documentation tools (60 tools)
+  3. jDataMunch   — Data tools (35 tools)
+     Total: 177 registered MCP tools
+
+======================================================================
+ SUMMARY
+======================================================================
+
+Primary inference:   OpenRouter (qwen/qwen3.7-max)
+Configured fallback: OpenRouter (deepseek/deepseek-v4-pro)
+Budget-safe alt:     Ollama Cloud (7 models, 4 registered)
+Direct API keys:     DeepSeek, Kimi/Moonshot (not wired as providers)
+Vision:              google/gemini-2.5-flash via OpenRouter
+TTS:                 Edge (default) + 6 alternatives
+MCP tools:           177 across 3 servers
+
+Total models I can reach TODAY:
+  - Hermes-routable:  10 (6 OpenRouter + 4 Ollama Cloud)
+  - Via direct API:   ~8 more (DeepSeek + Kimi)
+  - Via OpenRouter catalog: 500+ (but outside allowed list)
+
+======================================================================
+ RECOMMENDATIONS
+======================================================================
+
+1. Register the missing 3 Ollama Cloud models in Hermes config:
+   minimax-m3:cloud, qwen3.5:397b:cloud, gemini-3-flash-preview:cloud
+   → Gives me all 7 Ollama models as budget-safe alternatives
+
+2. Consider adding deepseek-v4-flash as a fallback chain:
+   OpenRouter → Ollama Cloud → DeepSeek direct
+
+3. The Tripp.Reason Phase 1 OpenAICompatibleProvider adapter
+   would cover ALL of the above through a single interface

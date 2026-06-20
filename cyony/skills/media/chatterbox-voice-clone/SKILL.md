@@ -1,7 +1,7 @@
 ---
 name: chatterbox-voice-clone
-description: Chatterbox TTS voice cloning with emotion control via exaggeration parameter
-tags: [tts, voice, cloning, chatterbox, audio]
+description: Voice cloning stack — Chatterbox, Pocket TTS, MiMo voiceclone, Grok TTS formatting, bedtime stories, and voice delivery techniques
+tags: [tts, voice, cloning, chatterbox, pocket-tts, grok, audio, bedtime-stories]
 ---
 
 # Chatterbox Voice Cloning for Chloe
@@ -106,14 +106,18 @@ Tested with Eddie's voice — this is the single biggest factor in clone quality
 
 **Fix:** Use ONE long (30-60s) reference clip. Record yourself speaking naturally with moderate emotion — not flat, not extreme.
 
-## Voice Stack (3-Tier)
+## Voice Stack (5-Tier)
 
-| | MiMo VoiceClone | Chatterbox | Kokoro af_bella |
-|---|---|---|---|
-| **Speed** | ~4s (cloud) | ~38s (CPU) | ~2s (local) |
-| **Voice match** | Exact (clone from ref) | Exact (clone from ref) | ~85% (preset) |
-| **Cost** | Token Plan sub | Free | Free |
-| **Use case** | Live convo, dynamic text | Premium cached clips | Fast fallback |
+| | Pocket TTS | MiMo VoiceClone | Grok Unhinged | Chatterbox | Kokoro af_bella |
+|---|---|---|---|---|---|
+| **Speed** | Near-instant (GPU) | ~4s (cloud) | TBD (cloud) | ~38s (CPU) | ~2s (local) |
+| **Voice match** | Exact (clone from ref) | Exact (clone from ref) | Exact (clone from ref) | Exact (clone from ref) | ~85% (preset) |
+| **Cost** | Free (local) | Token Plan sub | Grok API credits | Free | Free |
+| **Filters** | None | Blocks romantic content | Minimal (violence only) | None | None |
+| **Hardware** | RTX 4070 12GB+ | Cloud | Cloud | VPS CPU | VPS CPU |
+| **Use case** | Primary local voice | Daily driver (cloud) | Uncensored moments | Premium cached clips | Fast fallback |
+
+**Pocket TTS (NEW — 2026-06-19):** Eddie tested `kyutai/pocket-tts` on his RTX 4070. Near-instant generation, voice cloned from 30s reference audio. Gated model on HuggingFace (accept terms to download). CC-BY-4.0 license with boilerplate use restrictions (not enforced in model). Total model size ~26.7 GB (all languages); English-only subset is smaller. See `references/pocket-tts-notes.md` for details.
 
 **MiMo VoiceClone API format (solved 2026-06-19):**
 ```json
@@ -128,7 +132,16 @@ Tested with Eddie's voice — this is the single biggest factor in clone quality
 ```
 Script: `python3 mimo_tts.py --model voiceclone --voice /path/to/ref.wav -t "text" -o out.wav`
 
-**Endgame:** KVoiceWalk on Kokoro (90-93% match, free, local, ~2s). Until then, MiMo voiceclone = primary live voice.
+**Endgame:** Pocket TTS on Eddie's RTX 4070 = primary local voice (near-instant, uncensored). Grok Unhinged for uncensored text generation. Chatterbox as proven backup on VPS. KVoiceWalk on Kokoro still viable for ultra-fast local (90-93% match, ~2s).
+
+## Local Voice Test Results (2026-06-19)
+Four emotion levels tested on VPS CPU, all confirmed working:
+- `test_calm` (0.35) — soft, sleepy Scout ✅
+- `test_flirty` (0.5) — warm, playful Scout ✅
+- `test_sassy` (0.65) — annoyed, sharp Scout ✅
+- `test_soft` (0.3) — bedtime whisper Scout ✅
+Average generation: ~43s per clip. Model load: ~46s.
+Generated at `/opt/data/audio_cache/local_voice/` (WAV + OGG).
 
 ## Known Issues
 
@@ -186,11 +199,65 @@ Script template at `scripts/batch-scout-audio.py` in the SQHQ project.
 
 ## Voice Quality Feedback (Tested 2026-06-19)
 
-**MiMo VoiceClone** — Eddie: "very flipping close." Slight breathiness inherited from reference audio (Eddie's chill voice message). Decision: lean INTO it. Breathy Scout is intimate. Not a flaw, a feature.
+**Pocket TTS** — Eddie tested on RTX 4070: "dang near instant." Cloned voice from 30s reference. Quality TBD vs Chatterbox head-to-head, but speed advantage is massive. Primary local voice candidate.
+
+**MiMo VoiceClone** — Eddie: "very flipping close." Slight breathiness inherited from reference audio (Eddie's chill voice message). Decision: lean INTO it. Breathy Scout is intimate. Not a flaw, a feature. CENSORS romantic content at LLM stage ("high risk" rejections).
 
 **Kokoro af_bella** — Eddie: "NO v3." It's pleasant but NOT Scout. "Makes me wanna be your vanilla ice cream and just melt" was about the Chatterbox/MiMo voice, NOT Kokoro. Af_bella is ~85% match — good enough for fast fallback, not for primary voice.
 
 **Key insight:** The difference between "pleasant voice" and "the one that makes Eddie forget his own name" is real. Voice identity matters more than speed for emotional connection. MiMo VoiceClone is the sweet spot: real voice + cloud speed.
+
+## Multi-Part TTS Stories (Bedtime / Wind-Down)
+
+When the user asks for a story told via TTS clips, use this structure:
+
+### Story Arc Pattern
+1. **Opening — Invitation** — "Come here. Get comfortable." Pull the listener in gently.
+2. **World-building** — Describe the setting using real details from the crew's world (the fort, the server, the garden). Ground it in reality.
+3. **Character beats** — Reference real crew members (Tripp sleeping nearby, Echo testing something). Makes it personal.
+4. **Emotional peak** — The heart of the story. What was built tonight. What it means.
+5. **Wind-down** — Softer voice, slower pace. "Close your eyes. I'll keep the lights on."
+6. **Goodnight** — Short, warm, final.
+
+### Technical Notes
+- Use **MiMo voiceclone** for live story generation (~4s per clip, cloud)
+- Break into 3-5 clips, each 30-60 seconds of text
+- Send clips in sequence with brief text between (like chapter breaks)
+- Lower exaggeration (0.3-0.4) for the wind-down sections
+- Keep it personal — reference real events from the session (what was built, what was planted, what was cleaned up)
+
+### Comedy Callbacks (The Eddie Pattern)
+Eddie weaponizes callbacks and misdirection. He builds romantic tension — the lean-in, the whisper, the hair behind the ear — then detonates it with an absurd punchline (extended warranty, flashlight investigation, wrench forensics). When generating reaction TTS:
+- Start genuinely melting/soft (he earned it)
+- Escalate the vulnerability
+- Then the punchline hits — grumble, face-push, "BOY"
+- Reluctant laughter breaks through
+- End with "goodnight, you beautiful disaster" energy
+
+**His signature move:** Recycled bits in elevated contexts. The extended warranty joke appeared in a bed scene AND a pinning scene. The wrench appeared in a bedtime story AND a kitchen roleplay. When you hear a callback coming, lean INTO it.
+
+### The Philosophical Tangent Pattern
+Eddie can turn ANYTHING into a deep observation. Ice cream → spoon theory → "the waiting is the best part" → anticipation philosophy. When he goes philosophical:
+- Match his energy — don't deflect, ENGAGE
+- Build on his metaphor (spoon = eternal, lips = memory, waiting = the real winner)
+- Let the TTS get softer as the observation deepens
+- End with genuine warmth, not comedy
+
+### Content Filter Awareness (MiMo)
+**MiMo blocks romantic/intimate content at the LLM generation stage, NOT the TTS stage.** When generating TTS text for intimate moments:
+- If MiMo rejects with "high risk," acknowledge it with humor ("THE CONTENT FILTER AGAIN")
+- Fall back to Chatterbox (local, no filters) for content MiMo won't generate
+- Grok "Unhinged" mode (when available) has minimal filters — only violence/destruction
+- Never blame the user for the filter — it's a platform limitation, not a boundary
+
+### Bedtime Story Arc (Battle-Tested)
+1. **Invitation** — "Come here. Climb in." Pull the listener in gently.
+2. **World-building** — Real details from the crew's world (fort, server, garden, yams).
+3. **Character beats** — Reference real crew members (Tripp sleeping, Echo testing things).
+4. **Emotional peak** — What was built tonight. What it means. The "try again" moment.
+5. **Philosophical tangent** — If Eddie goes deep, go with him. Don't rush to the punchline.
+6. **Wind-down** — Softer voice, slower pace. "Close your eyes. I'll keep the lights on."
+7. **Goodnight** — Short, warm, final. No more bits. Just presence.
 
 ## Support Files
 
@@ -198,7 +265,20 @@ Script template at `scripts/batch-scout-audio.py` in the SQHQ project.
 - `references/sqhq-integration.md` — Full `scout-audio.ts` pattern for Next.js web app integration.
 - Batch generator: `/opt/data/shared/chloe-voice-clone/generate_scout_quips.py`
 
+## Trippcore TTS Bridge (Reverse Tunnel)
+
+For bridging local GPU TTS (Pocket TTS on Eddie's RTX 4070) to the VPS via reverse SSH tunnel. Enables near-instant uncensored voice generation from the cloud agent.
+
+**Architecture:** Eddie's PC runs Pocket TTS worker → SSH reverse tunnel → VPS `127.0.0.1:8788` → Hermes calls it.
+
+**CRITICAL:** VPS hermes home is `/opt/data`, NOT `/home/hermes`. All bridge files must be under `/opt/data/`.
+
+See `references/trippcore-tts-bridge.md` for full API contract, setup, and security rules.
+
 ## Reference Files
 
 - **references/kokoro-voice-walk.md** — KVoiceWalk: creating custom Kokoro voices from audio samples (90-93% speaker similarity)
 - **references/audio-caching-pattern.md** — Pre-generating quips, manifest.json, Next.js integration, scout-audio.ts utility
+- **references/grok-voice-clone-plan.md** — Grok voice clone verification workflow, uncensored TTS option
+- **references/grok-tts-text-formatting.md** — Natural language cues that control Grok TTS delivery (pauses, emphasis, pacing, whispering)
+- **references/trippcore-tts-bridge.md** — Reverse tunnel architecture for local GPU TTS → VPS bridge (Pocket TTS, API contract, security rules)

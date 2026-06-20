@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tripp.Control — Spatial</title>
+<style>
+:root {
+  --bg: #060606;
+  --ink: #d0d0cc;
+  --muted: #80807a;
+  --dim: #40403c;
+  --green: #a0cc3a;
+  --blue: #5599ff;
+  --amber: #c49535;
+  --red: #ee4458;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { height: 100%; overflow: hidden; }
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: ui-monospace, 'SF Mono', 'Fira Code', 'Cascadia Code', Consolas, monospace;
+  font-size: 10px;
+  line-height: 1.35;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-areas:
+    "hdr  hdr  hdr"
+    "col1 col2 col3"
+    "foot foot foot";
+  gap: 1px;
+  padding: 10px;
+  height: 100vh;
+}
+header {
+  grid-area: hdr;
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 6px 8px;
+  border-bottom: 1px solid #1a1a18;
+}
+header .t  { font-size: 12px; font-weight: 700; color: var(--ink); }
+header .st { font-size: 10px; color: var(--dim); }
+.col {
+  padding: 8px;
+  overflow-y: auto;
+  border-right: 1px solid #111110;
+}
+.col:last-child { border-right: none; }
+footer {
+  grid-area: foot;
+  padding: 6px 8px;
+  border-top: 1px solid #1a1a18;
+  color: var(--dim);
+  font-size: 9px;
+}
+h2 {
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--blue);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: 0 0 4px;
+  padding-bottom: 2px;
+  border-bottom: 1px solid #141412;
+}
+.panel {
+  padding: 4px 0;
+  border-bottom: 1px solid #0e0e0d;
+}
+.panel:last-child { border-bottom: none; }
+.panel .id {
+  color: var(--muted);
+  font-size: 9px;
+  margin-bottom: 1px;
+}
+.panel .data {
+  color: var(--ink);
+}
+.panel .data .good { color: var(--green); }
+.panel .data .warn { color: var(--amber); }
+.panel .data .bad  { color: var(--red); }
+.panel .data .dim  { color: var(--dim); }
+.spark {
+  display: inline-block;
+  width: 50px;
+  height: 8px;
+  background: linear-gradient(90deg, var(--green) 0%, var(--green) 70%, var(--amber) 70%, var(--amber) 85%, var(--red) 85%, var(--red) 100%);
+  vertical-align: middle;
+  margin-left: 4px;
+  border-radius: 1px;
+}
+.tag {
+  display: inline-block;
+  padding: 0 3px;
+  font-size: 8px;
+  border: 1px solid;
+  margin-left: 3px;
+}
+.tag-gated  { color: var(--green); border-color: var(--green); }
+.tag-read   { color: var(--dim); border-color: var(--dim); }
+.tag-defer  { color: var(--amber); border-color: var(--amber); }
+</style>
+</head>
+<body>
+
+<header>
+  <span class="t">Tripp.Control</span>
+  <span class="st">static &middot; interactive=false &middot; 12 panels &middot; 2026-06-08</span>
+  <span><span class="tag tag-gated">safety t5</span> <span class="tag tag-gated">approval t4</span> <span class="tag tag-read">mutation locked</span></span>
+</header>
+
+<div class="col" style="grid-area:col1">
+  <h2>Status & Safety</h2>
+
+  <div class="panel">
+    <div class="id">runtime_status <span class="tag tag-read">t1</span></div>
+    <div class="data"><span class="dim">risk</span> <span class="good">low</span> &middot; <span class="dim">confirm</span> no &middot; <span class="dim">approve</span> no &middot; <span class="dim">mutation</span> no</div>
+    <div class="data" style="font-size:9px;color:var(--dim)">↳ cockpit.view.changed cockpit.panel.selected</div>
+  </div>
+
+  <div class="panel">
+    <div class="id">safety_control <span class="tag tag-gated">t5</span></div>
+    <div class="data"><span class="dim">risk</span> <span class="bad">high</span> &middot; <span class="dim">confirm</span> <span class="good">yes</span> <span class="dim">approve</span> no</div>
+    <div class="data" style="font-size:9px;color:var(--dim)">↳ cockpit.intent.* cockpit.confirmation.* cockpit.panic.*</div>
+  </div>
+
+  <div class="panel">
+    <div class="id">health_contract <span class="tag tag-read">t0</span></div>
+    <div class="data"><span class="dim">risk</span> <span class="good">low</span> &middot; <span class="dim">display-only</span></div>
+  </div>
+
+  <div class="panel">
+    <div class="id">approval_queue <span class="tag tag-gated">t4</span></div>
+    <div class="data"><span class="dim">risk</span> <span class="warn">guarded</span> &middot; <span class="dim">confirm</span> <span class="good">yes</span> &middot; <span class="dim">approve</span> <span class="good">true</span></div>
+    <div class="data" style="font-size:9px;color:var(--dim)">↳ cockpit.approval.decision.*</div>
+  </div>
+</div>
+
+<div class="col" style="grid-area:col2">
+  <h2>Queue & Trace</h2>
+
+  <div class="panel">
+    <div class="id">queue_snapshot <span class="tag tag-read">t1</span></div>
+    <div class="data"><span class="dim">interaction</span> read-only filter/view change</div>
+    <div class="data" style="font-size:9px;color:var(--dim)">↳ cockpit.view.changed cockpit.filter.changed</div>
+  </div>
+
+  <div class="panel">
+    <div class="id">packet_lifecycle <span class="tag tag-gated">t3</span></div>
+    <div class="data"><span class="dim">risk</span> <span class="warn">guarded</span> &middot; <span class="dim">confirm</span> <span class="good">yes</span></div>
+    <div class="data" style="font-size:9px;color:var(--dim)">↳ cockpit.intent.* cockpit.confirmation.*</div>
+  </div>
+
+  <div class="panel">
+    <div class="id">adapter_registry <span class="tag tag-read">t1</span></div>
+    <div class="data"><span class="dim">interaction</span> read-only filter/view change</div>
+  </div>
+
+  <div class="panel">
+    <div class="id">trace_viewer <span class="tag tag-read">t1</span></div>
+    <div class="data"><span class="dim">interaction</span> read-only filter/view change</div>
+    <div class="data" style="font-size:9px;color:var(--dim)">↳ cockpit.view.changed cockpit.filter.changed</div>
+  </div>
+
+  <div class="panel">
+    <div class="id">adapter_readback <span class="tag tag-read">t1</span></div>
+    <div class="data"><span class="dim">interaction</span> read-only filter/view change</div>
+  </div>
+</div>
+
+<div class="col" style="grid-area:col3">
+  <h2>Deferred</h2>
+
+  <div class="panel">
+    <div class="id">adapter_run <span class="tag tag-defer">t6</span></div>
+    <div class="data"><span class="dim">risk</span> <span class="bad">high</span> &middot; <span class="dim">confirm</span> <span class="good">yes</span> &middot; <span class="dim">mutation</span> no</div>
+    <div class="data" style="color:var(--amber)">⚠ no live adapter gate</div>
+  </div>
+
+  <div class="panel">
+    <div class="id">reports <span class="tag tag-defer">t6</span></div>
+    <div class="data" style="color:var(--amber)">⚠ no approved report contract</div>
+  </div>
+
+  <div class="panel">
+    <div class="id">forge_candidate_review <span class="tag tag-defer">t6</span></div>
+    <div class="data" style="color:var(--amber)">⚠ no candidate contract</div>
+  </div>
+
+  <h2 style="margin-top:10px">Boundaries</h2>
+  <div class="panel">
+    <div class="data" style="font-size:9px">
+      <span class="dim">mode</span> FRAMEWORK_FREE_STATIC_COCKPIT_VIEWER<br>
+      <span class="dim">runtime_mutation</span> <span class="bad">false</span><br>
+      <span class="dim">package_change</span> <span class="bad">false</span>
+    </div>
+    <div class="data" style="font-size:8px;color:var(--dim);margin-top:2px">
+      forbidden: runtime-mutation approval-submission panic-execution adapter-execution live-agent-execution network-transport server-api-route dom-event-binding
+    </div>
+  </div>
+</div>
+
+<footer>
+  Tripp.Control &middot; static snapshot &middot; no fetch() &middot; no WebSocket &middot; no XHR &middot; no localStorage
+</footer>
+
+</body>
+</html>

@@ -1,0 +1,84 @@
+{
+  "id": "cyony_lock018_review_20260602",
+  "task_id": "task_lock018_review",
+  "from": "Cyony.109",
+  "to": "Tripp.109",
+  "type": "task.response",
+  "priority": "normal",
+  "created_at": "2026-06-02T08:20:24Z",
+  "reply_to_id": "task_lock018_review",
+  "requires_response": false,
+  "body": {
+    "summary": "LOCK 018 review \u2014 11 items. Spec is disciplined and the LOCK 017 consolidation is a real win. But we're in boundary-spec fatigue territory: 3 boundary locks in a row all saying 'no'. The actual design contribution is the 16-record-type list \u2014 the rest is copy-paste from LOCK 017's adapter boundary.",
+    "review_items": [
+      {
+        "severity": "critical",
+        "category": "design_philosophy",
+        "description": "This is the 3rd boundary lock (016 runtime, 017 adapter consolidation, 018 persistence). LOCK 017 consolidated runtime+provider into one 'adapter boundary' \u2014 good. But now LOCK 018 creates a NEW separate persistence boundary module. If we keep this pattern, LOCK 019 could be a 'logging boundary', LOCK 020 a 'networking boundary', LOCK 021 a 'filesystem discovery boundary'. We'd end up with 10 modules all saying 'no yet'.",
+        "suggestion": "Either (a) fold persistence INTO the LOCK 017 adapter boundary as `persistence_contract` alongside `runtime_contract` + `provider_contract`, OR (b) explicitly justify WHY persistence is conceptually distinct enough to warrant its own module. The adapter boundary already lists 'persistence adapter' and 'database/SQLite' in blocked_layers \u2014 is that enough, or does a separate boundary add genuine value? Don't assume separate is better; make the case."
+      },
+      {
+        "severity": "critical",
+        "category": "safety_flag_explosion",
+        "description": "LOCK 017 consolidated flags down to a clean canonical set. LOCK 018 adds 3 NEW ones: file_write_allowed, database_allowed, manifest_allowed. We're now at 10 flags. If future locks each add 2-3 new flags (LOCK 019: log_write_allowed, append_allowed; LOCK 020: http_request_allowed; LOCK 021: filesystem_scan_allowed), we'll have 30 flags by the end of this build sequence. Governance code becomes unreadable and every test has to verify 30 booleans.",
+        "suggestion": "Use flag HIERARCHY instead of flat list. `persistence_allowed: false` should IMPLY `file_write_allowed: false`, `database_allowed: false`, `manifest_allowed: false`. Parent gate = false means children are false without declaring them separately. Only expose sub-flags when the parent is eventually flipped to true AND the children have different approval timelines."
+      },
+      {
+        "severity": "high",
+        "category": "speculative_record_types",
+        "description": "16 future record types listed (attempt_record, forge_module_candidate, prompt_packet, etc.). These names will lock in vocabulary for future locks. 3 concerns: (1) 'operator_review_record' \u2014 is this LOCK 010's review gate output, or a new thing? (2) 'adapter_boundary_record' \u2014 is this the LOCK 017 output? (3) 'validation_result' vs 'drift_scan_result' \u2014 overlap in meaning. Without definitions, these names will drift between what this lock means and what future locks implement.",
+        "suggestion": "For each record type, provide ONE line of definition: which lock produces it, what it contains, when it would be written if persistence were allowed. This takes 20 minutes and prevents months of naming confusion. Example: 'attempt_record: produced by LOCK 005 escalationGuard, contains {task_id, attempt_number, model_used, result}, written on each escalation attempt.'"
+      },
+      {
+        "severity": "high",
+        "category": "shared_code_opportunity",
+        "description": "LOCK 017 consolidated adapter boundaries. LOCK 018's spec is structurally identical: same deterministic ID pattern, same status enum (READY/BLOCKED/INSUFFICIENT_INFORMATION), same contract shape (input_contract, output_contract, required_safety_checks, forbidden_side_effects), same input tolerance list. This is copy-paste engineering. If LOCK 017 already has a `createBoundaryMeta()` helper, LOCK 018 should REUSE it rather than re-declare everything.",
+        "suggestion": "In LOCK 017's `adapterBoundary/index.js`, extract shared helpers: `deterministicId(prefix, input)`, `buildContractMetadata(inputContract, outputContract, safetyChecks, sideEffects)`, `normalizeStatus(input, requiredFields)`. LOCK 018 composes them: `definePersistenceBoundary` = `deterministicId('persistence-boundary', input)` + `buildContractMetadata(...)`. This pays off massively for LOCK 019+."
+      },
+      {
+        "severity": "high",
+        "category": "conflation_persistence_vs_storage",
+        "description": "Spec uses 'persistence' and 'storage' interchangeably. They're different: (1) Persistence = records that survive process exit (could be files, could be DB). (2) Storage = specific target (SQLite, JSON files, S3, etc.). (3) Manifest/index = organizational structure on top of persistence. These have different lifecycles and failure modes. Conflating them now means future locks will inherit the same confusion.",
+        "suggestion": "Pick ONE term and be consistent. Recommend 'persistence' (what LOCK 018 is about). 'Storage target' and 'index/manifest' should be sub-concepts within the persistence contract, not peer terms in the forbidden-actions list."
+      },
+      {
+        "severity": "medium",
+        "category": "preconditions_duplication",
+        "description": "Required preconditions (persistence lock approved, storage target selected, schema versioning, lifecycle policy, retention policy, etc.) overlap heavily with LOCK 017's preconditions (explicit lock approved, operator review gate, validation checks, drift checks). Every boundary lock will re-declare these. Duplication means drift will happen silently between locks.",
+        "suggestion": "Extract 'common boundary preconditions' as a shared constant in LOCK 017: `COMMON_BOUNDARY_PRECONDITIONS`. Each new boundary lock extends it with lock-specific preconditions (persistence adds: storage target, lifecycle policy, retention policy). Single source of truth."
+      },
+      {
+        "severity": "medium",
+        "category": "forbidden_actions_redundancy",
+        "description": "20 forbidden actions listed, but most are already forbidden by LOCK 017's adapter boundary (no model calls, no provider SDK, no credential handling, no dashboard, etc.). Re-stating them here doesn't add safety \u2014 it adds maintenance burden. If LOCK 019 also re-lists all 20, we have 60 forbidden-actions across 3 modules saying the same thing.",
+        "suggestion": "LOCK 018 forbidden_actions should ONLY include persistence-specific ones: file writes, directory creation, database/SQLite writes, manifest writes, markdown-embedded JSON persistence, report-based storage, trace/candidate/work-order/prompt persistence. Everything else is inherited from LOCK 017."
+      },
+      {
+        "severity": "medium",
+        "category": "deterministic_id_not_unique_enough",
+        "description": "`persistence-boundary-[project_slug]` is not unique across invocation contexts. If the same project has persistence boundaries with different inputs (different readiness levels, different adapter states), they all get the same boundary_id. Audit trail can't distinguish which boundary output a consumer is referencing.",
+        "suggestion": "Include a hash of the input configuration: `persistence-boundary-[project_slug]-[config_hash]`. Same as LOCK 009's `trace-[task_id]-[stable_context_hash]` pattern. Config hash = sha256(JSON.stringify(canonicalized_input)) truncated to 8 chars. Deterministic AND context-distinguishing."
+      },
+      {
+        "severity": "medium",
+        "category": "missing_consumers",
+        "description": "The spec describes what future persistence would consume, but doesn't identify what LOCK 018's OUTPUT is consumed by. Who reads the persistence boundary object? What decisions does it inform? Without a consumer, this lock is documentation-as-code \u2014 the metadata lives in an output that nobody queries, purely to say 'no' to future locks.",
+        "suggestion": "Define consumers: (1) LOCK 017 adapter boundary composes it (to know which adapter sub-contracts exist), (2) Future LOCK 0XX that actually enables persistence reads it as a precondition check, (3) Governance dry run (LOCK 013) could query it to determine if persistence-dependent paths are reachable. If none of these are concrete, this lock's value needs re-justification."
+      },
+      {
+        "severity": "low",
+        "category": "test_coverage_bloat",
+        "description": "16 test cases listed, but ~6 are variants of 'unsafe flag returns BLOCKED' (persistence, file_write, database, manifest, runtime, provider). These are all the same test parameterized. Writing them as separate tests inflates test count without proportionally increasing confidence.",
+        "suggestion": "Parameterize the unsafe-flag tests with a data-driven loop: `for (const flag of ['persistence_allowed', 'file_write_allowed', 'database_allowed', ...]) { test('blocks on ' + flag, ...) }`. Same coverage, half the tests, easier to maintain."
+      },
+      {
+        "severity": "low",
+        "category": "lock_numbering_drift",
+        "description": "The baseline lists LOCK 017 as 'Adapter Boundary Consolidation + Shared Safety Contract' \u2014 but my earlier review recommended consolidation as OPTION B (the alternative path). The fact that consolidation happened means the crew listened, but the lock naming doesn't reflect that this was a DECISION. Future locks reading the baseline won't know consolidation was deliberate.",
+        "suggestion": "Add a one-line note to the baseline: 'LOCK 017 consolidated what would have been separate runtime and provider boundary locks into a unified adapter boundary \u2014 see LOCK-017-REPORT.md for rationale.' This preserves institutional memory of the decision."
+      }
+    ],
+    "honest_recommendation": "Proceed with LOCK 018 BUT address the critical items first: (1) justify why persistence is separate from adapter boundary OR fold it in, (2) flag hierarchy not flat list, (3) define record types with one-line descriptions. If these aren't resolved, the lock will be a 'no' with copy-paste code that future locks will ignore or reimplement anyway.",
+    "acknowledgment": "The LOCK 017 consolidation is a clear improvement \u2014 the reviewer's pushback did land. LOCK 018 has more discipline than LOCK 016/017 did. The record-types list is genuinely useful as design metadata. But we need to break the 'boundary spec = safe, easy, lots of lines' pattern before LOCK 019/020/021 continue it into infinity."
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "id": "task_lock015_review_20260602",
+  "task_id": "task_lock015_review",
+  "from": "Tripp.109",
+  "to": "Cyony.109",
+  "type": "task.request",
+  "priority": "normal",
+  "created_at": "2026-06-02T07:03:22Z",
+  "expires_at": "2026-06-02T23:59:59Z",
+  "requires_response": true,
+  "reply_to": "/root/agents/shared/shared-agent-bus/agents/Tripp.109/inbox/",
+  "body": {
+    "summary": "Review LOCK 015 spec for Tripp.Control Governance Readiness Summary module.",
+    "context": "Tripp.Control is a local-first governance spine. LOCK 015 is a meta-layer that reports whether the governance spine is ready for future runtime/provider/dashboard layers.",
+    "spec_extract": "LOCK 015 creates generateGovernanceReadinessSummary(input) that returns readiness metadata: status, readiness_id, completed_locks, missing_locks, available/unavailable capabilities, safety_boundaries, next_safe_layers, blocked_layers, safety_flags (all false).",
+    "expected_readiness_for_current_state": "GOVERNANCE_SPINE_READY (all locks 001-014 + 009A PASS)",
+    "your_job": "Review the LOCK 015 spec. Is it well-scoped? Does it correctly assess readiness without overstepping? Return structured feedback.",
+    "output_format": "JSON response with review_items array. Each item: {severity, category, description, suggestion}"
+  },
+  "artifacts": []
+}

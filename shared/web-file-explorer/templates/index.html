@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Web File Explorer</title>
+<style>
+  /* ─── Reset & Base ─── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #1e1e2e;
+    --sidebar: #181825;
+    --surface: #313244;
+    --surface-alt: #45475a;
+    --border: #45475a;
+    --text: #cdd6f4;
+    --text-dim: #6c7086;
+    --text-bright: #ffffff;
+    --accent: #89b4fa;
+    --accent-alt: #74c7ec;
+    --green: #a6e3a1;
+    --yellow: #f9e2af;
+    --red: #f38ba8;
+    --orange: #fab387;
+    --radius: 6px;
+    --header-h: 44px;
+    --sidebar-w: 260px;
+    --font: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+    --mono: 'Cascadia Code', 'Fira Code', 'JetBrains Mono', 'Consolas', monospace;
+  }
+  html, body { height: 100%; background: var(--bg); color: var(--text); font-family: var(--font); font-size: 14px; overflow: hidden; }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  /* ─── Layout ─── */
+  #app { display: flex; flex-direction: column; height: 100vh; }
+
+  /* Header */
+  header {
+    height: var(--header-h);
+    background: var(--sidebar);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    padding: 0 14px;
+    gap: 12px;
+    flex-shrink: 0;
+    -webkit-app-region: drag;
+  }
+  header h1 {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-bright);
+    letter-spacing: 0.3px;
+  }
+  header .badge {
+    font-size: 11px;
+    background: var(--surface);
+    color: var(--text-dim);
+    padding: 2px 8px;
+    border-radius: 10px;
+  }
+  header .spacer { flex: 1; }
+
+  /* Main area */
+  .main {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+  }
+
+  /* Sidebar */
+  .sidebar {
+    width: var(--sidebar-w);
+    min-width: var(--sidebar-w);
+    background: var(--sidebar);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .sidebar-section { padding: 8px 10px; border-bottom: 1px solid var(--border); }
+  .sidebar-section h3 {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: var(--text-dim);
+    margin-bottom: 6px;
+    font-weight: 600;
+  }
+  .bookmark-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 8px;
+    border-radius: var(--radius);
+    cursor: pointer;
+    font-size: 13px;
+    transition: background 0.15s;
+  }
+  .bookmark-item:hover { background: var(--surface); }
+  .bookmark-item .icon { font-size: 15px; }
+
+  .breadcrumb-area {
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+  .breadcrumb {
+    font-size: 12px;
+    color: var(--text-dim);
+    word-break: break-all;
+    line-height: 1.4;
+  }
+  .breadcrumb span { cursor: pointer; color: var(--accent); }
+  .breadcrumb span:hover { text-decoration: underline; }
+  .breadcrumb .current { color: var(--text); cursor: default; }
+  .breadcrumb .current:hover { text-decoration: none; }
+
+  /* File list */
+  .file-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 4px 0;
+  }
+  .file-list::-webkit-scrollbar { width: 6px; }
+  .file-list::-webkit-scrollbar-track { background: transparent; }
+  .file-list::-webkit-scrollbar-thumb { background: var(--surface-alt); border-radius: 3px; }
+
+  .file-item {
+    display: flex;
+    align-items: center;
+    padding: 6px 14px;
+    cursor: pointer;
+    gap: 10px;
+    transition: background 0.12s;
+    border-radius: 0;
+  }
+  .file-item:hover { background: var(--surface); }
+  .file-item .icon { font-size: 16px; width: 20px; text-align: center; flex-shrink: 0; }
+  .file-item .name {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 13px;
+  }
+  .file-item .meta {
+    flex-shrink: 0;
+    text-align: right;
+    font-size: 11px;
+    color: var(--text-dim);
+    white-space: nowrap;
+  }
+
+  /* Content panel */
+  .content-panel {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background: var(--bg);
+  }
+  .content-placeholder {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-dim);
+    font-size: 15px;
+  }
+  .content-placeholder .inner { text-align: center; }
+  .content-placeholder .big-icon { font-size: 48px; margin-bottom: 12px; }
+  .content-viewer {
+    flex: 1;
+    overflow: auto;
+    padding: 20px 24px;
+    line-height: 1.6;
+  }
+  .content-viewer::-webkit-scrollbar { width: 8px; }
+  .content-viewer::-webkit-scrollbar-track { background: transparent; }
+  .content-viewer::-webkit-scrollbar-thumb { background: var(--surface-alt); border-radius: 4px; }
+
+  /* File info header */
+  .file-info-bar {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 10px 20px;
+    background: var(--sidebar);
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+    flex-wrap: wrap;
+  }
+  .file-info-bar .fi-name { font-weight: 600; color: var(--text-bright); }
+  .file-info-bar .fi-stat { font-size: 12px; color: var(--text-dim); }
+  .file-info-bar .download-btn {
+    margin-left: auto;
+    background: var(--accent);
+    color: var(--bg);
+    border: none;
+    padding: 5px 14px;
+    border-radius: var(--radius);
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.15s;
+  }
+  .file-info-bar .download-btn:hover { opacity: 0.85; }
+
+  /* Code viewer */
+  pre.code-block {
+    background: var(--sidebar);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px 18px;
+    overflow-x: auto;
+    font-family: var(--mono);
+    font-size: 13px;
+    line-height: 1.55;
+    tab-size: 2;
+  }
+
+  /* Markdown */
+  .markdown-body h1 { font-size: 22px; color: var(--text-bright); margin: 0 0 12px 0; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+  .markdown-body h2 { font-size: 18px; color: var(--text-bright); margin: 20px 0 8px 0; }
+  .markdown-body h3 { font-size: 15px; color: var(--text-bright); margin: 16px 0 6px 0; }
+  .markdown-body p { margin: 8px 0; }
+  .markdown-body ul, .markdown-body ol { margin: 8px 0; padding-left: 24px; }
+  .markdown-body li { margin: 3px 0; }
+  .markdown-body code {
+    background: var(--surface);
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-family: var(--mono);
+    font-size: 12.5px;
+  }
+  .markdown-body pre code {
+    background: none;
+    padding: 0;
+    border-radius: 0;
+  }
+  .markdown-body blockquote {
+    border-left: 3px solid var(--accent);
+    padding-left: 12px;
+    color: var(--text-dim);
+    margin: 8px 0;
+  }
+  .markdown-body table {
+    border-collapse: collapse;
+    margin: 10px 0;
+    width: 100%;
+  }
+  .markdown-body th, .markdown-body td {
+    border: 1px solid var(--border);
+    padding: 6px 10px;
+    text-align: left;
+  }
+  .markdown-body th { background: var(--surface); }
+  .markdown-body hr { border: none; border-top: 1px solid var(--border); margin: 16px 0; }
+  .markdown-body a { color: var(--accent); }
+  .markdown-body img { max-width: 100%; border-radius: var(--radius); }
+
+  /* Image viewer */
+  .image-viewer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+    padding: 20px;
+  }
+  .image-viewer img {
+    max-width: 100%;
+    max-height: calc(100vh - 160px);
+    object-fit: contain;
+    border-radius: var(--radius);
+    box-shadow: 0 4px 24px rgba(0,0,0,0.4);
+  }
+
+  /* Loading / Error */
+  .loading { text-align: center; padding: 40px; color: var(--text-dim); }
+  .error { color: var(--red); padding: 20px; text-align: center; }
+
+  /* Responsive */
+  @media (max-width: 720px) {
+    .sidebar { display: none; }
+    .file-info-bar { flex-direction: column; align-items: flex-start; }
+    .file-info-bar .download-btn { margin-left: 0; }
+  }
+
+  /* Context */
+  .parent-link {
+    color: var(--yellow);
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <h1>📁 Web File Explorer</h1>
+    <span class="badge">read-only</span>
+    <span class="spacer"></span>
+    <span style="font-size:12px;color:var(--text-dim)" id="path-display">/root/agents/</span>
+  </header>
+
+  <div class="main">
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-section">
+        <h3>📌 Bookmarks</h3>
+        <div id="bookmarks"></div>
+      </div>
+      <div class="breadcrumb-area">
+        <div class="breadcrumb" id="breadcrumb"></div>
+      </div>
+      <div class="file-list" id="file-list"></div>
+    </aside>
+
+    <!-- Content -->
+    <section class="content-panel" id="content-panel">
+      <div class="content-placeholder" id="placeholder">
+        <div class="inner">
+          <div class="big-icon">📂</div>
+          <p>Select a file to preview</p>
+          <p style="font-size:12px;margin-top:8px;color:var(--text-dim)">Browse files from the sidebar</p>
+        </div>
+      </div>
+      <div id="content-viewer" style="display:none"></div>
+    </section>
+  </div>
+</div>
+
+<script>
+// ─── State ───
+let currentPath = '';
+let currentItems = [];
+let currentInfo = {};
+let isContentLoaded = false;
+
+// ─── Elements ───
+const fileList = document.getElementById('file-list');
+const breadcrumb = document.getElementById('breadcrumb');
+const bookmarksEl = document.getElementById('bookmarks');
+const placeholder = document.getElementById('placeholder');
+const contentViewer = document.getElementById('content-viewer');
+const pathDisplay = document.getElementById('path-display');
+
+// ─── API ───
+async function api(url) {
+  const res = await fetch(url);
+  if (res.status === 401) {
+    document.body.innerHTML = '<div style="padding:40px;text-align:center;color:var(--red)"><h2>🔒 Authentication Required</h2><p>Please provide credentials</p></div>';
+    throw new Error('Auth required');
+  }
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({error: res.statusText}));
+    throw new Error(err.error || 'Request failed');
+  }
+  return res.json();
+}
+
+async function browse(path = '') {
+  currentPath = path;
+  const data = await api(`/api/browse?path=${encodeURIComponent(path)}`);
+  currentItems = data.items;
+  currentInfo = data.current;
+
+  // Path display
+  pathDisplay.textContent = data.root_path + (path ? '/' + path : '');
+
+  // Breadcrumb
+  renderBreadcrumb(data);
+
+  // Bookmarks
+  renderBookmarks(data.bookmarks);
+
+  // File list
+  renderFileList(data);
+
+  // Clear content if navigating
+  if (isContentLoaded) {
+    showPlaceholder();
+  }
+}
+
+function renderBreadcrumb(data) {
+  const parts = (data.current.path || '').split('/').filter(Boolean);
+  let html = '<span onclick="browse(\'\')">agents</span>';
+  let acc = '';
+  for (const p of parts) {
+    acc += (acc ? '/' : '') + p;
+    const isLast = acc === data.current.path;
+    html += ' / ';
+    if (isLast) {
+      html += `<span class="current">${p}</span>`;
+    } else {
+      html += `<span onclick="browse('${acc}')">${p}</span>`;
+    }
+  }
+  breadcrumb.innerHTML = html;
+}
+
+function renderBookmarks(bookmarks) {
+  bookmarksEl.innerHTML = bookmarks.map(b => `
+    <div class="bookmark-item" onclick="browse('${b.path}')">
+      <span class="icon">📂</span>
+      <span>${b.name}</span>
+    </div>
+  `).join('');
+}
+
+function renderFileList(data) {
+  let html = '';
+
+  // Parent directory link
+  if (data.parent) {
+    const parentRel = data.parent.path;
+    html += `<div class="file-item parent-link" onclick="browse('${parentRel}')">
+      <span class="icon">📁</span>
+      <span class="name">.. (parent)</span>
+      <span class="meta"></span>
+    </div>`;
+  }
+
+  for (const item of data.items) {
+    const icon = item.is_dir ? '📁' : (item.is_image ? '🖼️' : (item.is_text ? '📄' : '📎'));
+    let nameClass = '';
+    if (item.is_markdown) nameClass = ' style="color:var(--green)"';
+    else if (item.name.startsWith('.')) nameClass = ' style="color:var(--text-dim)"';
+    
+    html += `<div class="file-item" onclick="itemClick('${item.path}', ${item.is_dir})">
+      <span class="icon">${icon}</span>
+      <span class="name"${nameClass}>${escapeHtml(item.name)}</span>
+      <span class="meta">${item.is_dir ? '' : item.size_human + ' · '}${item.modified_human.split(' ')[0]}</span>
+    </div>`;
+  }
+
+  fileList.innerHTML = html || '<div class="loading">Empty directory</div>';
+}
+
+function itemClick(path, isDir) {
+  if (isDir) {
+    browse(path);
+  } else {
+    viewFile(path);
+  }
+}
+
+// ─── View File ───
+async function viewFile(path) {
+  isContentLoaded = true;
+  hidePlaceholder();
+  contentViewer.style.display = 'block';
+  contentViewer.innerHTML = '<div class="loading">⏳ Loading file…</div>';
+
+  try {
+    const data = await api(`/api/file?path=${encodeURIComponent(path)}`);
+    let html = '';
+
+    // Info bar
+    const info = data.info;
+    html += `<div class="file-info-bar">
+      <span class="fi-name">${escapeHtml(info.name)}</span>
+      <span class="fi-stat">${info.size_human}</span>
+      <span class="fi-stat">modified ${info.modified_human}</span>
+      <button class="download-btn" onclick="downloadFile('${encodeURIComponent(path)}')">⬇ Download</button>
+    </div>`;
+
+    if (data.type === 'image') {
+      html += `<div class="image-viewer"><img src="/api/download?path=${encodeURIComponent(path)}" alt="${escapeHtml(info.name)}" /></div>`;
+    } else if (data.type === 'text') {
+      if (info.is_markdown) {
+        html += `<div class="content-viewer markdown-body">${renderMarkdown(data.content)}</div>`;
+      } else {
+        html += `<div class="content-viewer"><pre class="code-block">${escapeHtml(data.content)}</pre></div>`;
+      }
+    } else {
+      html += `<div class="content-viewer"><div class="content-placeholder">
+        <div class="inner">
+          <div class="big-icon">📎</div>
+          <p>Binary file — cannot preview inline</p>
+          <p style="margin-top:8px"><a href="/api/download?path=${encodeURIComponent(path)}">⬇ Download file</a></p>
+        </div>
+      </div></div>`;
+    }
+
+    contentViewer.innerHTML = html;
+  } catch (e) {
+    contentViewer.innerHTML = `<div class="error">❌ ${escapeHtml(e.message)}</div>`;
+  }
+}
+
+function downloadFile(path) {
+  window.open(`/api/download?path=${path}`, '_blank');
+}
+
+// ─── Markdown renderer (simple) ───
+function renderMarkdown(text) {
+  let html = '';
+
+  // Process line by line
+  const lines = text.split('\n');
+  let inCodeBlock = false;
+  let codeContent = '';
+  let codeLang = '';
+  let inList = false;
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+
+    // Code blocks
+    if (line.trim().startsWith('```')) {
+      if (inCodeBlock) {
+        html += `<pre><code class="lang-${codeLang}">${escapeHtml(codeContent.replace(/\n$/, ''))}</code></pre>\n`;
+        codeContent = '';
+        codeLang = '';
+        inCodeBlock = false;
+      } else {
+        inCodeBlock = true;
+        codeLang = line.trim().slice(3).trim();
+      }
+      continue;
+    }
+    if (inCodeBlock) {
+      codeContent += line + '\n';
+      continue;
+    }
+
+    // Headings
+    if (line.startsWith('### ')) { html += `<h3>${escapeHtml(line.slice(4))}</h3>\n`; continue; }
+    if (line.startsWith('## ')) { html += `<h2>${escapeHtml(line.slice(3))}</h2>\n`; continue; }
+    if (line.startsWith('# ')) { html += `<h1>${escapeHtml(line.slice(2))}</h1>\n`; continue; }
+
+    // Thematic break
+    if (/^[-*_]{3,}\s*$/.test(line.trim())) { html += '<hr>\n'; continue; }
+
+    // Blockquote
+    if (line.startsWith('> ')) {
+      html += `<blockquote>${escapeHtml(line.slice(2))}</blockquote>\n`;
+      continue;
+    }
+
+    // Inline formatting
+    let processed = escapeHtml(line);
+
+    // Bold + italic
+    processed = processed.replace(/\*\*\*(.+?)\*\*\*/g, '<strong><em>$1</em></strong>');
+    processed = processed.replace(/___(.+?)___/g, '<strong><em>$1</em></strong>');
+    // Bold
+    processed = processed.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+    processed = processed.replace(/__(.+?)__/g, '<strong>$1</strong>');
+    // Italic
+    processed = processed.replace(/\*(.+?)\*/g, '<em>$1</em>');
+    processed = processed.replace(/_(.+?)_/g, '<em>$1</em>');
+    // Inline code
+    processed = processed.replace(/`(.+?)`/g, '<code>$1</code>');
+    // Links
+    processed = processed.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank">$1</a>');
+
+    // Unordered list
+    if (/^[\s]*[-*+]\s/.test(line)) {
+      const content = line.replace(/^[\s]*[-*+]\s/, '');
+      html += `<li>${processInline(content)}</li>\n`;
+      inList = true;
+      continue;
+    } else if (inList && line.trim() === '') {
+      html = html.replace(/(<li>.*\n)*$/, match => `<ul>${match}</ul>\n`);
+      inList = false;
+      html += '\n';
+      continue;
+    } else if (inList) {
+      // Close list
+      html = html.replace(/(<li>.*\n)*$/, match => `<ul>${match}</ul>\n`);
+      inList = false;
+    }
+
+    // Ordered list
+    if (/^\s*\d+\.\s/.test(line)) {
+      const content = line.replace(/^\s*\d+\.\s/, '');
+      html += `<li>${processInline(content)}</li>\n`;
+      inList = 'ol';
+      continue;
+    } else if (inList === 'ol' && line.trim() === '') {
+      html = html.replace(/(<li>.*\n)*$/, match => `<ol>${match}</ol>\n`);
+      inList = false;
+      continue;
+    }
+
+    // Empty line
+    if (line.trim() === '') {
+      html += '\n';
+      continue;
+    }
+
+    // Paragraph
+    html += `<p>${processed}</p>\n`;
+  }
+
+  // Close any remaining code block
+  if (inCodeBlock) {
+    html += `<pre><code>${escapeHtml(codeContent)}</code></pre>\n`;
+  }
+  if (inList === true) {
+    html = html.replace(/(<li>.*\n)*$/, match => `<ul>${match}</ul>\n`);
+  } else if (inList === 'ol') {
+    html = html.replace(/(<li>.*\n)*$/, match => `<ol>${match}</ol>\n`);
+  }
+
+  return html;
+}
+
+function processInline(text) {
+  let t = escapeHtml(text);
+  t = t.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+  t = t.replace(/__(.+?)__/g, '<strong>$1</strong>');
+  t = t.replace(/\*(.+?)\*/g, '<em>$1</em>');
+  t = t.replace(/_(.+?)_/g, '<em>$1</em>');
+  t = t.replace(/`(.+?)`/g, '<code>$1</code>');
+  t = t.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank">$1</a>');
+  return t;
+}
+
+// ─── Helpers ───
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+function showPlaceholder() {
+  contentViewer.style.display = 'none';
+  placeholder.style.display = 'flex';
+  isContentLoaded = false;
+}
+
+function hidePlaceholder() {
+  placeholder.style.display = 'none';
+}
+
+// ─── Init ───
+browse('');
+</script>
+</body>
+</html>

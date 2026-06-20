@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tripp.Control — Blueprint</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
+
+:root {
+  --bg: #0a1218;
+  --grid: #0f1a24;
+  --ink: #a0c8d8;
+  --dim: #2a4a58;
+  --muted: #4a6a78;
+  --cyan: #5ab8d0;
+  --amber: #b08848;
+  --red: #b05858;
+  --line: #1a2a38;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+html, body { height:100%; overflow:hidden; background:var(--bg); }
+
+body {
+  background:
+    linear-gradient(90deg, var(--grid) 1px, transparent 1px),
+    linear-gradient(0deg, var(--grid) 1px, transparent 1px),
+    var(--bg);
+  background-size: 40px 40px;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--ink);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.sheet {
+  width: min(960px, calc(100% - 48px));
+  padding: 40px;
+  height: 100vh;
+  overflow-y: auto;
+  position: relative;
+}
+.sheet::-webkit-scrollbar { width: 2px; }
+.sheet::-webkit-scrollbar-track { background: transparent; }
+.sheet::-webkit-scrollbar-thumb { background: #1a2a38; }
+
+/* Crosshair corner markers */
+.sheet::before {
+  content: "+";
+  position: absolute;
+  top: 20px; left: 20px;
+  color: var(--cyan);
+  font-size: 10px;
+  opacity: 0.5;
+}
+.sheet::after {
+  content: "+";
+  position: absolute;
+  bottom: 20px; right: 20px;
+  color: var(--cyan);
+  font-size: 10px;
+  opacity: 0.5;
+}
+
+.title-block {
+  border: 1px solid var(--line);
+  padding: 20px 24px;
+  margin-bottom: 2px;
+  position: relative;
+}
+.title-block h1 {
+  font-size: 22px;
+  font-weight: 400;
+  color: var(--cyan);
+  margin: 0;
+  letter-spacing: 0.04em;
+}
+.title-block .ref {
+  position: absolute;
+  top: 8px; right: 16px;
+  font-size: 9px;
+  color: var(--dim);
+  letter-spacing: 0.15em;
+}
+.title-block .meta {
+  display: flex;
+  gap: 32px;
+  margin-top: 12px;
+  font-size: 10px;
+  color: var(--muted);
+}
+.title-block .meta span { color: var(--ink); }
+
+.spec-band {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2px;
+  margin-bottom: 2px;
+}
+.spec-cell {
+  border: 1px solid var(--line);
+  padding: 14px 20px;
+}
+.spec-cell .label {
+  font-size: 9px;
+  color: var(--dim);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.spec-cell .val {
+  font-size: 18px;
+  color: var(--cyan);
+  margin-top: 2px;
+}
+.spec-cell .note {
+  font-size: 9px;
+  color: var(--muted);
+  margin-top: 2px;
+}
+
+.panels {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2px;
+}
+.panel {
+  border: 1px solid var(--line);
+  padding: 14px 18px;
+  position: relative;
+}
+.panel .id {
+  font-size: 9px;
+  color: var(--dim);
+  letter-spacing: 0.06em;
+  margin-bottom: 4px;
+}
+.panel .name {
+  font-size: 13px;
+  color: var(--cyan);
+}
+.panel .specs {
+  font-size: 10px;
+  color: var(--muted);
+  margin-top: 4px;
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.panel .specs .good { color: var(--cyan); }
+.panel .specs .warn { color: var(--amber); }
+.panel .specs .bad  { color: var(--red); }
+.panel .events {
+  font-size: 9px;
+  color: var(--dim);
+  margin-top: 4px;
+}
+.panel .pin {
+  position: absolute;
+  top: 8px; right: 12px;
+  font-size: 8px;
+  color: var(--dim);
+  letter-spacing: 0.1em;
+}
+
+.boundary-block {
+  border: 1px solid var(--line);
+  padding: 14px 20px;
+  margin-top: 2px;
+}
+.boundary-block .label {
+  font-size: 9px;
+  color: var(--dim);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+.boundary-block .forbid {
+  font-size: 9px;
+  color: var(--dim);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+}
+.forbid span { opacity: 0.6; }
+.forbid span::before { content: "✕ "; color: var(--red); }
+
+.stamp {
+  position: absolute;
+  bottom: 60px; right: 40px;
+  font-size: 9px;
+  color: var(--red);
+  border: 2px solid var(--red);
+  padding: 6px 16px;
+  transform: rotate(-12deg);
+  opacity: 0.5;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+</style>
+</head>
+<body>
+
+<div class="sheet">
+
+<div class="title-block">
+  <span class="ref">DWG: TC-001 REV: A</span>
+  <h1>TRIPP.CONTROL</h1>
+  <div class="meta">
+    <div>MODE <span>static</span></div>
+    <div>PANELS <span>12</span></div>
+    <div>SURFACE <span>FFSCV</span></div>
+  </div>
+</div>
+
+<div class="spec-band">
+  <div class="spec-cell"><div class="label">Safety Gate</div><div class="val">TIER 5</div><div class="note">GATED</div></div>
+  <div class="spec-cell"><div class="label">Approval Gate</div><div class="val">TIER 4</div><div class="note">GATED</div></div>
+  <div class="spec-cell"><div class="label">Runtime Mutation</div><div class="val" style="color:var(--red)">LOCKED</div><div class="note">false</div></div>
+</div>
+
+<div class="panels">
+  <div class="panel"><span class="pin">T1</span><div class="id">runtime_status</div><div class="name">Runtime Status</div><div class="specs"><span class="good">risk: low</span> confirm: no mutation: no</div><div class="events">↳ view.changed panel.selected</div></div>
+  <div class="panel"><span class="pin" style="color:var(--amber)">T5</span><div class="id">safety_control</div><div class="name">Safety Control</div><div class="specs"><span class="bad">risk: high</span> <span class="good">confirm: yes</span></div><div class="events">↳ intent.* confirmation.* panic.*</div></div>
+  <div class="panel"><span class="pin">T0</span><div class="id">health_contract</div><div class="name">Health / Contract</div><div class="specs"><span class="good">risk: low</span> display-only</div><div class="events">↳ panel.selected</div></div>
+  <div class="panel"><span class="pin">T1</span><div class="id">queue_snapshot</div><div class="name">Queue Snapshot</div><div class="specs">read-only filter/view change</div><div class="events">↳ view.changed filter.changed</div></div>
+  <div class="panel"><span class="pin" style="color:var(--amber)">T3</span><div class="id">packet_lifecycle</div><div class="name">Packet Lifecycle</div><div class="specs"><span class="warn">risk: guarded</span> <span class="good">confirm: yes</span></div><div class="events">↳ intent.* confirmation.*</div></div>
+  <div class="panel"><span class="pin">T1</span><div class="id">adapter_registry</div><div class="name">Adapter Registry</div><div class="specs">read-only</div></div>
+  <div class="panel"><span class="pin">T1</span><div class="id">trace_viewer</div><div class="name">Trace Viewer</div><div class="specs">read-only</div><div class="events">↳ view.changed filter.changed</div></div>
+  <div class="panel"><span class="pin" style="color:var(--amber)">T4</span><div class="id">approval_queue</div><div class="name">Approval Queue</div><div class="specs"><span class="warn">risk: guarded</span> <span class="good">confirm: yes approve: true</span></div><div class="events">↳ approval.decision.*</div></div>
+  <div class="panel"><span class="pin">T1</span><div class="id">adapter_readback</div><div class="name">Adapter Readback</div><div class="specs">read-only</div></div>
+  <div class="panel"><span class="pin" style="color:var(--red)">T6</span><div class="id">adapter_run</div><div class="name">Adapter Run</div><div class="specs"><span class="bad">DEFERRED — no live adapter gate</span></div></div>
+  <div class="panel"><span class="pin" style="color:var(--red)">T6</span><div class="id">reports</div><div class="name">Reports</div><div class="specs"><span class="bad">DEFERRED — no report contract</span></div></div>
+  <div class="panel"><span class="pin" style="color:var(--red)">T6</span><div class="id">forge_review</div><div class="name">Forge Candidate Review</div><div class="specs"><span class="bad">DEFERRED — no candidate contract</span></div></div>
+</div>
+
+<div class="boundary-block">
+  <div class="label">Boundary Conditions</div>
+  <div class="forbid"><span>runtime-mutation</span><span>approval-submission</span><span>panic-execution</span><span>adapter-execution</span><span>live-agent-execution</span><span>network-transport</span><span>server-api-route</span><span>dom-event-binding</span></div>
+</div>
+
+<div class="stamp">STATIC ONLY</div>
+
+</div>
+</body>
+</html>

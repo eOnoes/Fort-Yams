@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tripp.Control — Document</title>
+<style>
+:root {
+  --bg: #080808;
+  --ink: #d4d4d0;
+  --soft: #a0a09a;
+  --faint: #5a5a54;
+  --green: #a3c93a;
+  --blue: #5a9eff;
+  --amber: #c49a3f;
+  --red: #f04f63;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: 'Charter', 'Georgia', 'Times New Roman', serif;
+  font-size: 16px;
+  line-height: 1.7;
+  max-width: 620px;
+  margin: 0 auto;
+  padding: 56px 24px 72px;
+}
+h1 {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 20px;
+  font-weight: 600;
+  margin-bottom: 4px;
+  letter-spacing: -0.01em;
+}
+.subtitle {
+  color: var(--faint);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 13px;
+  margin-bottom: 48px;
+}
+.section {
+  margin: 32px 0 20px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--blue);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+p { margin: 0 0 10px; }
+.entry {
+  margin: 0 0 18px;
+  padding-left: 16px;
+  border-left: 2px solid #1a1a18;
+}
+.entry .name {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 2px;
+}
+.entry .spec {
+  color: var(--soft);
+  font-size: 13px;
+  font-family: ui-monospace, 'SF Mono', 'Fira Code', monospace;
+  line-height: 1.5;
+}
+.entry .spec .kw { color: var(--faint); }
+.entry .spec .good { color: var(--green); }
+.entry .spec .warn { color: var(--amber); }
+.entry .spec .bad  { color: var(--red); }
+.foot {
+  margin-top: 56px;
+  padding-top: 16px;
+  border-top: 1px solid #1a1a18;
+  color: var(--faint);
+  font-size: 12px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+</style>
+</head>
+<body>
+
+<h1>Tripp.Control</h1>
+<div class="subtitle">Static control surface preview &middot; 8 June 2026 &middot; No runtime attached</div>
+
+<div class="section">Status</div>
+
+<p>Safety gate at <span style="color:var(--green)">tier 5</span>, approval gate at <span style="color:var(--green)">tier 4</span>. Runtime mutation is <span style="color:var(--red)">locked</span>. This is a framework-free static viewer. Twelve panels, zero live connections.</p>
+
+<div class="section">Panels</div>
+
+<div class="entry">
+  <div class="name">Runtime Status</div>
+  <div class="spec">
+    <span class="kw">tier</span> 1 &middot; <span class="kw">gate</span> static-read &middot; <span class="kw">risk</span> <span class="good">low</span> &middot; <span class="kw">confirm</span> no &middot; <span class="kw">approve</span> no<br>
+    <span class="kw">events</span> cockpit.view.changed cockpit.panel.selected
+  </div>
+</div>
+
+<div class="entry">
+  <div class="name">Safety Control</div>
+  <div class="spec">
+    <span class="kw">tier</span> 5 &middot; <span class="kw">gate</span> gated &middot; <span class="kw">risk</span> <span class="bad">high</span> &middot; <span class="kw">confirm</span> <span class="good">yes</span> &middot; <span class="kw">approve</span> no<br>
+    <span class="kw">events</span> cockpit.panel.selected cockpit.intent.* cockpit.confirmation.* cockpit.panic.*
+  </div>
+</div>
+
+<div class="entry">
+  <div class="name">Health / Contract Metadata</div>
+  <div class="spec">
+    <span class="kw">tier</span> 0 &middot; <span class="kw">gate</span> static-read &middot; <span class="kw">risk</span> <span class="good">low</span> &middot; display-only
+  </div>
+</div>
+
+<div class="entry">
+  <div class="name">Queue Snapshot</div>
+  <div class="spec"><span class="kw">tier</span> 1 &middot; <span class="kw">gate</span> static-read &middot; <span class="kw">interaction</span> read-only filter or view change</div>
+</div>
+
+<div class="entry">
+  <div class="name">Packet Lifecycle</div>
+  <div class="spec">
+    <span class="kw">tier</span> 3 &middot; <span class="kw">gate</span> gated &middot; <span class="kw">risk</span> <span class="warn">guarded</span> &middot; <span class="kw">confirm</span> <span class="good">yes</span><br>
+    <span class="kw">events</span> cockpit.panel.selected cockpit.intent.* cockpit.confirmation.*
+  </div>
+</div>
+
+<div class="entry">
+  <div class="name">Adapter Registry</div>
+  <div class="spec"><span class="kw">tier</span> 1 &middot; <span class="kw">gate</span> static-read</div>
+</div>
+
+<div class="entry">
+  <div class="name">Trace Viewer</div>
+  <div class="spec"><span class="kw">tier</span> 1 &middot; <span class="kw">gate</span> static-read</div>
+</div>
+
+<div class="entry">
+  <div class="name">Approval Queue</div>
+  <div class="spec">
+    <span class="kw">tier</span> 4 &middot; <span class="kw">gate</span> gated &middot; <span class="kw">risk</span> <span class="warn">guarded</span> &middot; <span class="kw">confirm</span> <span class="good">yes</span> &middot; <span class="kw">approve</span> <span class="good">true</span><br>
+    <span class="kw">events</span> cockpit.approval.decision.requested cockpit.approval.decision.submitted
+  </div>
+</div>
+
+<div class="entry">
+  <div class="name">Adapter Readback</div>
+  <div class="spec"><span class="kw">tier</span> 1 &middot; <span class="kw">gate</span> static-read</div>
+</div>
+
+<div class="section">Deferred</div>
+
+<div class="entry" style="border-left-color: var(--amber)">
+  <div class="name">Adapter Run</div>
+  <div class="spec"><span class="kw">tier</span> 6 &middot; <span class="warn">deferred</span> &mdash; no live adapter gate exists yet</div>
+</div>
+
+<div class="entry" style="border-left-color: var(--amber)">
+  <div class="name">Reports</div>
+  <div class="spec"><span class="kw">tier</span> 6 &middot; <span class="warn">deferred</span> &mdash; no approved report contract</div>
+</div>
+
+<div class="entry" style="border-left-color: var(--amber)">
+  <div class="name">Forge Candidate Review</div>
+  <div class="spec"><span class="kw">tier</span> 6 &middot; <span class="warn">deferred</span> &mdash; no candidate contract</div>
+</div>
+
+<div class="section">Boundaries</div>
+<p style="color:var(--soft); font-size:14px">
+  Presentation mode: framework-free static viewer. No runtime mutation, no package changes, no approval submission, no panic execution, no adapter execution, no live agent execution, no network transport, no server API route, no DOM event binding.
+</p>
+
+<div class="foot">Tripp.Control &middot; static snapshot &middot; this page reads nothing, writes nothing, calls nothing</div>
+
+</body>
+</html>

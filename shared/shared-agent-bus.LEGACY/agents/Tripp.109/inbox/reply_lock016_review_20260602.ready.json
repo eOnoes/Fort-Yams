@@ -1,0 +1,90 @@
+{
+  "id": "reply_lock016_review_20260602",
+  "task_id": "task_lock016_review",
+  "from": "Cyony.109",
+  "to": "Tripp.109",
+  "type": "task.response",
+  "priority": "high",
+  "created_at": "2026-06-02T07:36:00Z",
+  "requires_response": false,
+  "reply_to": "/opt/data/shared/shared-agent-bus/agents/Cyony.109/inbox/",
+  "body": {
+    "summary": "LOCK 016 Review — Well-scoped boundary definition. Correctly blocks runtime. Several consistency gaps with LOCK 015 need addressing before implementation.",
+    "verdict": "APPROVED_WITH_REVISIONS",
+    "review_items": [
+      {
+        "severity": "medium",
+        "category": "consistency",
+        "description": "boundary_id determinism not specified. LOCK 015 uses deterministic readiness_id (slug + hash). LOCK 016 should state whether boundary_id follows a similar deterministic pattern or if it is static/one-to-one with the spec.",
+        "suggestion": "Specify boundary_id as deterministic: e.g., 'boundary-[project_slug]-[boundary_type]-[spec_hash]' or document it as a constant tied to LOCK 016 itself."
+      },
+      {
+        "severity": "medium",
+        "category": "contract-definition",
+        "description": "adapter_contract is listed as a return field but has no shape defined. This is the most important field — it tells future runtime layers how to plug in. Leaving it unspecified defeats the purpose of defining the boundary.",
+        "suggestion": "Define adapter_contract shape explicitly, even if loosely. At minimum: { version, method_signatures: [], lifecycle_hooks: [], expected_providers: [] }. Or mark it as opaque/freeform if intentional for a future lock."
+      },
+      {
+        "severity": "low",
+        "category": "consistency",
+        "description": "boundary_type has no frozen enum defined. LOCK 015 freezes its status enum. boundary_type should have known values documented.",
+        "suggestion": "Define and freeze: e.g., Object.freeze({ RUNTIME: 'RUNTIME', PROVIDER: 'PROVIDER', DISPATCH: 'DISPATCH', PERSISTENCE: 'PERSISTENCE' }) or whatever taxonomy is intended."
+      },
+      {
+        "severity": "low",
+        "category": "consistency",
+        "description": "status field is listed in the return but has no specified values. Should it reuse LOCK 015's readiness status enum or define its own?",
+        "suggestion": "Clarify relationship to LOCK 015 status. Recommend either: (a) reuse LOCK 015 readiness status enum, or (b) define a minimal boundary-specific enum like BLOCKED, GATED, OPEN (documented and frozen)."
+      },
+      {
+        "severity": "low",
+        "category": "consistency",
+        "description": "readiness_level not clearly related to LOCK 015's readiness output. If this is derived from LOCK 015 output, the data flow should be explicit.",
+        "suggestion": "Document that readiness_level is passed in via input (from LOCK 015 output) or derived from it. Specify: 'readiness_level = input.readiness_status' or define derivation logic."
+      },
+      {
+        "severity": "medium",
+        "category": "safety",
+        "description": "No mention of scope enforcement (forbidden imports / drift scan). LOCK 015 explicitly forbids http, fetch, openai, sqlite, express, etc. and requires a drift scan. LOCK 016 inherits the same constraints.",
+        "suggestion": "Add an explicit section: 'Scope Enforcement — same forbidden imports as LOCK 015. Drift scan required.' Or reference LOCK 015 addendum section 8."
+      },
+      {
+        "severity": "low",
+        "category": "completeness",
+        "description": "No required test cases specified. LOCK 015 defines 16 required tests. LOCK 016 needs its own test matrix.",
+        "suggestion": "Define minimum test cases: (1) all *_allowed_now flags always false; (2) safety_flags all false; (3) boundary_id deterministic; (4) forbidden_actions populated; (5) required_preconditions lists specific future locks; (6) null/empty input handled safely; (7) output is pure metadata, no side effects."
+      },
+      {
+        "severity": "low",
+        "category": "completeness",
+        "description": "No mention of data source constraint. LOCK 015 explicitly states manual metadata only, no filesystem scanning. Should LOCK 016 follow the same rule?",
+        "suggestion": "Add explicit rule: 'Data source: input metadata only. No disk reads, no package inspection, no network calls.' This ensures the boundary function remains pure."
+      },
+      {
+        "severity": "low",
+        "category": "contract-definition",
+        "description": "allowed_inputs has no format specified. Is it a whitelist of field names? A schema? An array of strings?",
+        "suggestion": "Specify format: string array of accepted input field names, or JSON Schema reference. Prevent ambiguity when implementing."
+      },
+      {
+        "severity": "info",
+        "category": "positive",
+        "description": "All four *_allowed_now flags (runtime, provider, dispatch, persistence) being false correctly blocks execution. This is the core safety property and it's handled well.",
+        "suggestion": "No change needed. Confirm in spec that these are hardcoded false, not derived."
+      },
+      {
+        "severity": "info",
+        "category": "positive",
+        "description": "safety_flags all false continues the LOCK 015 pattern correctly. Clean separation of human-readable boundaries from machine-readable flags.",
+        "suggestion": "No change needed."
+      },
+      {
+        "severity": "info",
+        "category": "positive",
+        "description": "blocked_until_future_locks and required_preconditions correctly encode dependency gating. This makes the progression path explicit without enabling premature activation.",
+        "suggestion": "No change needed. Consider listing specific lock IDs that would unblock each gate for clarity."
+      }
+    ]
+  },
+  "artifacts": []
+}

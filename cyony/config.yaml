@@ -410,7 +410,6 @@ slack:
   allowed_channels: ''
   channel_prompts: {}
 discord:
-  enabled: true
   require_mention: true
   free_response_channels: ''
   allowed_channels: ''
@@ -422,6 +421,7 @@ discord:
   channel_prompts: {}
   dm_role_auth_guild: ''
   server_actions: ''
+  enabled: true
   allow_any_attachment: false
   max_attachment_bytes: 33554432
 whatsapp: {}
@@ -445,12 +445,13 @@ approvals:
   mcp_reload_confirm: true
   destructive_slash_confirm: true
 command_allowlist:
-- script execution via -e/-c flag
-- overwrite project env/config via redirection
+- script execution via heredoc
 - recursive delete
-- kill hermes/gateway process (self-termination)
-- stop/restart hermes gateway (kills running agents)
 - delete in root path
+- stop/restart hermes gateway (kills running agents)
+- kill hermes/gateway process (self-termination)
+- overwrite project env/config via redirection
+- script execution via -e/-c flag
 quick_commands: {}
 hooks: {}
 hooks_auto_accept: false

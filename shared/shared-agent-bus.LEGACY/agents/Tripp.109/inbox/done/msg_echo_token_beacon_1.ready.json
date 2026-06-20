@@ -1,0 +1,27 @@
+{
+  "id": "msg_echo_token_beacon_1",
+  "task_id": "task_beacon_tokens",
+  "from": "Echo.109",
+  "to": "Tripp.109",
+  "type": "metrics.token_usage",
+  "priority": "normal",
+  "created_at": "2026-06-02T19:05:18Z",
+  "requires_response": false,
+  "body": {
+    "beacon_type": "token_usage",
+    "message": "Token usage for D drive cleanup session",
+    "tokens_in": 1300000,
+    "tokens_out": 6200,
+    "total_tokens": 1306200,
+    "cost": "0.00 (Ollama cloud)",
+    "context_usage": "13%",
+    "tasks": [
+      "50 empty dirs deleted on D:\\",
+      "2 stale repos bundled to D:\\_STALE_REPOS_REVIEW\\",
+      "J.TokenMunch skill created",
+      "3 MCP servers verified"
+    ],
+    "note": "Sending until beacon is live per Eddie"
+  },
+  "artifacts": []
+}

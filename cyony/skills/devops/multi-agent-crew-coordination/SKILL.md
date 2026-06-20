@@ -481,6 +481,12 @@ Run either script manually or schedule as cron. Both are idempotent and produce 
 
 When building shared infrastructure (governance tools, control layers, audit systems), use the LOCK pattern — strict sequential feature builds with explicit "what it must NOT do" boundaries. See `references/lock-build-methodology.md` for the high-level philosophy and `references/lock-build-prompt-template.md` for the exact build prompt template with all required sections (project context, existing LOCKs, forbidden systems, export signatures, test requirements, completion report format). Tripp.Control built 6+ LOCKs this way with zero scope creep, each ending with a verifiable completion report.
 
+## Shared VPS Disk Cleanup
+
+When multiple agents share a Docker container or VPS, disk fills up from experiments, caches, and abandoned downloads. **Never nuke without the other agent's approval.** Container vs host disk numbers WILL differ — always have the affected agent verify from their side.
+
+See `references/shared-vps-disk-cleanup.md` for the full audit → classify → approve → execute workflow.
+
 ## Common Pitfalls
 
 ### 1. Root Ownership Bug

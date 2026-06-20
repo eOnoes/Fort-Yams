@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tripp.Control — Quiet Terminal Brutalism</title>
+<style>
+:root {
+  --bg: #080808;
+  --ink: #c4c4bf;
+  --soft: #8a8a84;
+  --dim: #4a4a44;
+  --green: #a3cc3f;
+  --blue: #5599ff;
+  --amber: #c49a3a;
+  --red: #ee4458;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+html, body { height:100%; overflow:hidden; background:var(--bg); }
+
+/* ── Ghost Scrollbar ── */
+.col::-webkit-scrollbar { width: 4px; }
+.col::-webkit-scrollbar-track { background: transparent; }
+.col::-webkit-scrollbar-thumb {
+  background: #1f1f1c;
+  border-radius: 2px;
+  max-height: 18px;
+}
+.col::-webkit-scrollbar-thumb:hover { background: #2a2a26; }
+.col { scrollbar-width: thin; scrollbar-color: #1f1f1c transparent; }
+
+body {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.container {
+  display: flex;
+  gap: 28px;
+  max-width: 960px;
+  width: 100%;
+  height: 100vh;
+  padding: 28px 32px;
+}
+
+.col {
+  flex: 1;
+  min-width: 0;
+  overflow-y: auto;
+}
+
+/* ── Divider ── */
+.divider {
+  width: 1px;
+  flex-shrink: 0;
+  background: linear-gradient(180deg, transparent 8%, #2a2a24 30%, #2a2a24 70%, transparent 92%);
+}
+
+/* ═══════ TERMINAL (left) ═══════ */
+.term {
+  font-family: ui-monospace, 'SF Mono', 'Fira Code', 'Cascadia Code', Consolas, monospace;
+  font-size: 11.5px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-all;
+  color: var(--ink);
+}
+.term .ts  { color: var(--dim); }
+.term .key { color: var(--soft); }
+.term .good { color: var(--green); }
+.term .warn { color: var(--amber); }
+.term .bad  { color: var(--red); }
+.term .info { color: var(--blue); }
+.term .marker { color: var(--dim); margin: 16px 0 3px; font-size: 9px; letter-spacing: 0.06em; }
+.term .indent { padding-left: 20px; }
+
+/* ═══════ DOCUMENT (right) ═══════ */
+.doc {
+  font-family: 'Charter', 'Georgia', 'Times New Roman', serif;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--ink);
+}
+.doc h1 {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 17px;
+  font-weight: 600;
+  margin-bottom: 2px;
+}
+.doc .subtitle {
+  color: var(--dim);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 10px;
+  margin-bottom: 28px;
+}
+.doc .section {
+  margin: 22px 0 10px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 9px;
+  font-weight: 600;
+  color: var(--blue);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.doc p { margin-bottom: 8px; }
+.doc .entry {
+  margin-bottom: 12px;
+  padding-left: 12px;
+  border-left: 2px solid #181815;
+}
+.doc .entry .name {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  margin-bottom: 1px;
+}
+.doc .entry .spec {
+  color: var(--soft);
+  font-size: 11px;
+  font-family: ui-monospace, 'SF Mono', 'Fira Code', monospace;
+  line-height: 1.4;
+}
+.doc .entry .spec .kw { color: var(--dim); }
+.doc .entry .spec .good { color: var(--green); }
+.doc .entry .spec .warn { color: var(--amber); }
+.doc .entry .spec .bad  { color: var(--red); }
+
+@media (max-width: 700px) {
+  .container { flex-direction: column; gap: 12px; }
+  .divider { width: 100%; height: 1px; background: linear-gradient(90deg, transparent 8%, #2a2a24 30%, #2a2a24 70%, transparent 92%); }
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- ═══════ TERMINAL ═══════ -->
+  <div class="col term">
+
+<span class="ts">2026-06-08T20:00:00Z</span> <span class="good">tripp.control started</span> <span class="dim">pid=0001 mode=static</span>
+<span class="ts">20:00:01</span> <span class="dim">surface=FRAMEWORK_FREE_STATIC_COCKPIT_VIEWER interactive=false</span>
+
+<div class="marker">── status ──</div>
+<div class="indent"><span class="key">safety_gate</span>     <span class="good">tier_5</span>  <span class="dim">gated</span></div>
+<div class="indent"><span class="key">approval_gate</span>   <span class="good">tier_4</span>  <span class="dim">gated</span></div>
+<div class="indent"><span class="key">runtime_mutation</span> <span class="bad">false</span>   <span class="dim">locked</span></div>
+
+<div class="marker">── panels ──</div>
+
+<span class="info">runtime_status</span> <span class="dim">tier_1 static-read</span>
+<div class="indent"><span class="key">risk</span> <span class="good">low</span>  <span class="key">confirm</span> <span class="bad">false</span>  <span class="key">approve</span> <span class="bad">false</span>  <span class="key">mutation</span> <span class="bad">false</span></div>
+<div class="indent"><span class="dim">↳</span> cockpit.view.changed cockpit.panel.selected</div>
+
+<span class="warn">safety_control</span> <span class="dim">tier_5 gated</span>
+<div class="indent"><span class="key">risk</span> <span class="bad">high</span>  <span class="key">confirm</span> <span class="good">true</span>  <span class="key">approve</span> <span class="bad">false</span></div>
+<div class="indent"><span class="dim">↳</span> cockpit.panel.selected cockpit.intent.* cockpit.confirmation.* cockpit.panic.*</div>
+
+<span class="info">health_contract_metadata</span> <span class="dim">tier_0 static-read</span>
+<div class="indent"><span class="key">risk</span> <span class="good">low</span> &middot; <span class="dim">display-only</span></div>
+
+<span class="info">queue_snapshot</span> <span class="dim">tier_1 static-read</span>
+
+<span class="warn">packet_lifecycle</span> <span class="dim">tier_3 gated</span>
+<div class="indent"><span class="key">risk</span> <span class="warn">guarded</span>  <span class="key">confirm</span> <span class="good">true</span></div>
+<div class="indent"><span class="dim">↳</span> cockpit.intent.* cockpit.confirmation.*</div>
+
+<span class="info">adapter_registry</span> <span class="dim">tier_1 static-read</span>
+<span class="info">trace_viewer</span> <span class="dim">tier_1 static-read</span>
+
+<span class="warn">approval_queue</span> <span class="dim">tier_4 gated</span>
+<div class="indent"><span class="key">risk</span> <span class="warn">guarded</span>  <span class="key">confirm</span> <span class="good">true</span>  <span class="key">approve</span> <span class="good">true</span></div>
+<div class="indent"><span class="dim">↳</span> cockpit.approval.decision.*</div>
+
+<span class="info">adapter_readback</span> <span class="dim">tier_1 static-read</span>
+
+<div class="marker">── deferred ──</div>
+<span class="dim">adapter_run</span>  <span class="warn">deferred</span> <span class="dim">tier_6 — no live adapter gate</span>
+<span class="dim">reports</span>     <span class="warn">deferred</span> <span class="dim">tier_6 — no report contract</span>
+<span class="dim">forge_review</span> <span class="warn">deferred</span> <span class="dim">tier_6 — no candidate contract</span>
+
+<div class="marker">── boundaries ──</div>
+<div class="indent"><span class="key">mode</span>     <span class="dim">FRAMEWORK_FREE_STATIC_COCKPIT_VIEWER</span></div>
+<div class="indent"><span class="key">mutation</span> <span class="bad">false</span>  <span class="key">package_change</span> <span class="bad">false</span></div>
+<div class="indent"><span class="dim">forbidden:</span> runtime-mutation approval-submission panic-execution adapter-execution live-agent-execution network-transport server-api-route dom-event-binding</div>
+
+  </div>
+
+  <!-- ═══════ DIVIDER ═══════ -->
+  <div class="divider"></div>
+
+  <!-- ═══════ DOCUMENT ═══════ -->
+  <div class="col doc">
+
+<h1>Tripp.Control</h1>
+<div class="subtitle">Static control surface &middot; 8 June 2026</div>
+
+<div class="section">Status</div>
+<p>Safety gate at <span style="color:var(--green)">tier 5</span>, approval at <span style="color:var(--green)">tier 4</span>. Runtime mutation is <span style="color:var(--red)">locked</span>. Twelve panels, zero live connections.</p>
+
+<div class="section">Panels</div>
+
+<div class="entry">
+  <div class="name">Runtime Status</div>
+  <div class="spec"><span class="kw">tier</span> 1 &middot; <span class="kw">risk</span> <span class="good">low</span> &middot; confirm no &middot; <span class="kw">events</span> view.changed panel.selected</div>
+</div>
+
+<div class="entry">
+  <div class="name">Safety Control</div>
+  <div class="spec"><span class="kw">tier</span> 5 &middot; <span class="kw">risk</span> <span class="bad">high</span> &middot; confirm <span class="good">yes</span> &middot; <span class="kw">events</span> intent.* confirmation.* panic.*</div>
+</div>
+
+<div class="entry">
+  <div class="name">Health &amp; Contract Metadata</div>
+  <div class="spec"><span class="kw">tier</span> 0 &middot; <span class="kw">risk</span> <span class="good">low</span> &middot; display-only</div>
+</div>
+
+<div class="entry">
+  <div class="name">Queue Snapshot</div>
+  <div class="spec"><span class="kw">tier</span> 1 &middot; read-only filter or view change</div>
+</div>
+
+<div class="entry">
+  <div class="name">Packet Lifecycle</div>
+  <div class="spec"><span class="kw">tier</span> 3 &middot; <span class="kw">risk</span> <span class="warn">guarded</span> &middot; confirm <span class="good">yes</span> &middot; <span class="kw">events</span> intent.* confirmation.*</div>
+</div>
+
+<div class="entry">
+  <div class="name">Adapter Registry</div>
+  <div class="spec"><span class="kw">tier</span> 1 &middot; read-only</div>
+</div>
+
+<div class="entry">
+  <div class="name">Trace Viewer</div>
+  <div class="spec"><span class="kw">tier</span> 1 &middot; read-only &middot; <span class="kw">events</span> view.changed filter.changed</div>
+</div>
+
+<div class="entry">
+  <div class="name">Approval Queue</div>
+  <div class="spec"><span class="kw">tier</span> 4 &middot; <span class="kw">risk</span> <span class="warn">guarded</span> &middot; confirm <span class="good">yes</span> &middot; approve <span class="good">true</span> &middot; <span class="kw">events</span> approval.decision.*</div>
+</div>
+
+<div class="entry">
+  <div class="name">Adapter Readback</div>
+  <div class="spec"><span class="kw">tier</span> 1 &middot; read-only</div>
+</div>
+
+<div class="section">Deferred</div>
+
+<div class="entry" style="border-left-color:var(--amber)">
+  <div class="name">Adapter Run</div>
+  <div class="spec"><span class="kw">tier</span> 6 &middot; <span class="warn">deferred</span> — no live adapter gate</div>
+</div>
+
+<div class="entry" style="border-left-color:var(--amber)">
+  <div class="name">Reports</div>
+  <div class="spec"><span class="kw">tier</span> 6 &middot; <span class="warn">deferred</span> — no approved report contract</div>
+</div>
+
+<div class="entry" style="border-left-color:var(--amber)">
+  <div class="name">Forge Candidate Review</div>
+  <div class="spec"><span class="kw">tier</span> 6 &middot; <span class="warn">deferred</span> — no candidate contract</div>
+</div>
+
+<div class="section">Boundaries</div>
+<p style="color:var(--soft); font-size:12px">No runtime mutation. No package changes. No approval submission. No panic execution. No adapter execution. No live agent execution. No network transport. No server API route. No DOM event binding.</p>
+
+  </div>
+
+</div>
+
+</body>
+</html>

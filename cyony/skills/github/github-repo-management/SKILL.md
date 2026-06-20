@@ -501,6 +501,10 @@ for g in json.load(sys.stdin):
     print(f\"  {g['id']}  {g['description'] or '(no desc)':40}  {files}\")"
 ```
 
+## Backup Repo Pattern
+
+For multi-agent crew backups to a shared repo (per-agent directories, .gitignore for secrets, cron-driven daily push). Full details in `references/crew-backup-repo-pattern.md`.
+
 ## Quick Reference Table
 
 | Action | gh | git + curl |

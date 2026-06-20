@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tripp.Control — Quiet</title>
+<style>
+  :root {
+    --bg: #0d1117;
+    --surface: #161b22;
+    --border: #21262d;
+    --text: #c9d1d9;
+    --muted: #8b949e;
+    --accent: #58a6ff;
+    --green: #3fb950;
+    --yellow: #d2991d;
+    --red: #f85149;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+    font-size: 14px;
+    line-height: 1.5;
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 32px 20px 48px;
+  }
+
+  /* ── Typography ── */
+  .title {
+    font-size: 18px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    margin-bottom: 2px;
+  }
+  .subtitle {
+    font-size: 13px;
+    color: var(--muted);
+    margin-bottom: 28px;
+  }
+  .section-head {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--muted);
+    text-transform: lowercase;
+    letter-spacing: 0.02em;
+    margin: 28px 0 8px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  /* ── Cards ── */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 14px 16px;
+    margin-bottom: 8px;
+  }
+  .card-row {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .card-row .card { flex: 1; min-width: 180px; margin-bottom: 8px; }
+
+  /* ── Labels & Values ── */
+  .label {
+    font-size: 12px;
+    color: var(--muted);
+    font-weight: 500;
+  }
+  .value {
+    font-weight: 500;
+    margin-bottom: 2px;
+  }
+  .meta {
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  /* ── Status Dots ── */
+  .dot {
+    display: inline-block;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    margin-right: 6px;
+    vertical-align: middle;
+    margin-top: -1px;
+  }
+  .dot-green  { background: var(--green); }
+  .dot-yellow { background: var(--yellow); }
+  .dot-red    { background: var(--red); }
+  .dot-muted  { background: var(--muted); }
+
+  /* ── Priority Band ── */
+  .pq-item {
+    display: flex;
+    align-items: baseline;
+    padding: 5px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 13px;
+  }
+  .pq-item:last-child { border-bottom: none; }
+  .pq-num {
+    color: var(--muted);
+    width: 20px;
+    flex-shrink: 0;
+    font-size: 12px;
+  }
+  .pq-label { flex: 1; }
+  .pq-agent {
+    color: var(--muted);
+    font-size: 12px;
+    margin-right: 10px;
+    min-width: 70px;
+  }
+
+  /* ── Evidence ── */
+  .ev-row {
+    display: flex;
+    align-items: center;
+    padding: 4px 0;
+    font-size: 13px;
+    border-bottom: 1px solid var(--border);
+  }
+  .ev-row:last-child { border-bottom: none; }
+  .ev-name { flex: 1; }
+  .ev-trust {
+    font-size: 11px;
+    color: var(--muted);
+    margin-left: 8px;
+    flex-shrink: 0;
+  }
+
+  /* ── Decision ── */
+  .decision-strip {
+    border-left: 2px solid var(--accent);
+    padding: 8px 14px;
+    margin: 10px 0;
+    font-size: 13px;
+  }
+  .decision-strip .label { display: block; margin-bottom: 2px; }
+
+  /* ── Stop Conditions ── */
+  .stop-list {
+    list-style: none;
+    font-size: 12px;
+    color: var(--muted);
+  }
+  .stop-list li { padding: 2px 0; }
+
+  /* ── Prompt Block ── */
+  pre.prompt {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    padding: 12px;
+    font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+    font-size: 12px;
+    line-height: 1.6;
+    white-space: pre-wrap;
+    word-break: break-all;
+    margin-top: 6px;
+    position: relative;
+  }
+  .copy-link {
+    position: absolute;
+    top: 8px;
+    right: 12px;
+    font-size: 11px;
+    color: var(--accent);
+    cursor: pointer;
+    background: none;
+    border: none;
+    font-family: inherit;
+  }
+  .copy-link:active { color: var(--text); }
+
+  /* ── Footer ── */
+  .footer {
+    margin-top: 36px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border);
+    font-size: 11px;
+    color: var(--muted);
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══════ HEADER ═══════ -->
+<div class="title">Tripp.Control</div>
+<div class="subtitle">static snapshot &middot; 2026-06-08 &middot; quiet mode</div>
+
+<!-- ═══════ ACTIVE LANE ═══════ -->
+<div class="section-head">active lane</div>
+<div class="card card-row">
+  <div style="flex:2">
+    <div class="label">lane</div>
+    <div class="value">TripCore Harness v1.1</div>
+  </div>
+  <div style="flex:1">
+    <div class="label">owner</div>
+    <div class="value">Cyony</div>
+  </div>
+  <div style="flex:1">
+    <div class="label">status</div>
+    <div class="value"><span class="dot dot-green"></span>final intake</div>
+  </div>
+</div>
+<div class="card">
+  <div class="label">current marker</div>
+  <div class="value">HARNESS_V1_1_PATCHED</div>
+  <div class="meta" style="margin-top:6px">
+    <div class="label">next marker</div>
+    <div class="value">TRIPCORE_HARNESS_V1_1_FINAL_PACKAGE_READY_FOR_CODEX_FINAL_INTAKE</div>
+  </div>
+</div>
+
+<!-- ═══════ DECISION ═══════ -->
+<div class="decision-strip">
+  <div class="label">current decision</div>
+  <div>Patch v1.1 per Codex review — UTF-8, HTML escaping, console output. Package delivered for final intake.</div>
+</div>
+
+<!-- ═══════ AGENTS ═══════ -->
+<div class="section-head">agents</div>
+<div class="card-row">
+  <div class="card">
+    <div class="value"><span class="dot dot-green"></span>Cyony</div>
+    <div class="meta">builder &middot; working</div>
+    <div class="meta">harness v1.1 patches</div>
+  </div>
+  <div class="card">
+    <div class="value"><span class="dot dot-green"></span>Tripp / Codex</div>
+    <div class="meta">warden &middot; reviewing</div>
+    <div class="meta">harness safety intake</div>
+  </div>
+</div>
+<div class="card-row">
+  <div class="card">
+    <div class="value"><span class="dot dot-red"></span>Echo</div>
+    <div class="meta">relay &middot; offline</div>
+    <div class="meta">win pc recovery</div>
+  </div>
+  <div class="card">
+    <div class="value"><span class="dot dot-muted"></span>Kimi</div>
+    <div class="meta">deep reasoning &middot; on-demand</div>
+    <div class="meta">kimi-k2.6 / ollama cloud</div>
+  </div>
+</div>
+
+<!-- ═══════ PRIORITY QUEUE ═══════ -->
+<div class="section-head">priority queue</div>
+<div class="card">
+  <div class="pq-item">
+    <span class="pq-num">1</span>
+    <span class="pq-label">Build Harness v1.1 pipeline</span>
+    <span class="pq-agent">Cyony</span>
+    <span class="dot dot-green"></span>
+  </div>
+  <div class="pq-item">
+    <span class="pq-num">2</span>
+    <span class="pq-label">Patch v1.1 per Codex intake</span>
+    <span class="pq-agent">Cyony</span>
+    <span class="dot dot-green"></span>
+  </div>
+  <div class="pq-item">
+    <span class="pq-num">3</span>
+    <span class="pq-label">Final intake review</span>
+    <span class="pq-agent">Codex</span>
+    <span class="dot dot-yellow"></span>
+  </div>
+  <div class="pq-item">
+    <span class="pq-num">4</span>
+    <span class="pq-label">Review handoff protocol</span>
+    <span class="pq-agent">Cyony+Tripp</span>
+    <span class="dot dot-muted"></span>
+  </div>
+</div>
+
+<!-- ═══════ EVIDENCE ═══════ -->
+<div class="section-head">evidence packages</div>
+<div class="card">
+  <div class="ev-row">
+    <span class="ev-name">Crew Comms Cleanup</span>
+    <span class="ev-trust">confirmed</span>
+  </div>
+  <div class="ev-row">
+    <span class="ev-name">VPS Cleanup Audit</span>
+    <span class="ev-trust">confirmed</span>
+  </div>
+  <div class="ev-row">
+    <span class="ev-name">Interop Boundary Design v1</span>
+    <span class="ev-trust">confirmed</span>
+  </div>
+  <div class="ev-row">
+    <span class="ev-name">TripCore Harness v1.1 Package</span>
+    <span class="ev-trust">pending review</span>
+  </div>
+</div>
+
+<!-- ═══════ STOP CONDITIONS ═══════ -->
+<div class="section-head">stop conditions</div>
+<div class="card">
+  <ul class="stop-list">
+    <li>no polling or watchers</li>
+    <li>no live comms or dispatch</li>
+    <li>no network calls</li>
+    <li>no shared-agent-bus mutation</li>
+    <li>no shell execution</li>
+  </ul>
+</div>
+
+<!-- ═══════ PROMPT BLOCK ═══════ -->
+<div class="section-head">copy prompt</div>
+<div class="card">
+  <pre class="prompt" id="prompt">Assigned to: Cyony
+
+Task: [INSERT]
+
+Context:
+- Current lane: TripCore Harness v1.1
+- Next marker: final intake review
+- Shared: /opt/data/shared/
+
+Assigned to: Cyony<span class="copy-link" onclick="navigator.clipboard.writeText(document.getElementById('prompt').innerText.replace('📋 Copied',''))">copy</span></pre>
+</div>
+
+<!-- ═══════ FOOTER ═══════ -->
+<div class="footer">
+  Tripp.Control &middot; static snapshot &middot; no live data &middot; no polling &middot; no dispatch
+</div>
+
+</body>
+</html>
