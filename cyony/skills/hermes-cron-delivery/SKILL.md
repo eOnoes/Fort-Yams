@@ -95,7 +95,33 @@ Cron jobs that produce "everything is fine" status updates should stay silent. O
 
 The pattern: `[SILENT]` for routine "all clear", normal message delivery for noteworthy events.
 
-## Common Target Formats
+## Zero-Token Watchdog Pattern (no_agent: true)
+
+For recurring checks that should only notify when something is wrong, use `no_agent: true` with a script. This skips the LLM entirely — the scheduler runs the script on schedule and delivers stdout verbatim. **Zero tokens burned when nothing to report.**
+
+### When to Use
+- Polling an API endpoint for state changes (snooze log, inbox, CI status)
+- System health checks (disk, memory, GPU, service uptime)
+- Any pattern where 99% of runs produce "nothing to report"
+
+### How It Works
+1. Script runs on schedule (bash or Python)
+2. If actionable: prints message to stdout → delivered to user
+3. If nothing: empty stdout → **silent** (no delivery, user sees nothing)
+4. If error: non-zero exit → error alert delivered
+
+### Example: Snooze Accountability
+```bash
+# cronjob: schedule "every 5m", no_agent: true, script: "snooze-check.py"
+# Script fetches /api/snooze-log, generates snarky message if snoozes found
+# Empty stdout when no snoozes → silent. Non-empty → delivered to Telegram.
+```
+
+### Pitfalls
+- Script stderr is ignored (use stdout for delivery, stderr for debug logging)
+- Script must exit cleanly (exit 0) even when nothing to report — non-zero exit triggers error alert
+- Don't use `no_agent: true` if the message needs reasoning/summarization — that requires the LLM (default mode)
+- `prompt` and `skills` are ignored when `no_agent: true` — only `script` matters
 
 | Platform | Target Format |
 |----------|---------------|

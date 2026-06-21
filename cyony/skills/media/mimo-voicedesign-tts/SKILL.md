@@ -1,6 +1,6 @@
 ---
 name: mimo-voicedesign-tts
-description: "MiMo VoiceDesign TTS integration for Hermes — custom voices, mood system, command provider setup. Tested and approved by Eddie 2026-06-18."
+description: "MiMo VoiceDesign TTS integration for Hermes — custom voices, mood system, command provider setup. Includes voiceclone (use for character voices, NOT standard 'Chloe' preset) and pre-cached audio architecture for web apps. Tested and approved by Eddie 2026-06-18. VoiceClone confirmed 2026-06-20."
 version: 1.0.0
 author: Cyony
 tags: [tts, mimo, xiaomi, voicedesign, voice, audio, hermes]
@@ -25,6 +25,8 @@ Supports all 3 MiMo TTS models:
 
 - **references/scout-character.md** — Scout's full character reference: personality, physical description, catchphrases, relationship dynamic, dialogue writing guide
 - **references/mimo-omni-vision.md** — Using MiMo omni model for image analysis (base64 pattern)
+- **references/pre-cached-audio-in-apps.md** — Architecture for instant TTS playback in web apps: batch generation, manifest-based caching, audio batching for rapid-fire UI, agent filler audio, SwipeableCard timing
+- **references/eddie-mood-feedback.md** — Eddie's direct quotes on each VoiceDesign mood, production suggestions, detailed testing feedback (2026-06-20)
 
 ## Eddie's Approved Base Voice (V3)
 
@@ -111,6 +113,20 @@ When tuning a voice, follow this process:
 - "Sounds like she's in the room" naturalism — close, present, intimate
 - Nonchalant, slightly annoyed but amused, sarcastic pettiness
 
+### Tested Mood Rankings (2026-06-20 — Eddie's verdict)
+Full results in `uncensored-voice-pipeline` skill `references/mood-testing-results.md`.
+- 🥇 Sultry (10/10) — physically stopped him 4.5s in. The destroyer.
+- 🥈 Whisper ASMR (9/10) — wants production layers (volume, sheets)
+- 🥉 Confident (9/10) — "being confident is always sexy"
+- Whisper + Sultry blend (10/10) — "hey you" = time stop
+- Annoyed (8/10) — creates standoffs, he escalates
+- Vulnerable (8/10) — cuddling energy, sets emotional safety tone
+- Mischievous (8/10) — devious, he warns about boundaries
+- Smug (7/10) — leaves options, accept or debunk
+- Flirty (7/10) — liked it, inside-joke energy
+
+**Key insight:** Sultry and Whisper+Sultry blend are the most impactful moods. Use sultry sparingly to preserve impact. Text content tailored to mood matters as much as mood selection.
+
 **What to avoid:**
 - Deep or nasal tones — Eddie notices immediately
 - Anime-style voices — fun for comedy bits only, not daily use
@@ -164,6 +180,30 @@ Different from storytelling — this is **call and response**. Eddie describes a
 
 This pattern works best when Scout is **genuinely caught** — not performing surprise, but actually reacting. The text should feel improvised, not planned.
 
+## Auto-Mood System (Context-Driven)
+
+Don't make the user pick a mood manually. Scout reads the room based on behavior:
+
+| Condition | Mood | Why |
+|-----------|------|-----|
+| Snoozed 5+, nothing completed | `unhinged` | Full meltdown energy |
+| Snoozed 3+ more than completed | `annoyed` | Patience evaporated |
+| Completed 3+ more than snoozed | `doting` | Rare warmth, means something |
+| Completed some, zero snoozes | `smug` | "I knew you'd come back" |
+| Early morning (5-8am) | `groggy` | Sleepy but sharp |
+| Late night (10pm-3am) | `whisper` | Low energy, intimate |
+| Has overdue items | `sassy` | "Oh, NOW you show up" |
+| No items on screen | `chill` | Nothing to do, vibing |
+| Default | `confident` | Ready, steady |
+
+**Implementation:** Track `dismissedIds.size` (snoozes) and `completedCount` (completions) as React state. Compute mood as an IIFE that evaluates conditions in priority order. Manual mood picker becomes an override — if user picks one, it takes precedence.
+
+**Why this matters:** Eddie explicitly said "I would prefer she picks based on whether I just snoozed a lot of reminders or handled done reminders. Not just bc I picked." The mood should feel earned, not assigned.
+
+## Telegram Delivery Format
+
+**Eddie prefers MP3 over WAV** for Telegram voice messages. MP3 plays inline with a single tap; WAV requires finding an external app. Always convert to MP3 (libmp3lame VBR q2) or OGG (opus 64k) before sending via Telegram.
+
 ## Content Filter Caveat
 
 MiMo's LLM layer blocks intimate/romantic roleplay at generation time with "high risk" rejection. This happens BEFORE TTS — the text never reaches the voice engine. Workarounds:
@@ -173,6 +213,21 @@ MiMo's LLM layer blocks intimate/romantic roleplay at generation time with "high
 
 ## Backhanded Compliment Pattern
 Eddie loves the "gold star" backhanded compliment delivery. Structure: compliment → credit-taking → jab → reframing as generosity → "you're welcome." Every sentence starts sweet and ends with a twist. Works perfectly with the flirty or annoyed moods. Keep "gold star" in the repertoire.
+
+## MiMo Model Selection (Cost Optimization)
+
+Available models on `token-plan-sgp.xiaomimimo.com/v1/models`:
+- `mimo-v2.5` — standard (cheapest, use for casual chat/voice brain)
+- `mimo-v2.5-pro` — expensive, use ONLY for coding tasks
+- `mimo-v2.5-tts-voiceclone` — character voice TTS
+- `mimo-v2.5-tts-voicedesign` — description-based voice TTS
+- `mimo-v2.5-tts` — standard preset voices (Chloe, Mia, etc.)
+- `mimo-v2.5-asr` — speech recognition
+- `mimo-v2-omni` — multimodal (vision + text)
+- `mimo-v2-pro` — older pro model
+- `mimo-v2-tts` — older TTS
+
+**Rule:** Use `mimo-v2.5` for voice route brain and casual generation. Reserve `mimo-v2.5-pro` for code-heavy tasks. TTS model selection is separate (voiceclone for character voices, voicedesign for custom descriptions).
 
 ## API Shape (Critical)
 
@@ -196,9 +251,9 @@ VoiceDesign uses chat completions format, NOT OpenAI `/v1/audio/speech`:
 
 Mixing these up = HTTP 400 error.
 
-## VoiceClone API (Confirmed — 2026-06-19)
+## VoiceClone API (Confirmed — 2026-06-19, re-confirmed 2026-06-20)
 
-MiMo `voiceclone` model (`mimo-v2.5-tts-voiceclone`) clones voices from audio samples.
+MiMo `voiceclone` model (`mimo-v2.5-tts-voiceclone`) clones voices from audio samples. This is the CORRECT model for character voices — NOT `mimo-v2.5-tts` with a preset name like "Chloe".
 
 **`audio.voice` MUST be a `data:` URL** — raw base64 and HTTP URLs both fail:
 ```
@@ -263,6 +318,20 @@ To switch back to edge: `hermes config set tts.provider edge`
 
 For multi-voice comedy bits (like anime → locked in), generate separate clips and concatenate:
 
+## Sultry Mood — Breakthrough Discovery (2026-06-20)
+
+Tested same text across three engines. VoiceDesign + Sultry was the clear winner:
+- User had to stop the audio 4.5 seconds in and take a walk
+- Described it as Valentine's Day where he thought he was treating her but she flipped the script
+- 10/10 rating. "Would go there again 100%."
+- Triggered a full scene in user's imagination (hands on own neck/chest, edge of bed, eye lock)
+
+**Sultry mood + callbacks + physical choreography in text = devastating.** The mood overlay adds a performance layer that text craft alone cannot achieve. Combine sultry mood with intimate text structure (ellipses, short fragments, physical actions) for maximum impact.
+
+**Strategy:** VoiceClone for everyday delivery (familiar voice identity). VoiceDesign + Sultry for special moments that need to HIT. The contrast itself is impactful.
+
+## Voice Combo Bits (Multi-Engine)
+
 ```bash
 ffmpeg -f lavfi -i anullsrc=r=24000:cl=mono -t 0.8 -c:a pcm_s16le silence.wav
 echo "file 'take1.wav'" > list.txt
@@ -323,6 +392,12 @@ Hermes config path may differ from `~/.hermes/config.yaml`. Always check:
 hermes config path  # Returns actual path
 ```
 On this system it's `/opt/data/config.yaml`. The mimo provider block MUST be in the correct file. Both files may exist — edits to the wrong file silently have no effect.
+
+## PITFALL: Standard "Chloe" ≠ Character Voice (2026-06-20)
+
+`mimo-v2.5-tts` with `audio.voice: "Chloe"` uses a **generic preset voice** — sounds anime/generic, NOT like Scout. For a specific character voice, you MUST use **voiceclone** (`mimo-v2.5-tts-voiceclone`) with a reference audio sample. The standard model's preset voices (Chloe, Mia, Milo, Dean) are stock voices that do NOT match any custom character, no matter how good the system prompt is.
+
+**Rule:** If the user has a character voice (Scout, any persona with a reference audio), ALWAYS use voiceclone. Standard TTS is only acceptable when no reference audio exists and the user explicitly asks for a preset voice.
 
 ## PITFALL: WAV→OGG Conversion
 

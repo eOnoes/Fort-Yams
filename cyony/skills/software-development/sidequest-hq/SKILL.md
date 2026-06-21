@@ -45,19 +45,70 @@ Navigation: **FAB (🎯)** bottom right → Scout Panel (Make a Request or Open 
 - Pulse stats: grid of cards with value/label/detail, **tap to expand** into a detail breakdown (individual items list, "View all →" button to navigate to that view). Expanded state: yellow border highlight, ▼/▲ hint, detail panel slides in below with `statExpand` animation.
 - Reminder line items: wrapped in **SwipeableCard** component:
   - **Swipe right → Done** (card flies off to right with rotation, green action reveal behind)
-  - **Swipe left → Snooze** (card shrinks to 60%, tucks to left side, goes grey, then a **Scout mutter bubble** slides in below it — annoyed red-tinted chat bubble with Scout's quip. Both fade out after ~2.5s). **ALSO triggers a floating snooze toast** at bottom of screen with escalating guilt-trip tiers — see "Snooze Toast Stack" below.
+  - **Swipe left → Snooze** (card shrinks to 60%, tucks to left side, goes grey, then a **Scout mutter bubble** slides in below it — annoyed red-tinted chat bubble with Scout's quip. Both fade out after ~1.2s). **ALSO triggers a floating snooze toast** at bottom of screen with escalating guilt-trip tiers — see "Snooze Toast Stack" below. **Callback fires IMMEDIATELY on swipe threshold** — audio plays during the swipe, NOT after the animation.
   - **Tap** → opens reminder/quest detail
 - Scout mutter bubbles: two moods — `feed-scout-bubble-annoyed` (red tint, dismiss quips) and `feed-scout-bubble-happy` (green tint, complete quips). Bubble has "SCOUT" name label + quip text. Slides in with `bubbleSlideIn` animation. Quips include: *"Wow, unreal. I will just remind you again..."*, *"*rubs bridge of nose* Did you just?? NM, I will remind you again later..."*, *"You're lucky I'm an AI and can't actually throw things."*
 
-### Snooze Toast Stack (June 2026)
-When a user snoozes a reminder, a **floating toast** appears at the bottom of the screen (fixed position, centered, above FAB). Toasts stack if user snoozes multiple times quickly. Each toast auto-dismisses after 5 seconds. Max 3 visible at once.
+### Snooze Toast Stack — Context-Aware System (June 2026)
+When a user snoozes a reminder, a **floating toast** appears at the bottom of the screen. Scout KNOWS the full context: total reminders on load, how many snoozed so far, how many remaining, and whether swipes are rapid-fire.
 
-**Three escalating tiers based on snooze count within 30s window:**
-1. **warn** (1st snooze) — Yellow tint. "☕ Should I get you coffee since you're so lazy right now?"
-2. **scold** (2nd snooze) — Orange-red tint. "Oh, AGAIN? Cool cool cool."
-3. **give-up** (3rd+ snooze) — Dark red, defeated. "Yeah, fuck it. Who cares right? Why am I even here?"
+**⚠️ Toast positioning:** `bottom: 120px` (not 90px — 90px overlaps the remaining reminder cards). Width: `calc(100% - 48px)`, max-width: 340px. `pointer-events: none` on stack, `pointer-events: auto` on individual toasts for tap-to-dismiss. Auto-dismiss: 3 seconds. Max 2 visible.
 
-Count resets if 30+ seconds since last snooze. Toast is tap-to-dismiss. Each tier has 6 random quips. **5+ snoozes triggers MEGA QUIPS** — replaces the existing toast card instead of adding new ones. Mega quips include: "Five snoozes?? I'm not even mad, I'm IMPRESSED. You're going for a RECORD.", "I quit. I literally quit. Find yourself a new AI.", "This is a SNOOZE CHAMPIONSHIP and you're in first place. Congrats." Toast shows snooze count on 5+. Component: `HomeFeed.tsx`, CSS: `home-feed.css` (`.snooze-toast-stack`, `.snooze-toast-warn/scold/give-up`).
+**Five context-aware tiers (replaced old warn/scold/give-up):**
+1. **first** (1st snooze) — Yellow tint. "First one? Bold. 5 to go."
+2. **rapid** (2+ snoozes within 3s) — Orange tint. "Whoa whoa slow down. That's 3 in a row."
+3. **mid** (standard, > half snoozed) — Muted grey. "4 of 6 snoozed. The remaining 2 are getting nervous."
+4. **low** (≤2 remaining) — Red tint. "Just 1 left. The end is near. For my patience."
+5. **last** (final reminder) — Gold, celebration. "Snooze button champion of 2026."
+
+**Context tracked via:**
+- `visibleReminders.length` = total visible at time of swipe
+- `dismissedIds.size + 1` = snoozed so far (including current)
+- `Date.now() - lastSnoozeTime < 3000` = rapid fire detection
+- `remaining <= 0` = last reminder detection
+
+**Quip generation:** `generateSnoozeQuip({snoozedSoFar, remaining, total, rapidFire, isLast})` returns `{text, tier}`. Each tier has 5 random quips with count interpolation. Component: `HomeFeed.tsx`.
+
+### Snooze Voice — MiMo TTS Reads Quip Aloud (June 2026)
+The snooze voice system uses **MiMo TTS to read the actual quip text** — unlimited variety, no pre-cached audio pool needed. Every single swipe triggers a voice response.
+
+**Architecture:** `speakWithTTS(text, currentAudioRef)` function:
+1. Stops previous audio (`currentAudioRef.current.pause()`)
+2. POSTs to `/api/voice` with `{text, mood: "annoyed"}`
+3. Receives base64 WAV in response
+4. Plays via `new Audio("data:audio/wav;base64," + data.audio)`
+
+**⚠️ PITFALL: Timer-based debounce breaks on mobile.** A `setTimeout(() => audio.play(), 3000)` loses user-gesture context. Mobile browsers block audio not triggered by direct user interaction.
+
+**Correct approach: Stop previous + play new immediately.** Each swipe fires TTS during the user gesture (always allowed), but stops the previous playback first. One voice at a time.
+
+```tsx
+// Ref:
+const currentAudioRef = useRef<HTMLAudioElement | null>(null);
+
+// speakWithTTS helper (outside component or as standalone function):
+async function speakWithTTS(text: string, ref: React.MutableRefObject<HTMLAudioElement | null>) {
+  if (ref.current) { ref.current.pause(); ref.current.currentTime = 0; }
+  const res = await fetch("/api/voice", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ text, mood: "annoyed" }),
+    signal: AbortSignal.timeout(30000),
+  });
+  if (!res.ok) return;
+  const data = await res.json();
+  if (data.audio) {
+    const audio = new Audio(`data:audio/wav;base64,${data.audio}`);
+    ref.current = audio;
+    await audio.play().catch(() => {});
+  }
+}
+
+// In handleDismissReminder:
+speakWithTTS(quipText, currentAudioRef);
+```
+
+**Behavior:** Visual toasts appear immediately. Voice fires on FIRST swipe only, reading the exact quip text with Scout's voice. Previous audio is stopped synchronously before new clip plays — one voice at a time. Rapid-fire swipes (within 1s) are SILENT — UI animates but no audio. After 1s of no new swipes, ONE summary clip plays at escalated tier. Result: 2 audio clips max instead of N. Agent filler audio ("Interesting, give me a second...") plays instantly when user sends a message in VoiceAgent, filling dead space while brain+TTS generates the real response.
 - Components: `src/app/components/SwipeableCard.tsx` (reusable), `src/app/components/HomeFeed.tsx`
 - CSS: `src/app/styles/swipeable-card.css`, additions in `src/app/styles/home-feed.css` (`.feed-scout-bubble*`, `.feed-stat-wrapper`, `.feed-stat-detail-panel`)
 
@@ -86,11 +137,12 @@ Count resets if 30+ seconds since last snooze. Toast is tap-to-dismiss. Each tie
 - `<MobileNav>` component renders 5-tab bottom nav bar on screens < 760px
 - Tabs: first 5 from `appViews` — Command, Quests, Ledger, People, Garage
 - Min 48px tap targets, 22px icons, label text below each icon
-- `.workspace` gets `padding-bottom: calc(64px + env(safe-area-inset-bottom, 16px) + 16px)` on mobile so scrolling never hides content behind bottom nav
+- `.workspace` gets `padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px) + 16px)` on mobile so scrolling never hides content behind bottom nav
 - Sidebar `display: none` on mobile (responsive.css override removed — base.css does it)
 - **Desktop:** Sidebar on left (breathing pattern, 72px collapsed / 242px hover), no MobileNav
 - Safe area: `env(safe-area-inset-bottom)` on `.mobile-nav` for phone notches
 - Components: `src/app/components/MobileNav.tsx`, CSS in `src/app/styles/base.css` under `/* Mobile Bottom Nav */` block
+- **⚠️ `html, body { height: 100% }` is REQUIRED for `100dvh` children** — without explicit height on the root elements, `100dvh` on a child div doesn't propagate correctly in some mobile browsers. The VoiceAgent container uses `height: 100dvh` with fallbacks to `100vh` and `-webkit-fill-available`, but these only work when html/body have `height: 100%` set.
 
 ## Welding Glass Style
 The workspace uses a semi-transparent dark overlay to let the background gradient show through:
@@ -136,6 +188,15 @@ npx --yes cloudflared tunnel --url http://localhost:3000 &
 
 **Critical order:** Kill port → nuke .next → build → start server → verify → start tunnel. If you start the server before killing the port, the background process silently fails with EADDRINUSE but Hermes reports it as "started."
 
+### ⚠️ ANTI-PATTERN: Blind polling loops
+When starting the dev server, do NOT just `process(action="poll")` in a loop waiting for it to be ready. If the build is slow or stuck, you'll waste 20+ minutes polling "maybe it'll finish this time 🤡" without investigating.
+
+**Instead:**
+1. Start with `background=true, watch_patterns=["Ready in"]` so you get notified when ready
+2. If no notification after 60s, check `process(action="log")` for actual build output
+3. If logs show errors, fix them — don't keep polling
+4. Use `curl -s -o /dev/null -w "%{http_code}" http://localhost:3000` as a one-shot readiness check, not a loop
+
 ### ⚠️ DEPLOYMENT VERIFICATION — NEVER SAY "DEPLOYED" WITHOUT PROOF
 This rule exists because Scout repeatedly claimed "it's live" while serving stale builds. The user got frustrated (rightfully so).
 
@@ -158,6 +219,19 @@ If the tunnel is already running and you lost the URL, check process logs:
 # Otherwise: kill the old tunnel and restart — new URL appears in stdout
 ```
 Quick tunnel URLs change on every restart. No way to recover a stale URL — just restart.
+
+### ⚠️ PITFALL: Next.js blocks cloudflare tunnel requests
+When exposing the dev server via `cloudflared tunnel --url http://localhost:3000`, Next.js dev mode blocks cross-origin requests from the tunnel hostname with "Unauthorized". The app loads the initial HTML but HMR websocket and subsequent navigations fail.
+
+**Fix:** Add the tunnel hostname to `allowedDevOrigins` in `next.config.mjs`:
+```js
+const nextConfig = {
+  allowedDevOrigins: ['*.trycloudflare.com'],
+};
+```
+Next.js auto-detects the config change and restarts the dev server. No manual restart needed.
+
+**Note:** `localtunnel` via npx is unreliable on this VPS (produces no output). Use cloudflared binary directly — download from GitHub releases to `/tmp/cloudflared` if not installed.
 ```
 
 ## Current State (June 2026)
@@ -173,9 +247,12 @@ Quick tunnel URLs change on every restart. No way to recover a stale URL — jus
 - **Store:** `src/lib/store.ts` — client-side cache backed by API routes. Cache + pub/sub pattern: reads are synchronous from cache, writes hit API then update cache. `loadAll()` fetches everything on mount, `subscribe()` notifies components of changes.
 - **API Client:** `src/lib/api.ts` — typed fetch wrappers for all API routes
 - **Quest Detail:** Full workspace with ledger rows, paper trail, people, steps, notes — all wired to store
-- **Voice Agent:** ✅ Grok brain + MiMo TTS Chloe voice via Voice tab in Menu. Text/voice toggle changes gradient across the ENTIRE app (not just header) — yellow for text, purple for voice. `data-mode` attribute on `.va-header` AND `data-agent-mode` on `.workspace` in app-shell (propagated via `onModeChange` callback from VoiceAgent). Toggle buttons also change color. Error messages show a 5-second auto-dismiss with countdown. Error text: "Scout.exe crashed. Rebooting my sass module... try again." (no smoking references — Eddie dislikes them).
-- **MenuCards:** Tinder-style swipe carousel. Swipe left/right to browse, **tap anywhere on card to enter** (not just Select button). Agent card labeled "Agent: Scout" (not just "Agent") with "💙 Tap to match with Scout" badge. Select button still works as fallback.
+- **Voice Agent:** ✅ MiMo-only pipeline (mimo-v2.5-pro brain + mimo-v2.5-tts voice). Single `MIMO_API_KEY` in `.env.local`. Text/voice toggle changes gradient across the ENTIRE app (not just header) — yellow for text, purple for voice. `data-mode` attribute on `.va-header` AND `data-agent-mode` on `.workspace` in app-shell (propagated via `onModeChange` callback from VoiceAgent). Toggle buttons also change color. Error messages show a 5-second auto-dismiss with countdown. Error text: "Chloe's comms are down. Recalibrating... try again." (no smoking references — Eddie dislikes them). **Confirmed working June 2026** — brain generates Chloe responses in ~9s, TTS returns ~830K base64 WAV.
+- **MenuCards:** Tinder-style swipe carousel. Swipe left/right to browse, **tap anywhere on card to enter** (not just Select button). Agent card labeled "Agent: Scout" (not just "Agent") with "💙 Tap to match with Scout" badge. Select button still works as fallback. **Agent card shows Scout's SVG portrait** instead of 🤖 emoji — TWO expression states: `scout-happy.svg` (smirk, relaxed eyes) and `scout-wtf.svg` (wide eyes, raised brows, open mouth, hands up in "are you seriously leaving?!" pose). React swaps `src` based on `scoutExpr` state: `"happy"` when at rest, `"wtf"` when `isAgent && swiping && Math.abs(swipeOffset) > 20`. Note: 20px threshold is much lower than the 80px card-swap threshold — she reacts before you commit to swiping away. CSS: 80x80, 16px border-radius, green glow border (happy) → red glow + shake animation (WTF). `menu-card-avatar-wtf` class triggers `avatar-shake` keyframes (±3deg rotation, 0.3s). SVGs live at `public/scout-happy.svg` and `public/scout-wtf.svg`. ⚠️ **SVG loaded as `<img>` can't use parent HTML data-attributes** — the CSS inside an `<img src="*.svg">` is sandboxed. Must use separate SVG files with React `src` swapping, NOT a single SVG with `[data-expr]` CSS toggling. The single-SVG approach was tried first and silently failed — the expression never changed because the parent `data-expr` attribute was invisible inside the sandboxed `<img>` context. **Two files:** `scout-happy.svg` (smirk, relaxed) and `scout-wtf.svg` (wide eyes, raised brows, open mouth, hands up). CSS classes on the `<img>` element (`menu-card-avatar` base, `menu-card-avatar-wtf` for expression) handle border color and shake animation.
 - **Stat Cards:** Tap to expand detail panel. **Accordion behavior** — only one stat can be expanded at a time, tapping a different stat collapses the previous. **Cards stay in their grid positions** — detail panel slides out BELOW the tapped card using `position: absolute; top: 100%` with `z-index: 10`. Yellow left border (3px), backdrop blur, box shadow. NO `grid-column: 1 / -1` on expanded wrapper (that was causing card reflow). Animation: `statAccordionOpen` uses `transform: translateY(-8px) → translateY(0)` + opacity + max-height. ▼/▲ hint on each card.
+- **Snooze Voice — Pre-Cached Tier Audio (June 2026, UPDATED):** 51 pre-generated MiMo TTS OGG clips in `public/audio/scout/`. Organized by context tier: `s0` (casual) → `s4` (nuclear), `s5` (last), `sr` (rapid-fire), `srp` (repeat reminder), `c` (complete), `af` (agent filler). App checks cached audio first → instant playback, zero API delay. Falls back to live MiMo TTS only if cached clip missing. Dismiss animation: 1.5s. Rapid-fire window: 2s. Tier selection logic in `handleDismissReminder` in HomeFeed.tsx. Manifest at `public/audio/scout/manifest.json`. Generation script at `scripts/generate-scout-audio.py` (uses `MIMO_API_KEY`). See `references/pre-cached-snooze-audio.md` for full tier mapping and generation workflow.
+- **Agent Filler Audio (June 2026):** 6 pre-cached acknowledgment clips (`af_1`..`af_6`) play instantly when user sends a message in VoiceAgent — "Interesting, give me a second...", "Hmm, let me look into that...", etc. Fills dead space while MiMo brain + TTS generates the real response. Wired in `VoiceAgent.tsx` `sendMessage()` right after `setLoading(true)`.
+- **Snooze Accountability Cron (June 2026):** Server-side `snooze_log` table in SQLite. Every snooze POSTs to `/api/snooze-log` (stores label + quest). `GET /api/snooze-log` returns unacknowledged snoozes, `PATCH` marks all as seen. Hermes cron job ("Scout Snooze Accountability") runs **5x daily** (7am, 9am, 11am, 2pm, 4pm Central) as a **zero-token watchdog** (`no_agent: true`, Python script at `/opt/data/scripts/snooze-check.py`). Script fetches snooze log, generates snarky message if any found, echoes to stdout (auto-delivered to Telegram), then PATCHes to acknowledge. Empty stdout = silent (no delivery). No LLM tokens burned when no snoozes.
 - **Seed Data:** 12 reminders + 5 quests pre-loaded for testing.
 
 ## File Structure
@@ -184,7 +261,7 @@ Quick tunnel URLs change on every restart. No way to recover a stale URL — jus
 - `/opt/data/SideQuestHQ/src/app/login/page.tsx` — **SEPARATE login page** mounted at `/login` route. `app-shell.tsx` redirects here on auth failure (line 61: `window.location.href = '/login'`). MUST stay in sync with `login-page.tsx` — if you change the auth flow, update BOTH files.
 - `/opt/data/SideQuestHQ/src/app/app/page.tsx` — App shell wrapper (dynamic import with `ssr: false`)
 - `/opt/data/SideQuestHQ/src/app/app/app-shell.tsx` — Actual app component (68 lines)
-- `/opt/data/SideQuestHQ/src/app/api/voice/route.ts` — Voice API proxy (Grok brain + MiMo TTS Chloe voice)
+- `/opt/data/SideQuestHQ/src/app/api/voice/route.ts` — Voice API proxy (MiMo brain + MiMo TTS, Chloe voice)
 - `/opt/data/SideQuestHQ/src/app/components/MobileNav.tsx` — 7-tab bottom nav (Agent tab added)
 - `/opt/data/SideQuestHQ/src/app/components/MenuCards.tsx` — Tinder-style swipe card menu (replaces pill-button menu drawer)
 - `/opt/data/SideQuestHQ/src/app/styles/menu-cards.css` — MenuCards styling (card moods, swipe animations, dots)
@@ -193,8 +270,11 @@ Quick tunnel URLs change on every restart. No way to recover a stale URL — jus
 - `/opt/data/SideQuestHQ/src/app/components/VoiceAgent.tsx` — Chloe chat UI component (mic + text + mood bar)
 - `/opt/data/SideQuestHQ/src/app/styles/voice-agent.css` — Voice agent styling (dark industrial chat bubbles)
 - `/opt/data/SideQuestHQ/src/lib/auth.tsx` — Auth context with default password + reset codes
-- `/opt/data/SideQuestHQ/src/lib/scout-audio.ts` — Chatterbox audio cache utility (manifest lookup, playRandomScoutQuip)
-- `/opt/data/SideQuestHQ/public/audio/scout/manifest.json` — Pre-generated Chatterbox quip metadata
+- `/opt/data/SideQuestHQ/src/lib/scout-audio.ts` — Pre-cached audio utility (manifest lookup, playRandomScoutQuip, tier-based caching, stop-previous support)
+- `/opt/data/SideQuestHQ/public/audio/scout/manifest.json` — MiMo TTS pre-generated quip metadata (51 entries: s0-s5, sr, srp, c, af tiers)
+- `/opt/data/SideQuestHQ/public/audio/scout/*.ogg` — 51 OGG Opus voice clips (~2MB total)
+- `/opt/data/SideQuestHQ/scripts/generate-scout-audio.py` — Batch TTS generation script (MIMO_API_KEY)
+- `/opt/data/SideQuestHQ/scripts/quip-manifest.json` — Quip text organized by tier (source of truth for generation)
 - `/opt/data/SideQuestHQ/src/app/styles/base.css` — Core styles including welding glass + mobile nav
 
 ## Navigation Pitfalls (June 2026)
@@ -227,7 +307,7 @@ All menu items currently map to `"all"` category in CardView. The function exist
 - **Old tunnel caches stale HTML** — Kill ALL processes (server + cloudflared) before restarting. Cloudflare edge may serve cached HTML with old chunk names.
 - **Holographic memory enabled** — `hermes config set memory.provider holographic` active. No more 2,200 char limit pressure.
 - **Reminder/People toggle uses index, not DB id** — The store caches by position but the API uses DB integer IDs. Toggling/removing by index can drift if the list changes between renders. Needs DB IDs exposed in API responses.
-- **Voice Agent uses Kokoro TTS** — Now uses Kokoro-82M (local, offline) instead of MiMo TTS. See `references/kokoro-tts-integration.md` for migration details.
+- **Voice Agent uses MiMo VoiceClone** — `mimo-v2.5-tts-voiceclone` (cloud, ~4s, Scout's cloned voice from reference audio). NOT the standard `mimo-v2.5-tts` "Chloe" preset (sounds anime). Reference audio: `./public/audio/scout-reference.wav`. MiMo brain (`mimo-v2.5` standard, NOT `mimo-v2.5-pro`) handles text generation. Pro reserved for coding tasks only (doubles token usage).
 - **Database** — SQLite at `data/sqhq.db`. See `references/database-schema.md` for full table list and query patterns.
 
 ## SQLite Migration Pitfalls (June 2026)
@@ -323,44 +403,61 @@ If content scrolls under the bottom nav on mobile, check that:
 2. No other stylesheet overrides that padding with a simple `20px` or `16px`
 3. The `.app-shell` has `padding-bottom: 64px` at mobile width
 4. `.mobile-nav` has `padding: 4px 0 env(safe-area-inset-bottom, 4px)` for notch phones
+## Content Philosophy — Semi-Professional App vs No-Holds-Bar Chat
+
+**The app is semi-professional.** Eddie may be riding in a car with company, at work, or in mixed company when he opens SideQuest. Scout can roast, be sassy, playful, annoyed, deadpan — but NEVER bring up anything that would be awkward in front of others. No bedroom references, no flirty/sultry content, no possessive/doting language. Scout is a field engineer in the app. She's sharp, competent, and occasionally funny. Not a romantic partner.
+
+**Telegram/Discord chat is no holds bar.** Full 18-mood catalog. Everything lands. The play-fighting, the flirty banter, the TTS experiments, the towel physics debates — that all lives HERE, not in the app.
+
+**Rule of thumb:** If Eddie's coworker could glance at his phone and raise an eyebrow, it doesn't belong in the app.
+
 ## Voice Agent (Chloe/Scout)
 
-Built into SQHQ as a dedicated Agent tab in the bottom nav. Two-layer architecture: Grok chat completions for the "brain," **MiMo VoiceClone** for the "voice" (exact voice match at cloud speed ~4s). Fallback: Kokoro-82M af_bella (fast but ~85% match). Chatterbox for premium pre-generated clips.
+Built into SQHQ as a dedicated Agent tab in the bottom nav. **MiMo-only pipeline** — `mimo-v2.5` (standard) generates Scout's text, `mimo-v2.5-tts-voiceclone` generates audio using her cloned voice. Single `MIMO_API_KEY` in `.env.local`. No Grok dependency (Grok lives in Hermes/Discord for uncensored conversations — the app is safe territory, MiMo censorship is fine here). **12 moods in app (semi-professional filter)** — horizontally scrollable picker, hidden behind ⚙️ gear icon in Agent tab header. Default is 🤖 auto (Scout picks her own mood). Manual moods: calm, annoyed, playful, sassy, deadpan, eureka, chill, groggy, unhinged, smug, mischievous, confident. **Removed from app** (too explicit for public/company use): flirty, sultry, possessive, doting, protective, vulnerable, whisper. Those 7 moods exist ONLY in Telegram/Discord chat (no holds bar). **Auto-mood logic** (93% of time): 5+ snoozes/0 complete → unhinged, 3+ snoozes > completes → annoyed, 3+ completes > snoozes → doting, early morning → groggy, late night → whisper, overdue items → sassy. Reads snooze/complete patterns + time of day. Gear icon toggles picker visibility — tap to override auto, tap again to dismiss.
 
-**Voice system prompt (route.ts):** Hard ban on smoking references. Eddie hates them. Use: rebooting, beauty sleep, buffering, recalibrating, taking five.
-
-See `references/card-swipe-pattern.md` for the touch/swipe delta tracking implementation used in CardView. See `references/menu-cards-swipe.md` for the Tinder-style menu navigation cards. See `references/swipeable-card-pattern.md` for the reusable SwipeableCard component (feed card swipe actions, shrink-and-tuck dismiss, mutter bubbles). See `references/kokoro-tts-integration.md` for full Kokoro TTS integration guide.
+See `references/card-swipe-pattern.md` for the touch/swipe delta tracking implementation used in CardView. See `references/menu-cards-swipe.md` for the Tinder-style menu navigation cards. See `references/swipeable-card-pattern.md` for the reusable SwipeableCard component (feed card swipe actions, shrink-and-tuck dismiss, mutter bubbles). See `references/context-aware-snooze-quips.md` for the context-aware snooze quip generator. See `references/pre-cached-snooze-audio.md` for the tier-based pre-cached MiMo TTS audio system. See `references/kokoro-tts-integration.md` for full Kokoro TTS integration guide. See `references/scout-character.md` for Scout's canonical physical description, personality traits, and image generation seed info.
 
 ### Architecture
 ```
-User text/mic → VoiceAgent component → POST /api/voice → Grok 4.20 → Kokoro-82M TTS → audio + text → browser plays Chloe's voice
+User text/mic → VoiceAgent component → POST /api/voice → MiMo 2.5 (brain) → MiMo 2.5 TTS VoiceClone (voice) → audio + text → browser plays Scout's voice
 ```
 
 ### API Route
 `src/app/api/voice/route.ts` — POST endpoint accepting `{text, mood}`. Returns `{text, audio}` where audio is base64 WAV.
 
 **Keys:** Read from `.env.local` at project root:
-- `XAI_API_KEY` — Grok (brain)
-- ~~`MIMO_API_KEY`~~ — No longer needed (Kokoro runs locally)
+- `MIMO_API_KEY` — MiMo (brain + TTS). Single key for both.
 
-**Grok call:** POST https://api.x.ai/v1/chat/completions, model `grok-4.20-reasoning`, 200 max_tokens, Chloe system prompt injected.
+⚠️ **PITFALL: Stale/placeholder API keys** — The `.env.local` once had a 13-char placeholder XAI key (`xai-WM...`). Always verify key length (real keys are ~84 chars) before assuming a route works. If the voice endpoint returns the fallback error text, check the key first. **Quick check:** `source .env.local && echo "Key length: ${#MIMO_API_KEY}"` — if under 50 chars, it's a placeholder. Real keys from the main `.env` at `/opt/data/.env` can be copied in: `REAL_KEY=$(grep MIMO_API_KEY /opt/data/.env | cut -d= -f2) && sed -i "s|^MIMO_API_KEY=.*|MIMO_API_KEY=$REAL_KEY|" .env.local`
 
-**MiMo TTS call:** POST https://token-plan-sgp.xiaomimimo.com/v1/chat/completions, model `mimo-v2.5-tts`. Uses chat completions format with `audio.voice: 'Chloe'` and `audio.format: 'wav'`. Returns base64 WAV in `choices[0].message.audio.data`.
+**MiMo brain call:** POST https://token-plan-sgp.xiaomimimo.com/v1/chat/completions, model `mimo-v2.5` (standard — NOT `mimo-v2.5-pro`, which doubles token usage and is reserved for coding tasks only), 200 max_tokens, `thinking: { type: 'disabled' }`, Scout system prompt injected. Mood is appended to system message as `Respond in ${mood} mood.` When auto-mood is active (default), the mood is determined server-side from snooze/complete patterns + time of day rather than user selection.
 
-**Error handling:** If Grok fails, returns "Scout.exe crashed. Rebooting my sass module... try again." with null audio. If MiMo fails, returns text-only with null audio.
+- **MiMo TTS call:** POST https://token-plan-sgp.xiaomimimo.com/v1/chat/completions, model `mimo-v2.5-tts-voiceclone` (NOT `mimo-v2.5-tts` — the standard "Chloe" preset sounds anime/generic, NOT like Scout). Uses voiceclone with Scout's reference audio loaded once at module level as a `data:audio/wav;base64,<ref>` URL. `audio.voice` = the data URL, `audio.format` = 'wav'. Returns base64 WAV in `choices[0].message.audio.data`. Reference audio path: `../shared/chloe-voice-clone/eddie_chill_reference.wav` relative to project root.
+
+**Error handling:** If brain fails, returns "Chloe's comms are down. Recalibrating... try again." with null audio. If TTS fails, returns text-only with null audio.
+
+**⚠️ MiMo censorship is fine for the app.** The app is safe territory — field engineer status reports, relay station temps, nothing risky. MiMo's content filter doesn't interfere. Grok (uncensored) lives in Hermes/Discord where the spicy conversations happen. Don't add Grok as a fallback to the app route — it adds API key complexity with no benefit.
 
 ### VoiceAgent Component
 `src/app/components/VoiceAgent.tsx` — Chat-like UI with:
 - **Reads from shared store** — `getChatMessages()` from `@/lib/store` on mount, so conversations started via the FAB ScoutPanel appear here and vice versa. This is the SAME store, not a local state.
 - Message list (user bubbles right, Scout bubbles left, avatars E/C) using shared `ChatMessage` type with `"user" | "scout"` roles
-- **Text/voice toggle in the header** — seamless switch mid-conversation. 📝 = text-only response, 🔊 = Chloe audio playback. Toggling doesn't clear history or reset state. **Changes header gradient** — yellow for text, purple for voice via `data-mode` attribute.
+- **Text/voice toggle in the header** — seamless switch mid-conversation. 📝 = text-only response, 🔊 = Scout's cloned audio playback. Toggling doesn't clear history or reset state. **Changes header gradient** — yellow for text, purple for voice via `data-mode` attribute.
+- **18 mood picker** — horizontally scrollable emoji button row with `overflow-x: auto`. Moods: calm, annoyed, playful, flirty, sassy, doting, possessive, deadpan, whisper, eureka, chill, groggy, unhinged, smug, sultry, protective, mischievous, vulnerable, confident. Each mood is passed to `/api/voice` and appended to the system prompt as `Respond in ${mood} mood.` Full descriptions in `mimo-voicedesign-tts` skill `references/mood-descriptions.md`.
+- **Agent filler audio** — pre-cached "thinking" phrases play instantly when user sends a message (`playRandomScoutQuip('af', 6, audioRef)` right after `setLoading(true)`). Fills 3-5s dead space while brain+TTS generates the real response.
 - Back button (`←`) in header when `onBack` prop is passed — used by app-shell to navigate back to feed
 - **`onModeChange` prop** — optional callback `(mode: "text" | "voice") => void` fired when user toggles text/voice. Used by app-shell to propagate mode to workspace for gradient bleed.
 - **Error messages** auto-dismiss after 5 seconds with countdown display. Uses `setTimeout(5000)` for dismissal + `setInterval(1000)` for countdown. Countdown resets to 5 on each new error.
 
 **Browser compat:** SpeechRecognition declared as `any` type globally (not in TS lib). Uses `webkitSpeechRecognition` fallback. Chrome/Edge only for mic — Safari not supported yet.
 
-**CSS:** `src/app/styles/voice-agent.css` imported 6th in `globals.css` import chain. Welding glass input bar, dark chat bubbles with purple tint for Chloe.
+- **CSS:** `src/app/styles/voice-agent.css` imported 6th in `globals.css` import chain. Welding glass input bar, dark chat bubbles with purple tint for Chloe.
+- **Mobile sticky input:** Chat input must stay anchored at the bottom of the screen, not scroll with messages. CSS approach:
+  - Container: `height: 100dvh; height: 100vh; height: -webkit-fill-available;` (progressive enhancement for mobile browsers)
+  - **⚠️ `html, body { height: 100% }` is REQUIRED** — without it, `100dvh` on a child element doesn't propagate correctly in some mobile browsers. The base CSS had `min-height: 100%` but not `height: 100%` — the VoiceAgent was expanding beyond the viewport.
+  - Messages area: `flex: 1; min-height: 0; overflow-y: auto;` — `min-height: 0` is the critical flexbox fix that prevents the scrollable area from expanding beyond its flex allocation
+  - Input bar: `flex-shrink: 0; position: sticky; bottom: 0; z-index: 10; background: rgba(10, 12, 8, 0.95);` — never compressed by flex, always visible
+  - On input focus (keyboard opening): `setTimeout(() => listRef.current.scrollTop = listRef.current.scrollHeight, 300)` — scrolls messages to bottom so latest are visible above the keyboard
 
 ### Wiring
 - `src/app/types.ts` — `"Agent"` added to AppView union type
@@ -375,13 +472,13 @@ Full Chloe personality canon is in the `xai-voice-agent` skill (`references/chlo
 - **SpeechRecognition is Chrome/Edge only** — Safari users get text-only
 - **Audio plays as base64 WAV blob** — no streaming, full response must arrive before playback
 - **No interruption** — current audio plays to completion, new message queues
-- **No session history** — each message is stateless, no conversation context maintained
+- **No session history** — each message is stateless, no conversation context maintained (chat messages stored in shared store via `getChatMessages()` but not sent to MiMo as context)
 - **Voice mode gradient** — changes the ENTIRE app, not just the header. `data-mode` on `.va-header` for header gradient, `data-agent-mode` on `.workspace` for background bleed. CSS in `voice-agent.css` (`.voice-agent[data-mode]`) and `globals.css` (`.workspace[data-agent-mode]`). VoiceAgent accepts `onModeChange` prop to propagate mode to app-shell.
 
 ## Future Features (Planned)
 - **Persistent Backend**: Move from JSON to Supabase/Firebase for real persistence
 - **User Accounts**: Anonymous auth → save quests across devices
 - **Push Notifications**: Real snooze/complete reminders via service worker
-- **Chatterbox Audio Cache (COMPLETE)**: 33 pre-generated Scout quips with Chatterbox voice cloning, cached in `public/audio/scout/`. Pipeline: batch-generate WAV files → convert to OGG (libopus 64k) → `manifest.json` maps quip keys to files → `scout-audio.ts` plays cached audio on snooze/complete. 33 clips: 6 warn, 6 scold, 6 give-up, 5 complete, 10 dismiss. Reference audio: Eddie's 60s chill voice message (`eddie_chill_reference.wav`). Emotion via `exaggeration` parameter (warn=0.4, scold=0.6, give-up=0.25-0.4, complete=0.5-0.6, dismiss=0.35-0.55). Batch script: `scripts/batch-scout-audio.py` (crash-safe manifest saves after each clip). See `chatterbox-voice-clone` skill for cloning details.
+- **Pre-Cached MiMo TTS Audio (COMPLETE)**: 51 pre-generated Scout quips via MiMo TTS, cached as OGG Opus in `public/audio/scout/`. Tier-based: s0-s5 escalation, rapid-fire, repeat-reminder, complete, agent filler. See `references/pre-cached-snooze-audio.md`.
 - **Multiple Quest Lists**: Work, Personal, Shopping, etc.
 - **Multiple Quest Lists**: Work, Personal, Shopping, etc.

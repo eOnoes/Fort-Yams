@@ -39,6 +39,14 @@ npx cloudflared tunnel --url http://localhost:3000
 
 **IMPORTANT: Use production mode, not dev mode.** Dev mode (`next dev`) uses WebSockets for hot module reloading. Cloudflare quick tunnels do NOT proxy WebSocket connections correctly, resulting in repeated connection failures in the browser console that can prevent the page from loading fully.
 
+**If you MUST use dev mode through a tunnel** (e.g. for hot reload during testing), add this to `next.config.mjs`:
+```mjs
+const nextConfig = {
+  allowedDevOrigins: ['*.trycloudflare.com'],
+};
+```
+Without this, Next.js blocks cross-origin requests from the tunnel hostname. Tunnel logs will show `Unauthorized` or `malformed HTTP response "Unauthorized"`. With it, dev mode works through the tunnel — HMR WebSocket still fails silently but the page loads and functions correctly.
+
 Also note: Next.js 16 in production mode with `"use client"` components will crash with **React hydration error #310** unless you use the `dynamic(() => import(...), { ssr: false })` pattern. See `references/react-hydration-error-310.md` for the fix.
 
 **Successful tunnel output:**

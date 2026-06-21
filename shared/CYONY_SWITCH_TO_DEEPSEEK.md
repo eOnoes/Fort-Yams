@@ -15,11 +15,11 @@ File location (on host):
 
 **Current .env:**
 ```bash
-OPENROUTER_API_KEY=[REDACTED]
+OPENROUTER_API_KEY=sk-or-v1-REDACTED
 OPENROUTER_DEFAULT_MODEL=qwen/qwen3.7-max
 OPENROUTER_FALLBACK_MODEL=deepseek/deepseek-v4-pro
 OPENROUTER_ALLOWED_MODELS=nvidia/nemotron-3-super-120b-a12b,deepseek/deepseek-v4-pro,qwen/qwen3.6-plus,x-ai/grok-build-0.1,moonshotai/kimi-k2.6,qwen/qwen3.7-max
-DEEPSEEK_API_KEY=REDACTED
+DEEPSEEK_API_KEY=sk-REDACTED
 ```
 
 **What needs to change:**
@@ -57,7 +57,7 @@ docker start hermes-agent-8eep-hermes-agent-1
 Since Cyony responds to Telegram, send her:
 ```
 /config provider add deepseek \
-  --api-key REDACTED \
+  --api-key sk-REDACTED \
   --base-url https://api.deepseek.com/v1 \
   --model deepseek/deepseek-v4-pro
 ```
@@ -91,7 +91,7 @@ Cyony is a **Hermes agent**, not OpenClaw. She uses a different config system.
    @Cyony109_bot Switch to DeepSeek API. 
    Provider: deepseek
    Model: deepseek/deepseek-v4-pro
-   API Key: REDACTED
+   API Key: sk-REDACTED
    Base URL: https://api.deepseek.com/v1
    ```
 
