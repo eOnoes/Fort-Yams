@@ -41,6 +41,22 @@ Define a shorthand first:
 GSETUP="python ${HERMES_HOME:-$HOME/.hermes}/skills/productivity/google-workspace/scripts/setup.py"
 ```
 
+### PITFALL: System Python is externally managed (Debian/Ubuntu)
+
+On modern Debian/Ubuntu, `/usr/bin/python3` is externally managed and `pip install` fails with `externally-managed-environment`. Use the Hermes venv's Python instead:
+
+```bash
+GSETUP="/opt/hermes/.venv/bin/python ${HERMES_HOME:-$HOME/.hermes}/skills/productivity/google-workspace/scripts/setup.py"
+```
+
+If the venv is missing Google API dependencies, install them with uv (not pip):
+
+```bash
+/usr/local/bin/uv pip install google-api-python-client google-auth-oauthlib google-auth-httplib2 --python /opt/hermes/.venv/bin/python
+```
+
+The setup script's `--install-deps` flag will fail on externally-managed systems — always install manually via uv first.
+
 ### Step 0: Check if already set up
 
 ```bash

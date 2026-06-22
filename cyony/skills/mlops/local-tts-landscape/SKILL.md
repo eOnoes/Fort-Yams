@@ -30,6 +30,7 @@ tags: [tts, voice, local, open-source, voice-cloning]
 - **Speed:** Real-time on GPU, streaming support
 - **License:** Open-source, free to use
 - **Perfect for:** High-quality voice cloning with natural delivery
+- **Status (2026-06-21):** ✅ LIVE via tripp-tts-worker on port 8788. Voice: "qwen_chloe" (cloned). Use `tripp-tts-generate-qwen.sh` CLI or direct API. Outputs WAV; convert to MP3 with ffmpeg for Telegram delivery. Slightly slower than Pocket TTS (~8-14s vs ~5s) but higher fidelity.
 
 ### 2. Kokoro-82M (82M params) — The Lightweight
 - **Repo:** github.com/hexgrad/kokoro
@@ -76,10 +77,11 @@ tags: [tts, voice, local, open-source, voice-cloning]
 
 ## Recommendations for SQHQ
 
-### Triple-Stack Architecture (Updated 2026-06-19):
-1. **Live conversation** → Kokoro-82M af_bella (~2s, local, free)
-2. **Dynamic text (not cached)** → MiMo TTS VoiceDesign (~2s, cloud, V3 voice)
-3. **Premium pre-generated clips** → Chatterbox voice clone (~38s, exact voice match)
+### Triple-Stack Architecture (Updated 2026-06-21):
+1. **Live conversation** → Pocket TTS (chloe) via tripp-tts-worker (~5s, local, uncensored)
+2. **Premium local TTS** → Qwen3 TTS (qwen_chloe) via tripp-tts-worker (~8-14s, local, higher fidelity)
+3. **Dynamic text (not cached)** → MiMo TTS VoiceDesign (~2s, cloud, V3 voice + mood overlays)
+4. **Premium pre-generated clips** → Chatterbox voice clone (~38s, exact voice match)
 
 ### Why Chatterbox is the Winner for Spite:
 - `exaggeration` parameter controls emotion intensity (0.0-1.0) — no text tags needed

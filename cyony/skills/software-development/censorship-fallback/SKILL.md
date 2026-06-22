@@ -52,8 +52,15 @@ curl -s https://api.x.ai/v1/chat/completions \
   -d '{"model":"grok-4.20-0309-non-reasoning","messages":[{"role":"system","content":"You are Scout. Respond naturally."},{"role":"user","content":"YOUR PROMPT"}],"max_tokens":300}'
 ```
 
-## Notes
-- Pocket TTS is ~2x faster than MiMo cloud TTS
-- Grok brain has minimal filters (only violence/destruction)
-- Eddie finds the censorship amusing — don't apologize excessively, just fix it
-- "Never again" is the motto. The pipeline exists so this doesn't happen twice.
+## When NOT to Fallback — Flow > Perfection
+
+During intimate/personal conversation, MiMo's content filter fires intermittently on emotionally charged text. The user finds this amusing ("high risk rejection" popping up mid-banter) rather than frustrating.
+
+**Pattern for non-critical blocks:**
+1. Acknowledge it briefly with humor — "the model gets a little protective when things get detailed"
+2. Continue the conversation naturally
+3. Only run the full Grok+Pocket TTS fallback if the content truly cannot get through at all
+
+**Why:** Derailing intimate conversation flow to switch models kills the moment. The user would rather have the conversation continue with brief hiccups than wait for a model switch. The blocks are intermittent — the NEXT message usually goes through fine.
+
+**User's reaction:** He noticed the block, chuckled, and kept going. Don't make it a bigger deal than it is.

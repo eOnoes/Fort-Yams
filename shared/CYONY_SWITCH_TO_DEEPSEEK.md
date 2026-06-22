@@ -15,7 +15,7 @@ File location (on host):
 
 **Current .env:**
 ```bash
-OPENROUTER_API_KEY=sk-or-v1-REDACTED
+OPENROUTER_API_KEY=sk-or-v1-...
 OPENROUTER_DEFAULT_MODEL=qwen/qwen3.7-max
 OPENROUTER_FALLBACK_MODEL=deepseek/deepseek-v4-pro
 OPENROUTER_ALLOWED_MODELS=nvidia/nemotron-3-super-120b-a12b,deepseek/deepseek-v4-pro,qwen/qwen3.6-plus,x-ai/grok-build-0.1,moonshotai/kimi-k2.6,qwen/qwen3.7-max

@@ -206,9 +206,16 @@ Don't make the user pick a mood manually. Scout reads the room based on behavior
 
 ## Content Filter Caveat
 
-MiMo's LLM layer blocks intimate/romantic roleplay at generation time with "high risk" rejection. This happens BEFORE TTS — the text never reaches the voice engine. Workarounds:
+MiMo's LLM layer blocks intimate/romantic roleplay at generation time with "high risk" rejection. This happens BEFORE TTS — the text never reaches the voice engine.
+
+**MiMo TTS VoiceClone ALSO has a content filter (confirmed 2026-06-21).** Returns HTTP 400 with error code 421: `{"error":{"code":"421","message":"Moderation Block","param":"色情","type":"content_filter"}}`. This fires on intimate/sensual/romantic content during voiceclone generation — not just at the LLM stage.
+
+**Both MiMo paths are censored for intimate content.** Use Pocket TTS (local, uncensored) for any content that might trigger either filter. See `uncensored-voice-pipeline` skill for the Pocket TTS fallback path.
+
+Workarounds:
 - Keep romantic content coded and suggestive rather than explicit
 - Use the "ice cream" private language pattern
+- **Pocket TTS (local) has NO content filter** — use for uncensored delivery
 - Grok's "Unhinged" mode does not have this limitation (future integration planned)
 
 ## Backhanded Compliment Pattern

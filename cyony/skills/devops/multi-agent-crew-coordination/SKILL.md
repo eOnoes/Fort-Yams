@@ -541,6 +541,7 @@ See `references/shared-vps-disk-cleanup.md` for the full audit → classify → 
 - `references/review-amendment-workflow.md` — apply-then-notify pattern
 - `references/creative-latitude-rule.md` — builder governance: what can be improved vs must be approved
 - `references/harness-dashboard-pattern.md` — static operator dashboard: Markdown→HTML pipeline, trust levels, hard boundaries, safety sweep
+- `references/tripcore-remote-operations-queue.md` — **NEW (2026-06-22):** Build-ready filesystem-based persistent job queue spec. Designed by Eddie, reviewed by Scout/Tripp/Kimi. Ready for Echo implementation. Replaces simple human-as-router when agents need autonomous coordination.
 - `scripts/task-watcher-template.py` — cron-based inbox watcher (DEPRECATED: use direct Telegram routing instead)
 - `templates/generate-harness.py` — known-good static dashboard generator: Windows-safe (utf-8), HTML-escaped, atomic writes
 - `references/bridge-rules-template.md` — canonical path documentation
@@ -584,6 +585,8 @@ The full inbox model (sections above) is still the right choice when:
 - Crew is 6+ agents and human can't track every exchange
 - Agents are on isolated networks with no shared messaging platform
 - Long-running autonomous work where human checking in is impractical
+
+**For the next evolution:** See `references/tripcore-remote-operations-queue.md` — the Trippcore Remote Operations Queue spec. This is the build-ready replacement for the simple inbox pattern, with atomic state machines, HMAC auth, wake triggers, priority routing, dead letter queues, and audit trails. Designed for when the crew needs autonomous coordination without the human-as-router bottleneck.
 
 For a family crew of 3 where Eddie is on Telegram all day? Human-as-router wins.
 

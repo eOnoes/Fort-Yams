@@ -119,6 +119,8 @@ Tested with Eddie's voice — this is the single biggest factor in clone quality
 
 **Pocket TTS (NEW — 2026-06-19):** Eddie tested `kyutai/pocket-tts` on his RTX 4070. Near-instant generation, voice cloned from 30s reference audio. Gated model on HuggingFace (accept terms to download). CC-BY-4.0 license with boilerplate use restrictions (not enforced in model). Total model size ~26.7 GB (all languages); English-only subset is smaller. See `references/pocket-tts-notes.md` for details.
 
+**Pocket TTS Hidden Parameters (2026-06-21):** Pocket has `temp` (0.3-1.2, controls expressiveness), `lsd_decode_steps` (1-5, controls quality), `frames_after_eos` (trailing breath), and voice state export to safetensors. These are NOT exposed through the Trippcore worker but ARE available in the Python library. See `uncensored-voice-pipeline` skill's `references/pocket-tts-api-parameters.md` for full details. The `temp` parameter is the closest Pocket has to mood control — higher = more expressive, lower = more monotone.
+
 **MiMo VoiceClone API format (solved 2026-06-19):**
 ```json
 {

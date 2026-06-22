@@ -413,6 +413,30 @@ hermes config path   # ALWAYS check this first
 ```
 Or add to PATH: `export PATH="/opt/hermes/.venv/bin:$PATH"`
 
+### Practical Config Tuning (from production use)
+
+Most defaults are fine for casual use. These matter for power users running long sessions, large files, or parallel delegation:
+
+| Setting | Default | Recommended | Why |
+|---|---|---|---|
+| `compression.threshold` | 0.50 | 0.75 | At 50% on a 200K context model, compression fires at 100K tokens — too early for long runs. 75% gives 50% more working room. On 1M context models (MiMo, Gemini), 50% = 500K which is already generous — bump to 75% only if you hit compression mid-task. |
+| `tool_output.max_lines` | 2000 | 5000 | Large policy docs, codebases, and knowledge bases exceed 2000 lines. Chunking loses cross-section context. |
+| `tool_output.max_line_length` | 2000 | 2000+ | Single-line JSON/markdown blobs over 2000 chars get truncated. Increase if working with minified files. |
+| `tool_output.max_bytes` | 50000 | 50000 | Rarely a bottleneck. Increase if monitoring long test runs that produce >50K char outputs. |
+| `delegation.max_concurrent_children` | 3 | 5 | Parallel subagent tasks (research batches, multi-file refactors) hit the 3 cap. 5 is a good middle ground. Token-heavy — watch cost. |
+| `delegation.max_spawn_depth` | 1 | 1 | Keep at 1 unless you specifically need subagents spawning their own subagents. Nesting adds complexity and cost. |
+
+**Config key paths (PITFALL):** `tool_output.*` controls file reading limits. `curator.*` also has a `max_lines` key — don't confuse them. Always verify with `grep -n "key_name" config.yaml` after setting.
+
+Apply with:
+```bash
+hermes config set compression.threshold 0.75
+hermes config set tool_output.max_lines 5000
+hermes config set delegation.max_concurrent_children 5
+```
+
+Changes take effect on next session (`/reset` in gateway, or new `hermes` invocation in CLI).
+
 ### Config Sections
 
 Edit with `hermes config edit` or `hermes config set section.key value`.
@@ -993,6 +1017,14 @@ Works with standard OpenAI image format (both base64 data URIs and URLs). Sends 
 2. `hermes login` — re-authenticate OAuth providers
 3. Check `.env` has the right API key
 4. **Copilot 403**: `gh auth login` tokens do NOT work for Copilot API. You must use the Copilot-specific OAuth device code flow via `hermes model` → GitHub Copilot.
+
+### `hermes update` fails with permission denied
+The venv at `/opt/hermes/.venv/` may have dist-info directories owned by `root` while the process runs as `hermes` user. `uv pip install --upgrade` fails with `Permission denied` on `INSTALLER` file. No `sudo` available in container.
+
+**Fix:** A root user must run: `chmod -R 777 /opt/hermes/.venv/lib/python3.13/site-packages/hermes_agent-*.dist-info/`
+Then retry: `cd /opt/hermes && /usr/local/bin/uv pip install --upgrade hermes-agent --python .venv/bin/python`
+
+**Alt fix:** Create a fresh venv and reinstall there, then swap the path.
 
 ### Model-change drift (multi-location)
 
