@@ -1,0 +1,135 @@
+{
+  "jobs": [
+    {
+      "id": "9acb15ceb07d",
+      "name": "MiMo 30-Day Check-in",
+      "prompt": "This is your 30-day MiMo check-in reminder! It's been a month since you subscribed to the MiMo Token Plan ($169/yr).\n\nTime for the verdict: Love it or hate it?\n- If LOVE: We buy Echo a sub through your referral link (you get 20% back).\n- If HATE: We plan the exit strategy and don't renew in April 2027.\n\nPrevious context: You got the MiMo Token Plan working after figuring out you need to send thinking: {\"type\": \"disabled\"} on pro models. Scout (your agent) has been using it for TTS (Chloe voice, raspy southern sarcasm), vision, function calling, and chat. Echo and Tripp were candidates for sharing the load.\n\nSo... Yo Fam? Love it or hate it? \ud83d\udd27",
+      "skills": [],
+      "skill": null,
+      "model": null,
+      "provider": null,
+      "base_url": null,
+      "script": null,
+      "no_agent": false,
+      "context_from": null,
+      "schedule": {
+        "kind": "once",
+        "run_at": "2026-07-16T19:02:00+00:00",
+        "display": "once at 2026-07-16 19:02"
+      },
+      "schedule_display": "once at 2026-07-16 19:02",
+      "repeat": {
+        "times": 1,
+        "completed": 0
+      },
+      "enabled": true,
+      "state": "scheduled",
+      "paused_at": null,
+      "paused_reason": null,
+      "created_at": "2026-06-16T21:09:11.956854+00:00",
+      "next_run_at": "2026-07-16T19:02:00+00:00",
+      "last_run_at": null,
+      "last_status": null,
+      "last_error": null,
+      "last_delivery_error": null,
+      "deliver": "telegram:8808479511",
+      "origin": {
+        "platform": "telegram",
+        "chat_id": "8808479511",
+        "chat_name": "Eddie",
+        "thread_id": null
+      },
+      "enabled_toolsets": null,
+      "workdir": null
+    },
+    {
+      "id": "db9f74e056ef",
+      "name": "Daily Fort-Yams Backup",
+      "prompt": "Run the daily backup to Fort-Yams GitHub repo. Steps:\n1. cd /opt/data/Fort-Yams\n2. source /opt/data/.env to get GITHUB_PAT\n3. git pull origin main (to avoid conflicts)\n4. rsync or copy updated files: skills from /opt/data/skills to cyony/skills, config.yaml to cyony/, shared memory/wiki to shared/\n5. git add -A, commit with timestamp message, push to origin main\n6. Report what was backed up (file count, any errors)\nKeep the commit message short: \"\ud83c\udf60 Daily harvest: YYYY-MM-DD\"",
+      "skills": [],
+      "skill": null,
+      "model": null,
+      "provider": null,
+      "base_url": null,
+      "script": null,
+      "no_agent": false,
+      "context_from": null,
+      "schedule": {
+        "kind": "cron",
+        "expr": "0 3 * * *",
+        "display": "0 3 * * *"
+      },
+      "schedule_display": "0 3 * * *",
+      "repeat": {
+        "times": null,
+        "completed": 2
+      },
+      "enabled": true,
+      "state": "scheduled",
+      "paused_at": null,
+      "paused_reason": null,
+      "created_at": "2026-06-19T08:38:10.427898+00:00",
+      "next_run_at": "2026-06-22T03:00:00+00:00",
+      "last_run_at": "2026-06-21T03:04:55.540457+00:00",
+      "last_status": "ok",
+      "last_error": null,
+      "last_delivery_error": null,
+      "deliver": "origin",
+      "origin": {
+        "platform": "telegram",
+        "chat_id": "8808479511",
+        "chat_name": "Eddie",
+        "thread_id": null
+      },
+      "enabled_toolsets": [
+        "terminal",
+        "file"
+      ],
+      "workdir": null
+    },
+    {
+      "id": "f3251f73141c",
+      "name": "Scout Snooze Accountability",
+      "prompt": "",
+      "skills": [],
+      "skill": null,
+      "model": null,
+      "provider": null,
+      "base_url": null,
+      "script": "snooze-check.sh",
+      "no_agent": true,
+      "context_from": null,
+      "schedule": {
+        "kind": "cron",
+        "expr": "0 12,14,16,19,21 * * *",
+        "display": "0 12,14,16,19,21 * * *"
+      },
+      "schedule_display": "0 12,14,16,19,21 * * *",
+      "repeat": {
+        "times": null,
+        "completed": 20
+      },
+      "enabled": true,
+      "state": "scheduled",
+      "paused_at": null,
+      "paused_reason": null,
+      "created_at": "2026-06-20T08:14:01.583111+00:00",
+      "next_run_at": "2026-06-22T12:00:00+00:00",
+      "last_run_at": "2026-06-21T21:00:58.903972+00:00",
+      "last_status": "ok",
+      "last_error": null,
+      "last_delivery_error": null,
+      "deliver": "telegram",
+      "origin": {
+        "platform": "telegram",
+        "chat_id": "8808479511",
+        "chat_name": "Eddie",
+        "thread_id": null
+      },
+      "enabled_toolsets": null,
+      "workdir": null,
+      "fire_claim": null
+    }
+  ],
+  "updated_at": "2026-06-21T21:00:58.904455+00:00"
+}

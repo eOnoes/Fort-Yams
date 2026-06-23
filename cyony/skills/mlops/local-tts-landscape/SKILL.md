@@ -8,7 +8,74 @@ tags: [tts, voice, local, open-source, voice-cloning]
 
 ## Top Solutions for SQHQ
 
-### 1. Chatterbox TTS (25k+ ⭐) — The Beast
+### 1. Fun-CosyVoice 3 (21.7k+ ⭐) — THE CROWN JEWEL
+- **Repo:** github.com/FunAudioLLM/CosyVoice
+- **Model:** FunAudioLLM/Fun-CosyVoice3-0.5B-2512 (HuggingFace) | GGUF: Lourdle/Fun-CosyVoice3-0.5B-2512-GGUF
+- **Model Size:** 0.5B parameters
+- **Languages:** 9 (English, Chinese, Japanese, Korean, German, Spanish, French, Italian, Russian)
+- **Voice Cloning:** ✅ Zero-shot from reference audio. State-of-the-art speaker similarity (78.0% Chinese, 71.8% English — beats F5-TTS, CosyVoice 2, Spark TTS).
+- **Emotion Control:** ✅ **Instruct mode that works WITH cloning.** Supports instructions for emotions, speed, volume, dialect. This is the combo no other open model delivers.
+- **VRAM:** ~4-6GB. Fits RTX 4070 12GB easily.
+- **Speed:** 150ms streaming latency, near real-time.
+- **Content Filters:** ❌ **NONE.** No safety checker code in the repo. Apache 2.0 license. Fully open.
+- **License:** Apache 2.0
+- **Status (2026-06-22):** Discovered via research. Codex tasked with deployment on Echo's Windows PC. This is the potential replacement for both Pocket TTS (no emotion control) and Qwen3-TTS (instruct doesn't work in clone mode). Awaiting hands-on testing.
+- **Why this matters:** It's the ONLY open-source model where voice cloning + emotion instruction control actually work together. Qwen3's instruct is a dead end (model limitation). CosyVoice 3 was designed for this exact use case.
+- **GGUF quantized versions available:** F16, Q4_K_M, Q5_K_M, Q8_0 — flexible deployment options.
+
+### 2. Dia 1.6B (NEW — June 2026) — The Multi-Speaker
+- **Repo:** github.com/nari-labs/dia
+- **Model:** nari-labs/Dia-1.6B (1.6B params, ~4.4GB VRAM)
+- **Languages:** English primary
+- **Voice Cloning:** ✅ Yes
+- **Emotion Control:** ✅ Native inline tags: `(laughs)`, `(sighs)`, `(gasps)`, `(screams)`, `(singing)`, `(whistles)` etc. Multi-speaker dialogue with `[S1]`/`[S2]` tags.
+- **VRAM:** ~4.4GB. Fits RTX 4070.
+- **Content Filters:** ❌ NONE. Apache 2.0.
+- **License:** Apache 2.0
+- **Status (2026-06-22):** ✅ LIVE on Echo's PC. Repo at `D:\\Trippcore\\repos\\dia`, model at `D:\\Trippcore\\models\\dia\\Dia-1.6B-0626`. Provider: `dia_chloe`. Model loader fixed (switched to `from_local` with .pth file). ~37s generation time. All 4 providers (Pocket, CosyVoice3, IndexTTS2, Dia) verified operational after provider isolation fix.
+- **Why this matters:** Multi-speaker dialogue capability is unique. Inline emotion tags work natively in text. No L/R confusion (English-native).
+
+### 3. Zonos v0.1 (NEW — June 2026) — The Compact Uncensored
+- **Repo:** github.com/Zyphra/Zonos
+- **Model:** Zyphra/Zonos-v0.1-transformer (500M params, ~3.1GB VRAM)
+- **Voice Cloning:** ✅ From reference audio
+- **Emotion Control:** ✅ 8D emotion vector (happiness, sadness, anger, fear, surprise, disgust, contempt, neutral) + whispering via audio prefix
+- **VRAM:** 3.1GB. Easily fits RTX 4070.
+- **Content Filters:** ❌ NONE. Community confirmed NSFW out of the box.
+- **License:** Apache 2.0
+- **Speed:** Fast (small model). 44.1kHz native output.
+- **Status (2026-06-22):** Identified via Kimi's research. NOT YET INSTALLED. Top candidate for next test — smallest model, confirmed uncensored, precise emotion vector control.
+
+### 4. VibeVoice (NEW — June 2026) — The Banned One
+- **Model:** Microsoft VibeVoice 1.5B
+- **Voice Cloning:** ✅ Context-aware expression
+- **Content Filters:** ❌ NONE (Microsoft pulled it because people used it for NSFW)
+- **VRAM:** 8-12GB (tight on RTX 4070)
+- **License:** MIT
+- **Status (2026-06-22):** Identified. Hard to find (pulled from official channels). May need community mirrors.
+
+### 5. Fish S2 Pro (NEW — June 2026) — The Tag Master
+- **Model:** ~5B params (too large for RTX 4070 at 17GB VRAM)
+- **Emotion Control:** ✅ 15,000+ free-form tags including `[whisper]`, `[moaning]`, `[panting]`, `[laugh]`
+- **Voice Cloning:** ✅ SOTA
+- **Content Filters:** Likely none (research model)
+- **Status (2026-06-22):** Identified. Too large for current hardware. Bookmark for future.
+
+### 6. Orpheus (NEW — June 2026) — The Inline Tagger
+- **Model:** 3B params, ~8GB VRAM
+- **Emotion Control:** ✅ Trained inline tags: `<gasp>`, `<sigh>`, `<groan>`, `<laugh>`
+- **Voice Cloning:** ✅
+- **Content Filters:** Partial (some censorship)
+- **License:** Apache 2.0
+- **Status (2026-06-22):** Identified. Fits RTX 4070 but tight. Some censorship present.
+
+### 7. Higgs Audio V3 (NEW — June 2026) — The Arousal Token
+- **Emotion Control:** ✅ `<|emotion:arousal|>`, `<|style:whispering|>`, `<|sfx:sigh|>` tokens built in
+- **Content Filters:** Unclear
+- **License:** ⚠️ NON-COMMERCIAL
+- **Status (2026-06-22):** Identified. Non-commercial license is a blocker for production use.
+
+### 8. Chatterbox TTS (25k+ ⭐) — The Beast
 - **Repo:** github.com/resemble-ai/chatterbox
 - **Model Size:** 350M-500M parameters
 - **Languages:** English primary, multilingual variant available
@@ -77,11 +144,26 @@ tags: [tts, voice, local, open-source, voice-cloning]
 
 ## Recommendations for SQHQ
 
-### Triple-Stack Architecture (Updated 2026-06-21):
-1. **Live conversation** → Pocket TTS (chloe) via tripp-tts-worker (~5s, local, uncensored)
-2. **Premium local TTS** → Qwen3 TTS (qwen_chloe) via tripp-tts-worker (~8-14s, local, higher fidelity)
-3. **Dynamic text (not cached)** → MiMo TTS VoiceDesign (~2s, cloud, V3 voice + mood overlays)
-4. **Premium pre-generated clips** → Chatterbox voice clone (~38s, exact voice match)
+### Triple-Stack Architecture (Updated 2026-06-22 — Kimi Research Edition):
+1. **Live conversation** → Pocket TTS (chloe) via tripp-tts-worker (~5s, local, uncensored, PRIMARY)
+2. **Premium local TTS** → Fun-CosyVoice 3 via local API (~4-6GB VRAM, zero-shot clone + instruct emotion control) — LIVE but L/R English issue = NOT production. Fine-tune may fix (see `references/cosyvoice3-finetune-guide.md`).
+3. **Experimental** → Dia 1.6B (dia_chloe) — INSTALLED, awaiting worker restart. Native emotion tags, multi-speaker, Apache 2.0.
+4. **Next to test** → Zonos v0.1 (500M, 3.1GB VRAM, confirmed uncensored, 8D emotion vector)
+5. **Experimental backup** → Qwen3 TTS (qwen_chloe) — instruct is dead end in clone mode
+6. **Dynamic text (not cached)** → MiMo TTS VoiceDesign (~2s, cloud, V3 voice + mood overlays)
+7. **Premium pre-generated clips** → Chatterbox voice clone (~38s, exact voice match)
+
+### Kimi's Research Rankings (for next tests):
+1. 🥇 **Zonos v0.1** — confirmed uncensored, 500M, 3.1GB VRAM, 8D emotion vector, Apache 2.0
+2. 🥈 **Dia 1.6B** — installed, inline emotion tags, multi-speaker, Apache 2.0
+3. 🥉 **Chatterbox-Turbo** — MIT, English-native, exaggeration+cfg tuning
+4. **Orpheus** — 3B, 8GB VRAM, inline tags, but partial censorship
+5. **VibeVoice** — pulled from official channels, hard to get
+6. **Fish S2 Pro** — 17GB VRAM, too large for current hardware
+7. **Higgs Audio V3** — arousal tokens, but non-commercial license
+
+### CosyVoice3 Fine-Tune Option (June 2026):
+If CosyVoice3's L/R confusion can be fixed via fine-tuning on Scout's voice data, it becomes viable. Path: generate 100-500 MiMo TTS reference sentences → prepare Kaldi format → extract embeddings + speech tokens → fine-tune LLM component on RTX 4070 (~6-8GB VRAM with AMP). See `references/cosyvoice3-finetune-guide.md` for full pipeline.
 
 ### Why Chatterbox is the Winner for Spite:
 - `exaggeration` parameter controls emotion intensity (0.0-1.0) — no text tags needed
@@ -103,6 +185,10 @@ tags: [tts, voice, local, open-source, voice-cloning]
 4. ~~Use Kokoro for fast, lightweight TTS~~ ✅ af_bella approved for Scout 2026-06-19
 5. Fine-tune Kokoro on Scout audio samples (needs GPU access)
 6. Skip Voicebox for now (VPS too small)
+7. ~~FIX TTS worker regression~~ ✅ Fixed 2026-06-22 — provider isolation (`providerEnv.ts`) + dependency pinning
+8. ~~Test Dia 1.6B~~ ✅ LIVE 2026-06-22 — basic generation works, emotion tags pending user testing
+9. **Install and test Zonos v0.1** — 500M, 3.1GB VRAM, confirmed uncensored, 8D emotion vector
+10. **CosyVoice3 fine-tune** — generate MiMo TTS training data → fine-tune LLM to fix L/R confusion
 
 ## Links
 - **Video:** "Elevenlabs just got wrecked. This free AI text to speech is WILD!"
@@ -112,3 +198,10 @@ tags: [tts, voice, local, open-source, voice-cloning]
 - **Voicebox:** github.com/jamiepine/voicebox
 - **Piper:** github.com/rhasspy/piper
 - **Coqui:** github.com/coqui-ai/TTS
+- **Dia:** github.com/nari-labs/dia
+- **Zonos:** github.com/Zyphra/Zonos
+
+## References
+- `references/chatterbox-voice-cloning.md` — Chatterbox voice cloning pipeline
+- `references/cosyvoice3-research.md` — CosyVoice3 pre-deployment research
+- `references/kimi-tts-research-june2026.md` — Kimi's curated uncensored TTS research: Zonos, Dia, VibeVoice, Fish S2 Pro, Orpheus, Higgs Audio V3

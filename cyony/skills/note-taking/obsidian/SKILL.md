@@ -59,3 +59,7 @@ Use `patch` for focused note changes when the current content gives you stable c
 ## Wikilinks
 
 Obsidian links notes with `[[Note Name]]` syntax. When creating notes, use these to link related content.
+
+## Pitfalls
+
+- **You may not need the app.** Obsidian is just organized markdown files. If the primary interface is an agent (not a human browsing a desktop app), a plain folder structure with `.md` files, `[[wikilinks]]`, and good naming conventions achieves the same thing. The agent reads/writes/searches markdown natively. The Obsidian app adds value for humans who want a visual graph, drag-and-drop, and plugins — but for agent-mediated knowledge management, a self-organized vault on disk is sufficient and has zero dependencies.
