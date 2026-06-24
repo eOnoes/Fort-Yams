@@ -1,7 +1,7 @@
 # Pre-Cached Snooze Audio — Tier Architecture
 
 ## Overview
-51 MiMo TTS voice clips pre-generated as OGG Opus files. App plays cached audio instantly on snooze/complete, falls back to live MiMo TTS only if clip missing. Eliminates the ~4s API delay for common actions.
+57 MiMo TTS voice clips pre-generated as OGG Opus files (51 quip + 6 interrupt). App plays cached audio instantly on snooze/complete, falls back to live MiMo TTS only if clip missing. Eliminates the ~4s API delay for common actions.
 
 ## Tier Mapping (App-Side Logic)
 
@@ -17,6 +17,7 @@
 | Repeat reminder | `srp` | 5 | Same reminder snoozed before (not yet wired) |
 | Complete | `c` | 5 | Marking reminder done |
 | Agent filler | `af` | 6 | User sends message in Agent tab |
+| Interrupt | `int` | 6 | Scout mid-speech, user acts again |
 
 Priority: `isLast` > `rapidFire` > `snoozedSoFar` tier escalation.
 
@@ -50,6 +51,14 @@ Priority: `isLast` > `rapidFire` > `snoozedSoFar` tier escalation.
 - "Hmm. Let me look into that."
 - "Okay. Working on it."
 
+### int (Interrupt)
+- "Huh."
+- "Excuse me?"
+- "Oh. Okay then."
+- "Wow. Rude."
+- "Seriously?"
+- "I was talking."
+
 ## Generation
 
 ### Script
@@ -59,7 +68,7 @@ Priority: `isLast` > `rapidFire` > `snoozedSoFar` tier escalation.
 Uses `MIMO_API_KEY` from `.env.local` (NOT `XAI_API_KEY` — that's for Grok). 401 error = wrong key.
 
 ### Output
-- `public/audio/scout/*.ogg` — 51 files, ~2MB total
+- `public/audio/scout/*.ogg` — 57 files, ~2.1MB total
 - `public/audio/scout/manifest.json` — `{key: {ogg, text, category}}` mapping
 
 ### Re-generation
@@ -79,20 +88,27 @@ export async function playScoutAudio(key: string, currentAudioRef?): Promise<boo
 export async function playRandomScoutQuip(prefix: string, count: number, currentAudioRef?): Promise<string | null>
 ```
 
-### HomeFeed.tsx (Snooze Handler)
-```typescript
-// Tier selection
-let audioPrefix = "s0";
-if (isLast) audioPrefix = "s5";
-else if (rapidFire && snoozedSoFar >= 3) audioPrefix = "sr";
-else if (snoozedSoFar >= 5) audioPrefix = "s4";
-// ... etc
+### HomeFeed.tsx (Snooze Handler — Interruption-Aware, June 2026)
+All snooze/complete actions go through `scheduleDelayedQuip()`. First action plays immediately + sets 2s marker timer. Next action within 2s triggers interruption path (grunt + 2s delay for real quip).
 
-// Cached first, live TTS fallback
-playRandomScoutQuip(audioPrefix, 5, currentAudioRef).then((played) => {
-  if (!played) speakWithTTS(text, currentAudioRef);
-});
+```typescript
+// ALWAYS use delayed quip — even first action
+scheduleDelayedQuip(
+  async () => {
+    playRandomScoutQuip(audioPrefix, audioPoolSize, currentAudioRef).then((played) => {
+      if (!played) speakWithTTS(text, currentAudioRef);
+    });
+  },
+  pendingQuipTimer, pendingQuipFn, interruptionCount, currentAudioRef,
+  true, snoozedSoFar, completedSoFar, remaining,
+);
+
+// scheduleDelayedQuip internal logic:
+// if (!isInterrupt) → play immediately, set 2s marker timer
+// if (isInterrupt) → playInterruptionClip(), set 2s timer for context-aware quip
 ```
+
+**⚠️ CRITICAL: Do NOT check `audioIsPlaying` before deciding whether to use the delayed system.** The old pattern `if (audioIsPlaying || pendingQuipTimer.current) { interrupt } else { play immediately }` fails because on first action, neither condition is true, so no timer is set. The second action then also finds neither condition true and plays immediately instead of interrupting. Always route through `scheduleDelayedQuip`.
 
 ### VoiceAgent.tsx (Agent Filler)
 ```typescript
@@ -104,4 +120,4 @@ playRandomScoutQuip('af', 6, audioRef)
 - Short clip (~10 chars): ~14-20KB
 - Medium clip (~40 chars): ~25-40KB
 - Long clip (~80 chars): ~50-75KB
-- 51 clips total: ~1.9MB
+- 57 clips total: ~2.1MB (51 quip + 6 interrupt)

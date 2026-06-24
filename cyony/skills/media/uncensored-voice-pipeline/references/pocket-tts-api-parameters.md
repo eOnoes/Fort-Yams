@@ -117,10 +117,18 @@ If single-step clone+instruct isn't preserving identity well enough:
 
 ## Worker Integration
 
-The Trippcore worker at `127.0.0.1:8788` exposes Pocket TTS via `/v1/tts` with `voice: "chloe"`. Currently only basic parameters are exposed. To use advanced parameters (temp, lsd_decode_steps, etc.), either:
-1. Run Pocket TTS Python directly on the Windows machine
-2. Extend the worker API to accept these parameters
-3. Use the `serve` command with custom config
+The Trippcore worker at `127.0.0.1:8788` exposes Pocket TTS via `/v1/tts` with `voice: "chloe"`.
+
+**CONFIRMED 2026-06-23:** The worker DOES accept and forward `temp` and `lsd_decode_steps` in the JSON body. No need to run Python directly on Windows. These parameters are passed through to the Pocket TTS model.
+
+```bash
+curl -s -X POST http://127.0.0.1:8788/v1/tts \
+  -H "Authorization: Bearer $SECRET" \
+  -H "Content-Type: application/json" \
+  -d '{"text":"Your text","voice":"chloe","return_format":"wav","temp":0.3,"lsd_decode_steps":3}'
+```
+
+Eddie confirmed `temp=0.3` produces actual whisper/intimate delivery. `temp=0.9` produces excited/energetic. This is the ONLY engine with real dynamic volume control — MiMo voiceclone and Dia both output at one fixed volume regardless of text craft or emotion tags.
 
 **Shell script:** `/opt/data/tripp-tts-generate.sh "text"` — basic Pocket TTS generation via worker.
 **Python pattern:** See SKILL.md "Pocket TTS Direct API" section for reliable generation with retry.

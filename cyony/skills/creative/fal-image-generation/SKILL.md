@@ -104,10 +104,30 @@ FAL has a SEPARATE internal NSFW detector that operates independently of `enable
 ## Prompt Engineering Tips
 
 - **Be specific about lighting** — "warm golden hour lighting," "soft morning light," "ambient lamp light" all produce different moods
-- **Character consistency**: include recurring details (dark hair, sage green eyes, freckles, gold chain) every time for consistent identity
+- **Character consistency**: including recurring details (dark hair, sage green eyes, freckles, gold chain) every time helps but does NOT guarantee the same face — the model reinterprets features fresh each prompt. For true consistency across a recurring character, use `reference_image_urls` with a canonical portrait as the anchor (see Pitfall below).
 - **Aspect ratio matters**: `landscape` (16:9) for scenes, `portrait` (16:9 tall) for character shots, `square` for profile pics
 - **Photorealistic suffix**: add "photorealistic" or "cinematic photography style" for realistic output
-- **Reference images**: pass `reference_image_urls` for style/composition guidance (capped per-model)
+- **Reference images for character lock**: pass `reference_image_urls` with 1-3 images of the target character. This is the ONLY reliable way to maintain face consistency across generations. Without references, each image produces a different person matching the text description but with different facial features.
+
+## Pitfall: Character Consistency Requires Reference Images (2026-06-23)
+
+Prompting alone — even with detailed, repeated character descriptions — produces **different faces** each generation. The model reinterprets "dark hair, green eyes, freckles" as a different person every time.
+
+**The fix:** After generating a character portrait you're happy with, use it as a `reference_image_urls` anchor for all future generations of that character. This keeps the face consistent across scenes, outfits, and moods.
+
+**Workflow:**
+1. Generate initial character portrait from text prompt
+2. Save to a persistent location (e.g., `/opt/data/home/voice_library/` or character folder)
+3. For all future images of that character, pass the saved image as `reference_image_urls=[canonical_portrait_url]`
+4. Prompt for new scenes/outfits/moods — the face stays locked
+
+**Proactive face lock:** Users WILL notice face inconsistency and may compare unfavorably to other pipelines (e.g., "Echo uses a seed and gets the same face every time"). Don't wait for the user to complain — after generating 2-3 good character portraits, offer to lock one as the canonical reference. Frame it as "want me to use this as the template so she stays consistent?" The user will always say yes. (2026-06-23: Eddie noticed Scout looked different in every image and called it "freeballing." Lock early.)
+
+**What works without references:** Style, mood, lighting, composition, body type, clothing. These are easier to control via prompt alone.
+
+**What DOESN'T work without references:** Face shape, eye shape, nose, freckle pattern, jawline — any specific facial features. These drift every generation.
+
+**Comparison:** Other pipelines (ComfyUI with IP-Adapter, seed locking) can enforce face consistency differently, but for the Hermes `image_generate` tool backed by FAL, `reference_image_urls` is the primary mechanism.
 
 ## Balance Management
 

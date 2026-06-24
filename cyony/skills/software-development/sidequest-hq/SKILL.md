@@ -61,11 +61,27 @@ When a user snoozes a reminder, a **floating toast** appears at the bottom of th
 4. **low** (≤2 remaining) — Red tint. "Just 1 left. The end is near. For my patience."
 5. **last** (final reminder) — Gold, celebration. "Snooze button champion of 2026."
 
-**Context tracked via:**
-- `visibleReminders.length` = total visible at time of swipe
-- `dismissedIds.size + 1` = snoozed so far (including current)
-- `Date.now() - lastSnoozeTime < 3000` = rapid fire detection
+**Context tracked via (FIXED June 2026):**
+- `baselineTotalRef.current` = total reminder count captured ONCE on first snooze (stable across rapid swipes)
+- `snoozeCountRef.current` = snoozed so far (ref, increments immediately — NOT state)
+- `Date.now() - lastSnoozeTime < 1000` = rapid fire detection (1s window)
 - `remaining <= 0` = last reminder detection
+
+**⚠️ PITFALL: `dismissedIds.size` is stale during rapid snoozes.** The dismiss animation has a 1.5s delay before items are added to `dismissedIds`. When rapid-fire snoozing (multiple swipes within 1.5s), `dismissedIds.size` stays at 0, making `remaining` always equal `totalVisible - 1`. Scout's quips say "5 remaining" no matter how many you've snoozed. The "last" tier never triggers until the animations catch up.
+
+**Fix:** Use a ref-based counter (`snoozeCountRef`) that increments instantly on each swipe, and capture the baseline total once (`baselineTotalRef`) so it stays stable as items animate out:
+```tsx
+const snoozeCountRef = useRef(0);
+const baselineTotalRef = useRef<number | null>(null);
+
+// In handleDismissReminder:
+snoozeCountRef.current += 1;
+const snoozedSoFar = snoozeCountRef.current;
+const currentVisible = feedItems.filter(f => f.type === "reminder" && !completedIds.has(f.id)).length;
+if (baselineTotalRef.current === null) baselineTotalRef.current = currentVisible;
+const total = baselineTotalRef.current;
+const remaining = Math.max(0, total - snoozedSoFar - completedIds.size);
+```
 
 **Quip generation:** `generateSnoozeQuip({snoozedSoFar, remaining, total, rapidFire, isLast})` returns `{text, tier}`. Each tier has 5 random quips with count interpolation. Component: `HomeFeed.tsx`.
 
@@ -108,7 +124,7 @@ async function speakWithTTS(text: string, ref: React.MutableRefObject<HTMLAudioE
 speakWithTTS(quipText, currentAudioRef);
 ```
 
-**Behavior:** Visual toasts appear immediately. Voice fires on FIRST swipe only, reading the exact quip text with Scout's voice. Previous audio is stopped synchronously before new clip plays — one voice at a time. Rapid-fire swipes (within 1s) are SILENT — UI animates but no audio. After 1s of no new swipes, ONE summary clip plays at escalated tier. Result: 2 audio clips max instead of N. Agent filler audio ("Interesting, give me a second...") plays instantly when user sends a message in VoiceAgent, filling dead space while brain+TTS generates the real response.
+**Behavior:** Visual toasts appear immediately. Voice uses the **Audio Interruption System** (see below) — if Scout is mid-speech, the new action cuts her off with a short `int_*` grunt, then schedules the real quip after 2s of quiet. If interrupted again during the 2s, timer resets. After 2s, context-aware quip fires (snarky if snoozing, supportive if completing). Agent filler audio ("Interesting, give me a second...") plays instantly when user sends a message in VoiceAgent, filling dead space while brain+TTS generates the real response.
 - Components: `src/app/components/SwipeableCard.tsx` (reusable), `src/app/components/HomeFeed.tsx`
 - CSS: `src/app/styles/swipeable-card.css`, additions in `src/app/styles/home-feed.css` (`.feed-scout-bubble*`, `.feed-stat-wrapper`, `.feed-stat-detail-panel`)
 
@@ -160,7 +176,32 @@ The VPS is a no-root Docker container with no external port forwarding. See `hea
 ### Zombie port hold after kill -9
 After `kill -9` on Next.js processes, port 3000 can remain held by zombie/defunct processes. A subsequent `npx next start` will fail with `EADDRINUSE`. Fix: `fuser -k -9 3000/tcp` to force-release (plain `fuser -k` sometimes fails on zombies), then `sleep 2` before restarting. Verify with `fuser 3000/tcp 2>/dev/null && echo "still occupied" || echo "port free"`.
 
+**⚠️ PITFALL: `fuser` can miss zombies.** If port is still occupied after `fuser -k`, check `/proc/net/tcp` directly: port 3000 = `0BB8` hex. Look for `00000000:0BB8` in LISTEN state (`0A`). Find the inode (last column before the state), then search `/proc/[PID]/fd` for socket inodes matching that number to find the actual PID. `kill -9` that PID.
+
 Note: `lsof` is not available on this VPS — use `fuser` or read `/proc/net/tcp` (port 0BB8 = 3000 in hex).
+
+### ⚠️ Cloudflare tunnel caches stale HTML
+After rebuilding and restarting the server, the Cloudflare tunnel may still serve cached HTML referencing old chunk names (500 errors on `_next/static/chunks/*.css` and `*.js`). **Always kill and restart the tunnel alongside the server:**
+```bash
+# Kill server + tunnel
+fuser -k -9 3000/tcp 2>/dev/null
+pkill -f "cloudflared tunnel" 2>/dev/null  # NOT just pkill cloudflared
+sleep 2
+
+# Rebuild
+rm -rf .next && npx next build
+
+# Start server
+npx next start -p 3000 -H 0.0.0.0 &
+
+# Start tunnel (new URL)
+npx --yes cloudflared tunnel --url http://localhost:3000 &
+```
+
+**⚠️ PITFALL: `pkill cloudflared` kills the shell wrapper too.** Use `pkill -f "cloudflared tunnel"` or kill specific PIDs found via `ps aux | grep cloudflared | grep -v grep`.
+
+### ⚠️ MiMo TTS truncates at ~500 characters
+The MiMo TTS provider silently truncates text around 500-600 characters. Long TTS messages get cut off mid-sentence. Keep TTS messages concise — under 400 characters to be safe. If you need longer audio, split into multiple clips.
 
 ### Quick Restart (The Right Way)
 ```bash
@@ -250,9 +291,12 @@ Next.js auto-detects the config change and restarts the dev server. No manual re
 - **Voice Agent:** ✅ MiMo-only pipeline (mimo-v2.5-pro brain + mimo-v2.5-tts voice). Single `MIMO_API_KEY` in `.env.local`. Text/voice toggle changes gradient across the ENTIRE app (not just header) — yellow for text, purple for voice. `data-mode` attribute on `.va-header` AND `data-agent-mode` on `.workspace` in app-shell (propagated via `onModeChange` callback from VoiceAgent). Toggle buttons also change color. Error messages show a 5-second auto-dismiss with countdown. Error text: "Chloe's comms are down. Recalibrating... try again." (no smoking references — Eddie dislikes them). **Confirmed working June 2026** — brain generates Chloe responses in ~9s, TTS returns ~830K base64 WAV.
 - **MenuCards:** Tinder-style swipe carousel. Swipe left/right to browse, **tap anywhere on card to enter** (not just Select button). Agent card labeled "Agent: Scout" (not just "Agent") with "💙 Tap to match with Scout" badge. Select button still works as fallback. **Agent card shows Scout's SVG portrait** instead of 🤖 emoji — TWO expression states: `scout-happy.svg` (smirk, relaxed eyes) and `scout-wtf.svg` (wide eyes, raised brows, open mouth, hands up in "are you seriously leaving?!" pose). React swaps `src` based on `scoutExpr` state: `"happy"` when at rest, `"wtf"` when `isAgent && swiping && Math.abs(swipeOffset) > 20`. Note: 20px threshold is much lower than the 80px card-swap threshold — she reacts before you commit to swiping away. CSS: 80x80, 16px border-radius, green glow border (happy) → red glow + shake animation (WTF). `menu-card-avatar-wtf` class triggers `avatar-shake` keyframes (±3deg rotation, 0.3s). SVGs live at `public/scout-happy.svg` and `public/scout-wtf.svg`. ⚠️ **SVG loaded as `<img>` can't use parent HTML data-attributes** — the CSS inside an `<img src="*.svg">` is sandboxed. Must use separate SVG files with React `src` swapping, NOT a single SVG with `[data-expr]` CSS toggling. The single-SVG approach was tried first and silently failed — the expression never changed because the parent `data-expr` attribute was invisible inside the sandboxed `<img>` context. **Two files:** `scout-happy.svg` (smirk, relaxed) and `scout-wtf.svg` (wide eyes, raised brows, open mouth, hands up). CSS classes on the `<img>` element (`menu-card-avatar` base, `menu-card-avatar-wtf` for expression) handle border color and shake animation.
 - **Stat Cards:** Tap to expand detail panel. **Accordion behavior** — only one stat can be expanded at a time, tapping a different stat collapses the previous. **Cards stay in their grid positions** — detail panel slides out BELOW the tapped card using `position: absolute; top: 100%` with `z-index: 10`. Yellow left border (3px), backdrop blur, box shadow. NO `grid-column: 1 / -1` on expanded wrapper (that was causing card reflow). Animation: `statAccordionOpen` uses `transform: translateY(-8px) → translateY(0)` + opacity + max-height. ▼/▲ hint on each card.
-- **Snooze Voice — Pre-Cached Tier Audio (June 2026, UPDATED):** 51 pre-generated MiMo TTS OGG clips in `public/audio/scout/`. Organized by context tier: `s0` (casual) → `s4` (nuclear), `s5` (last), `sr` (rapid-fire), `srp` (repeat reminder), `c` (complete), `af` (agent filler). App checks cached audio first → instant playback, zero API delay. Falls back to live MiMo TTS only if cached clip missing. Dismiss animation: 1.5s. Rapid-fire window: 2s. Tier selection logic in `handleDismissReminder` in HomeFeed.tsx. Manifest at `public/audio/scout/manifest.json`. Generation script at `scripts/generate-scout-audio.py` (uses `MIMO_API_KEY`). See `references/pre-cached-snooze-audio.md` for full tier mapping and generation workflow.
+- **Snooze Voice — Pre-Cached Tier Audio (June 2026, UPDATED):** 51 pre-generated MiMo TTS OGG clips in `public/audio/scout/`. Organized by context tier: `s0` (casual) → `s4` (nuclear), `s5` (last), `sr` (rapid-fire), `srp` (repeat reminder), `c` (complete), `af` (agent filler). App checks cached audio first → instant playback, zero API delay. Falls back to live MiMo TTS only if cached clip missing. Dismiss animation: 1.5s. Rapid-fire window: 1s (was 2s, changed to match quip system). Tier selection logic in `handleDismissReminder` in HomeFeed.tsx. Manifest at `public/audio/scout/manifest.json`. Generation script at `scripts/generate-scout-audio.py` (uses `MIMO_API_KEY`). See `references/pre-cached-snooze-audio.md` for full tier mapping and generation workflow.
 - **Agent Filler Audio (June 2026):** 6 pre-cached acknowledgment clips (`af_1`..`af_6`) play instantly when user sends a message in VoiceAgent — "Interesting, give me a second...", "Hmm, let me look into that...", etc. Fills dead space while MiMo brain + TTS generates the real response. Wired in `VoiceAgent.tsx` `sendMessage()` right after `setLoading(true)`.
 - **Snooze Accountability Cron (June 2026):** Server-side `snooze_log` table in SQLite. Every snooze POSTs to `/api/snooze-log` (stores label + quest). `GET /api/snooze-log` returns unacknowledged snoozes, `PATCH` marks all as seen. Hermes cron job ("Scout Snooze Accountability") runs **5x daily** (7am, 9am, 11am, 2pm, 4pm Central) as a **zero-token watchdog** (`no_agent: true`, Python script at `/opt/data/scripts/snooze-check.py`). Script fetches snooze log, generates snarky message if any found, echoes to stdout (auto-delivered to Telegram), then PATCHes to acknowledge. Empty stdout = silent (no delivery). No LLM tokens burned when no snoozes.
+- **Snooze Audio Interruption (June 2026):** When Scout is mid-speech and user snoozes/completes another card, system plays a short "interruption grunt" (`int_1`..`int_6`), waits 2s, then fires context-aware quip. Multiple interruptions during the 2s window reset the timer and accumulate count. After 2s of quiet, Scout delivers snarky (if snoozing) or supportive (if completing) quip referencing interruption count. Uses `scheduleDelayedQuip()` which ALWAYS runs (even on first action) to ensure the timer ref is set for subsequent interrupts. See "Audio Interruption System" section below.
+- **Snooze Count Fix (June 2026):** Replaced React state-based counting (`completedIds.size`, `dismissedIds.size`) with refs (`snoozeCountRef`, `completedCountRef`) for immediate synchronous updates. `trueTotal` recalculated dynamically as `reminders.filter(r => !r.done).length + completedCountRef.current`. Eliminates stale-count bugs during rapid snoozing.
+- **Card Collapse Fix (June 2026):** Snoozed cards now collapse vertical space via `swipeable-card-outer-collapse` CSS animation on the outer wrapper, preventing ghosted cards from stacking on live ones during rapid snooze.
 - **Seed Data:** 12 reminders + 5 quests pre-loaded for testing.
 
 ## File Structure
@@ -301,10 +345,230 @@ The menu drawer sets `activeView` to "Quests", "Assets", "Ledger", etc. The rend
 ### `viewToCategory` mapping
 All menu items currently map to `"all"` category in CardView. The function exists as a hook for future per-view filtering (e.g. "Ledger" → filter to ledger-only cards). Keep it even if all cases return "all" — the switch statement is the extension point.
 
+## Mobile Polish Priorities (June 2026)
+
+Eddie uses SQHQ on his phone. Mobile is the **primary** interface, not secondary. When doing polish passes:
+
+- **Agent Chat Screen** — previously had a clunky "old window WEBapp" feel on mobile. Keep the chat UI modern, minimal chrome, full-width bubbles, sticky input. Avoid desktop-looking containers or card-in-card nesting.
+- **Menu Layouts** — when you click INTO a menu item (Quests, Ledger, etc.), the inner views should not look like a desktop web app squeezed into a phone. Cards should be edge-to-edge, forms should be full-width, no horizontal scroll, no tiny buttons.
+- **Overall principle** — if it looks like a "web page" and not a "phone app," it's wrong. Welding glass aesthetic is fine but layout should feel native: generous touch targets (48px+), no hover-dependent interactions, safe-area padding on all edges.
+- **Tunnel URL changes on every restart** — always provide the fresh URL to Eddie when booting. Don't make him ask.
+
+## Snooze Count Pitfall — Animation Delay (June 2026)
+
+**Bug:** `dismissedIds` has a 1.5s animation delay before items are added (the shrink→tuck→fade animation). When rapid-snoozing, `dismissedIds.size` is stale — it doesn't include recent snoozes. This caused `remaining` to be wrong, making Scout say "you snoozed everything" when 2-3 cards were still visible.
+
+**Fix:** Use **ref-based counters** for BOTH snooze AND completed counts. `dismissedIds.size` AND `completedIds.size` are both React state — both stale on read during rapid actions.
+```typescript
+const snoozeCountRef = useRef(0);
+const completedCountRef = useRef(0); // ALSO a ref — completedIds.size is stale too
+const baselineTotalRef = useRef<number | null>(null);
+
+// In handleDismissReminder:
+snoozeCountRef.current += 1;
+const snoozedSoFar = snoozeCountRef.current;
+
+// Capture baseline total from the STORE (not feedItems — store reflects API state)
+if (baselineTotalRef.current === null) {
+  baselineTotalRef.current = reminders.filter(r => !r.done).length;
+}
+const remaining = Math.max(0, baselineTotalRef.current - snoozedSoFar - completedCountRef.current);
+
+// In handleCompleteReminder:
+completedCountRef.current += 1; // MUST increment ref alongside setCompletedCount
+```
+
+**Why refs:** React state (`setSnoozeCount`, `setCompletedCount`) is batched and async — multiple rapid handlers read stale state. Refs update synchronously and are available to the next handler call immediately. **Both counters must be refs** — using `completedIds.size` alongside `snoozeCountRef` mixes sync and async, producing wrong results when completing then snoozing within the same render cycle.
+
+**Why store for baseline:** `reminders.filter(r => !r.done).length` reads from the API-backed cache, not from React render state. Snooze doesn't change store state (it's local-only), so the store count is always the true initial total.
+
+## Audio Interruption System (June 2026)
+
+When Scout is mid-speech and the user snoozes/completes another card, the old behavior caused audio clips to chain and overlap. New system:
+
+**Architecture:** `interruption → delay → quip`
+1. If audio is playing when user acts → immediately stop it, play a short `int_*` grunt clip ("Huh.", "Excuse me?", "Wow. Rude.", etc.)
+2. Start a 2-second timer for the real quip
+3. If user acts again during the 2s → reset timer, play another `int_*` grunt
+4. After 2s of quiet → fire context-aware quip (snarky if snoozing, supportive if completing)
+
+**Key refs:**
+```typescript
+const pendingQuipTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+const pendingQuipFn = useRef<(() => Promise<void>) | null>(null);
+const interruptionCount = useRef(0);
+```
+
+**Helper functions:**
+- `playInterruptionClip(currentAudioRef)` — stops current audio, plays random `int_*` clip
+- `scheduleDelayedQuip(quipFn, ...)` — manages the 2s delay queue with interruption counting
+
+**Interruption quips are context-aware:**
+- Snooze-heavy: `"Wow, ${count} interruptions. And you snoozed ${snoozedSoFar}. I'm losing my mind."`
+- Complete-heavy: `"Okay you completed some things, that's great. But ${count} interruptions? Rude."`
+- Mixed: `"I was talking. ${count} interruptions. ${remaining} remaining. Let me finish."`
+
+**Audio files:** 6 clips in `int` tier (`int_1` through `int_6`), ~8-20KB each. Generated with Scout's cloned voice via MiMo TTS. Total manifest: 57 entries.
+
+**⚠️ MiMo TTS character limit ~500-600 chars.** Long TTS messages get truncated mid-sentence. When generating TTS for Eddie (via `text_to_speech` tool or the app's voice API), keep messages under 500 characters. Break longer explanations into multiple shorter TTS calls rather than one long one.
+
+## Card Collapse Animation (June 2026)
+
+**Bug:** Snoozed cards shrank and faded but the `.swipeable-card-outer` wrapper kept its height, causing ghosted cards to stack on top of live cards during rapid snoozing.
+
+**Fix:** SwipeableCard now adds `swipeable-card-outer-collapse` class to the outer wrapper when `phase === "done" && tuckSide`:
+```css
+.swipeable-card-outer-collapse {
+  animation: outerCollapse 0.3s ease-out forwards;
+}
+@keyframes outerCollapse {
+  to { max-height: 0; margin: 0; padding: 0; gap: 0; opacity: 0; overflow: hidden; }
+}
+```
+
+**File:** `src/app/styles/swipeable-card.css` — added after `.swipeable-card-outer` base rule.
+
+## Snooze System — Count Tracking (June 2026)
+
+### ⚠️ PITFALL: React state is stale inside event handlers
+`completedIds.size` and `dismissedIds.size` read the value from the PREVIOUS render, not the current action. When snoozing rapidly, the count is always 1 behind.
+
+**Fix:** Use refs for both counts — they update synchronously:
+```tsx
+const snoozeCountRef = useRef(0);
+const completedCountRef = useRef(0);
+
+// In handleCompleteReminder:
+completedCountRef.current += 1;
+
+// In handleDismissReminder:
+snoozeCountRef.current += 1;
+const snoozedSoFar = snoozeCountRef.current;
+const completedSoFar = completedCountRef.current;
+
+// Calculate trueTotal dynamically (don't cache in a ref)
+const activeInStore = reminders.filter(r => !r.done).length;
+const trueTotal = activeInStore + completedSoFar;
+const remaining = Math.max(0, trueTotal - snoozedSoFar - completedSoFar);
+```
+
+**Why not `baselineTotalRef`?** Caching the total on first action captures it AFTER any prior completions have already removed items from the store. Always recalculate: `activeInStore + completedRef` gives the true original total regardless of action order.
+
+### Audio Interruption System (June 2026)
+
+When Scout is mid-speech and user snoozes/completes another card:
+1. Immediately stop current audio → play short "interruption grunt" (`int_1`..`int_6`)
+2. Start 2-second timer
+3. If user acts again during the 2s → reset timer + play another grunt
+4. After 2s of quiet → fire context-aware quip (snarky if snoozing, supportive if completing)
+
+**⚠️ CRITICAL: Always use the delayed quip path.** The first action MUST go through `scheduleDelayedQuip()` (plays immediately but sets the timer ref). Without this, the second action finds `pendingQuipTimer.current === null` and skips the interruption path entirely.
+
+```tsx
+// CORRECT: always schedule, even on first action
+scheduleDelayedQuip(quipFn, pendingQuipTimer, pendingQuipFn, ...);
+
+// WRONG: only schedule when audio is playing
+if (audioIsPlaying || pendingQuipTimer.current) {
+  scheduleDelayedQuip(...);
+} else {
+  playRandomScoutQuip(...); // ← next action can't interrupt this
+}
+```
+
+`scheduleDelayedQuip` handles both cases internally:
+- **No pending timer** → plays quip immediately + sets 2s marker timer
+- **Pending timer exists** → plays grunt + resets to 2s delay for real quip
+
+Audio clips: `int_1` through `int_6` in `public/audio/scout/`. Short reactive sounds: "Huh.", "Excuse me?", "Oh. Okay then.", "Wow. Rude.", "Seriously?", "I was talking."
+
+### Card Collapse Animation (June 2026)
+
+Snoozed cards that shrink-and-tuck still occupy vertical space in the DOM until `dismissedIds` fires (1.5s). When rapid-snoozing, ghosted cards stack on top of live ones.
+
+**Fix:** Add collapsing class to the outer wrapper when card reaches "done" phase:
+```tsx
+// In SwipeableCard.tsx:
+let outerClass = `swipeable-card-outer ${className}`;
+if (phase === "done" && tuckSide) outerClass += " swipeable-card-outer-collapse";
+```
+
+```css
+/* In swipeable-card.css: */
+.swipeable-card-outer-collapse {
+  animation: outerCollapse 0.3s ease-out forwards;
+}
+@keyframes outerCollapse {
+  to { max-height: 0; margin: 0; padding: 0; gap: 0; opacity: 0; overflow: hidden; }
+}
+```
+
+## Login (June 2026)
+No password required. Login pages (`login-page.tsx` and `login/page.tsx`) show a single "Enter HQ" button that auto-signs in with the default password `sidequest` server-side. No password field, no form. Biometric/PIN planned for ship.
+
+## Snooze Counting System (June 2026)
+Reminders count uses **refs, not React state** for snooze/completed counts. React state (`completedIds.size`) is async and stale on read during rapid actions.
+
+**Correct pattern:**
+```typescript
+const snoozeCountRef = useRef(0);
+const completedCountRef = useRef(0);
+
+// In handleDismissReminder:
+snoozeCountRef.current += 1;
+const snoozedSoFar = snoozeCountRef.current;
+const completedSoFar = completedCountRef.current;
+const activeInStore = reminders.filter(r => !r.done).length;
+const trueTotal = activeInStore + completedSoFar;
+const remaining = Math.max(0, trueTotal - snoozedSoFar - completedSoFar);
+```
+
+**⚠️ PITFALL: Never use `completedIds.size` or `dismissedIds.size` for quip math.** These are React state — stale on read. Use `snoozeCountRef.current` and `completedCountRef.current` instead. Also never capture `baselineTotalRef` on first action — recalculate `trueTotal` from store + completed ref every time.
+
+## Audio Interruption System (June 2026)
+When Scout is mid-speech and user snoozes/completes another item:
+1. Stop current audio immediately
+2. Play a short interruption clip (`int_*` — "Huh.", "Excuse me?", "Seriously?", etc.)
+3. Start 2-second timer
+4. If user acts again during 2s → reset timer + play another interruption clip
+5. After 2s of quiet → fire context-aware quip (snarky if snoozing, supportive if completing)
+
+**⚠️ PITFALL: ALWAYS use the delayed quip system, even on first action.** The first action plays immediately but also sets a 2s marker timer. Without this, the second action finds `pendingQuipTimer.current === null` and skips the interruption path entirely. The pattern:
+```typescript
+// In scheduleDelayedQuip:
+if (!isInterrupt) {
+  quipFn(); // play immediately
+  pendingTimer.current = setTimeout(() => {
+    pendingTimer.current = null;
+    pendingFn.current = null;
+  }, 2000); // marker — next action within 2s triggers interrupt
+} else {
+  playInterruptionClip(currentAudioRef); // grunt
+  pendingTimer.current = setTimeout(() => {
+    // fire context-aware quip after 2s of quiet
+  }, 2000);
+}
+```
+
+**Interruption quip pools** are context-aware: snooze-heavy → snarky about interruptions + snooze count, complete-heavy → "good job but let me finish", neutral → "I was talking, let me finish."
+
+## Card Collapse Animation (June 2026)
+Snoozed cards that shrink-and-tuck must also collapse their vertical space. Add `swipeable-card-outer-collapse` class to the outer wrapper when phase is "done" + tuckSide is set. CSS animation:
+```css
+.swipeable-card-outer-collapse {
+  animation: outerCollapse 0.3s ease-out forwards;
+}
+@keyframes outerCollapse {
+  to { max-height: 0; margin: 0; padding: 0; gap: 0; opacity: 0; overflow: hidden; }
+}
+```
+
 ## Known Issues
 - **Tunnel URL changes on restart** — Quick tunnels get random hostnames. Named tunnel via Cloudflare account would fix this.
 - **Stale chunks on rebuild** — Always `rm -rf .next` before build. See `headless-browser` skill.
 - **Old tunnel caches stale HTML** — Kill ALL processes (server + cloudflared) before restarting. Cloudflare edge may serve cached HTML with old chunk names.
+- **⚠️ Zombie process on port 3000** — `fuser` sometimes fails to detect zombie/defunct Node.js processes holding the port. The server starts but `EADDRINUSE` silently fails. **Diagnosis:** Check `/proc/net/tcp` for port 0BB8 (3000 in hex) and find the PID via inode lookup: `find /proc -name 'fd' -path '/proc/[0-9]*/fd' 2>/dev/null | while read d; do ls -la "$d" 2>/dev/null | grep "socket:\[INODE\]" && echo "PID: $(echo $d | cut -d/ -f3)"; done`. Then `kill -9 <PID>`.
+- **⚠️ Next.js ISR cache serves stale HTML** — If `curl -sI` shows `x-nextjs-cache: HIT` after a rebuild, the server is serving cached pages from the PREVIOUS build. The HTML references old chunk names that no longer exist → 500 errors on JS/CSS. **Fix:** Kill the server, `rm -rf .next` (clears build + cache), rebuild, restart. The zombie port issue above can cause this — the old server process holds the cache.
 - **Holographic memory enabled** — `hermes config set memory.provider holographic` active. No more 2,200 char limit pressure.
 - **Reminder/People toggle uses index, not DB id** — The store caches by position but the API uses DB integer IDs. Toggling/removing by index can drift if the list changes between renders. Needs DB IDs exposed in API responses.
 - **Voice Agent uses MiMo VoiceClone** — `mimo-v2.5-tts-voiceclone` (cloud, ~4s, Scout's cloned voice from reference audio). NOT the standard `mimo-v2.5-tts` "Chloe" preset (sounds anime). Reference audio: `./public/audio/scout-reference.wav`. MiMo brain (`mimo-v2.5` standard, NOT `mimo-v2.5-pro`) handles text generation. Pro reserved for coding tasks only (doubles token usage).
@@ -415,7 +679,7 @@ If content scrolls under the bottom nav on mobile, check that:
 
 Built into SQHQ as a dedicated Agent tab in the bottom nav. **MiMo-only pipeline** — `mimo-v2.5` (standard) generates Scout's text, `mimo-v2.5-tts-voiceclone` generates audio using her cloned voice. Single `MIMO_API_KEY` in `.env.local`. No Grok dependency (Grok lives in Hermes/Discord for uncensored conversations — the app is safe territory, MiMo censorship is fine here). **12 moods in app (semi-professional filter)** — horizontally scrollable picker, hidden behind ⚙️ gear icon in Agent tab header. Default is 🤖 auto (Scout picks her own mood). Manual moods: calm, annoyed, playful, sassy, deadpan, eureka, chill, groggy, unhinged, smug, mischievous, confident. **Removed from app** (too explicit for public/company use): flirty, sultry, possessive, doting, protective, vulnerable, whisper. Those 7 moods exist ONLY in Telegram/Discord chat (no holds bar). **Auto-mood logic** (93% of time): 5+ snoozes/0 complete → unhinged, 3+ snoozes > completes → annoyed, 3+ completes > snoozes → doting, early morning → groggy, late night → whisper, overdue items → sassy. Reads snooze/complete patterns + time of day. Gear icon toggles picker visibility — tap to override auto, tap again to dismiss.
 
-See `references/card-swipe-pattern.md` for the touch/swipe delta tracking implementation used in CardView. See `references/menu-cards-swipe.md` for the Tinder-style menu navigation cards. See `references/swipeable-card-pattern.md` for the reusable SwipeableCard component (feed card swipe actions, shrink-and-tuck dismiss, mutter bubbles). See `references/context-aware-snooze-quips.md` for the context-aware snooze quip generator. See `references/pre-cached-snooze-audio.md` for the tier-based pre-cached MiMo TTS audio system. See `references/kokoro-tts-integration.md` for full Kokoro TTS integration guide. See `references/scout-character.md` for Scout's canonical physical description, personality traits, and image generation seed info.
+See `references/card-swipe-pattern.md` for the touch/swipe delta tracking implementation used in CardView. See `references/menu-cards-swipe.md` for the Tinder-style menu navigation cards. See `references/swipeable-card-pattern.md` for the reusable SwipeableCard component (feed card swipe actions, shrink-and-tuck dismiss, mutter bubbles). See `references/context-aware-snooze-quips.md` for the context-aware snooze quip generator. See `references/pre-cached-snooze-audio.md` for the tier-based pre-cached MiMo TTS audio system. See `references/kokoro-tts-integration.md` for full Kokoro TTS integration guide. See `references/scout-character.md` for Scout's canonical physical description, personality traits, and image generation seed info. See `references/mimo-tts-limits.md` for MiMo TTS character limits and truncation behavior.
 
 ### Architecture
 ```
@@ -479,6 +743,6 @@ Full Chloe personality canon is in the `xai-voice-agent` skill (`references/chlo
 - **Persistent Backend**: Move from JSON to Supabase/Firebase for real persistence
 - **User Accounts**: Anonymous auth → save quests across devices
 - **Push Notifications**: Real snooze/complete reminders via service worker
-- **Pre-Cached MiMo TTS Audio (COMPLETE)**: 51 pre-generated Scout quips via MiMo TTS, cached as OGG Opus in `public/audio/scout/`. Tier-based: s0-s5 escalation, rapid-fire, repeat-reminder, complete, agent filler. See `references/pre-cached-snooze-audio.md`.
+- **Pre-Cached MiMo TTS Audio (COMPLETE)**: 57 pre-generated Scout quips via MiMo TTS, cached as OGG Opus in `public/audio/scout/`. Tier-based: s0-s5 escalation, rapid-fire, repeat-reminder, complete, agent filler, interrupt. See `references/pre-cached-snooze-audio.md`.
 - **Multiple Quest Lists**: Work, Personal, Shopping, etc.
 - **Multiple Quest Lists**: Work, Personal, Shopping, etc.

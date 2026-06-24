@@ -234,6 +234,13 @@ fi
 
 ---
 
+## Verifying a New PAT
+
+When a user gives you a new GitHub PAT, verify its capabilities before relying on it. See `references/pat-scope-verification.md` for the full workflow, including:
+- Token masking pitfall (Hermes masks tokens in terminal — use temp files for Python)
+- Step-by-step scope verification (identity → repos → orgs → metadata → permissions)
+- Fine-grained PAT permission gaps (Administration scope often missing for repo metadata updates)
+
 ## Troubleshooting
 
 | Problem | Solution |
