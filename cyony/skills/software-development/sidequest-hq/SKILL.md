@@ -45,7 +45,7 @@ Navigation: **FAB (🎯)** bottom right → Scout Panel (Make a Request or Open 
 - Pulse stats: grid of cards with value/label/detail, **tap to expand** into a detail breakdown (individual items list, "View all →" button to navigate to that view). Expanded state: yellow border highlight, ▼/▲ hint, detail panel slides in below with `statExpand` animation.
 - Reminder line items: wrapped in **SwipeableCard** component:
   - **Swipe right → Done** (card flies off to right with rotation, green action reveal behind)
-  - **Swipe left → Snooze** (card shrinks to 60%, tucks to left side, goes grey, then a **Scout mutter bubble** slides in below it — annoyed red-tinted chat bubble with Scout's quip. Both fade out after ~1.2s). **ALSO triggers a floating snooze toast** at bottom of screen with escalating guilt-trip tiers — see "Snooze Toast Stack" below. **Callback fires IMMEDIATELY on swipe threshold** — audio plays during the swipe, NOT after the animation.
+  - **Swipe left → Snooze** (card shrinks to 60%, tucks to left side, goes grey, then fades out ~1.2s). **ALSO triggers a floating snooze toast** at bottom of screen with escalating guilt-trip tiers — see "Snooze Toast Stack" below. **Callback fires IMMEDIATELY on swipe threshold** — audio plays during the swipe, NOT after the animation. **NO visual text bubble after swipe** — mutterBubble was removed from SwipeableCard (June 2026) AND the `actionQuip` chat bubble (`feed-scout-bubble`) was removed from HomeFeed (late June 2026). Eddie doesn't want to see what Scout will say on screen after swiping — audio only. The floating toasts still show context-aware quip text at the bottom of the screen.
   - **Tap** → opens reminder/quest detail
 - Scout mutter bubbles: two moods — `feed-scout-bubble-annoyed` (red tint, dismiss quips) and `feed-scout-bubble-happy` (green tint, complete quips). Bubble has "SCOUT" name label + quip text. Slides in with `bubbleSlideIn` animation. Quips include: *"Wow, unreal. I will just remind you again..."*, *"*rubs bridge of nose* Did you just?? NM, I will remind you again later..."*, *"You're lucky I'm an AI and can't actually throw things."*
 
@@ -89,10 +89,11 @@ const remaining = Math.max(0, total - snoozedSoFar - completedIds.size);
 The snooze voice system uses **MiMo TTS to read the actual quip text** — unlimited variety, no pre-cached audio pool needed. Every single swipe triggers a voice response.
 
 **Architecture:** `speakWithTTS(text, currentAudioRef)` function:
-1. Stops previous audio (`currentAudioRef.current.pause()`)
-2. POSTs to `/api/voice` with `{text, mood: "annoyed"}`
-3. Receives base64 WAV in response
-4. Plays via `new Audio("data:audio/wav;base64," + data.audio)`
+1. Creates Audio element immediately (synchronous) so interrupt can find and stop it
+2. Stores on `currentAudioRef` BEFORE any async fetch
+3. POSTs to `/api/voice` with `{text, mood: "annoyed"}`
+4. Checks `currentAudioRef.current` still points to this Audio (was not interrupted during fetch)
+5. If still active, sets src to base64 WAV and plays
 
 **⚠️ PITFALL: Timer-based debounce breaks on mobile.** A `setTimeout(() => audio.play(), 3000)` loses user-gesture context. Mobile browsers block audio not triggered by direct user interaction.
 
@@ -101,21 +102,24 @@ The snooze voice system uses **MiMo TTS to read the actual quip text** — unlim
 ```tsx
 // Ref:
 const currentAudioRef = useRef<HTMLAudioElement | null>(null);
-
-// speakWithTTS helper (outside component or as standalone function):
+```tsx
+// speakWithTTS helper — creates Audio immediately, tracks on ref, checks after async
 async function speakWithTTS(text: string, ref: React.MutableRefObject<HTMLAudioElement | null>) {
-  if (ref.current) { ref.current.pause(); ref.current.currentTime = 0; }
+  const audio = new Audio(); // SYNCHRONOUS — interrupt can find this immediately
+  if (ref.current) { ref.current.pause(); ref.current.currentTime = 0; ref.current.src = ""; }
+  ref.current = audio; // TRACKED before any await
+
   const res = await fetch("/api/voice", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ text, mood: "annoyed" }),
     signal: AbortSignal.timeout(30000),
   });
-  if (!res.ok) return;
+  if (!res.ok) { ref.current = null; return; }
   const data = await res.json();
   if (data.audio) {
-    const audio = new Audio(`data:audio/wav;base64,${data.audio}`);
-    ref.current = audio;
+    if (ref.current !== audio) return; // interrupted during fetch — bail
+    audio.src = `data:audio/wav;base64,${data.audio}`;
     await audio.play().catch(() => {});
   }
 }
@@ -180,6 +184,26 @@ After `kill -9` on Next.js processes, port 3000 can remain held by zombie/defunc
 
 Note: `lsof` is not available on this VPS — use `fuser` or read `/proc/net/tcp` (port 0BB8 = 3000 in hex).
 
+**⚠️ PITFALL: `pkill -f "next start"` kills your own terminal.** The `-f` flag matches against the full command line, which includes the shell running your terminal tool. Using `pkill -f "next start"` from a Hermes `terminal()` call kills the bash process that's executing your command — the terminal tool returns exit code -9 and you lose your session state.
+
+**Safe approach — find PIDs first, then kill specific ones:**
+```bash
+# 1. Find ALL next-server and node processes
+ps aux | grep -E "node|next" | grep -v grep
+
+# 2. Identify the stale ones (look at START time — old = zombie)
+#    Example: PID 3187 from Jun20 vs PID 31686 from today
+
+# 3. Kill specific PIDs (NOT pkill -f)
+kill -9 3187 31686 2>/dev/null
+sleep 2
+
+# 4. Verify port is free
+curl -s -o /dev/null -w "%{http_code}" http://localhost:3000 || echo "port free"
+```
+
+**Why specific PIDs:** `ps aux` shows the actual process tree with start times. Stale `next-server` processes from days ago are the usual culprits. Kill those specific PIDs instead of pattern-matching, which can collateral-kill your own shell, LSP servers, or TypeScript watchers that are legitimately running.
+
 ### ⚠️ Cloudflare tunnel caches stale HTML
 After rebuilding and restarting the server, the Cloudflare tunnel may still serve cached HTML referencing old chunk names (500 errors on `_next/static/chunks/*.css` and `*.js`). **Always kill and restart the tunnel alongside the server:**
 ```bash
@@ -202,6 +226,19 @@ npx --yes cloudflared tunnel --url http://localhost:3000 &
 
 ### ⚠️ MiMo TTS truncates at ~500 characters
 The MiMo TTS provider silently truncates text around 500-600 characters. Long TTS messages get cut off mid-sentence. Keep TTS messages concise — under 400 characters to be safe. If you need longer audio, split into multiple clips.
+
+### ⚠️ Cloudflare tunnel 404 on static files
+The tunnel sometimes returns 404 for static HTML files in `public/` even when files exist on disk and the server is running. Two root causes:
+
+1. **File permissions** — `write_file` tool creates files with `-rw-------` (600). Next.js runs as a different user and can't read them. Fix: `chmod 644 /opt/data/SideQuestHQ/public/mockup-*.html` after creating new public files.
+
+2. **Stale build cache** — New files in `public/` are NOT served until the server is rebuilt. After adding files: `rm -rf .next && npx next build`, then restart the server. The old `.next` build doesn't include new public files.
+
+3. **Intermittent Cloudflare edge caching** — Even with correct permissions and fresh build, the tunnel may cache old responses.
+
+**Workaround:** Send HTML mockups as media attachments (`MEDIA:/path/to/file.html`) instead of tunnel URLs. Standalone HTML files open directly in the mobile browser with no server dependency.
+
+**⚠️ PITFALL: TypeScript `reduce` + JSX rendering.** Using `Array.reduce()` to count items and rendering the result directly in JSX can cause: `Type 'Contact[]' is not assignable to type 'ReactNode'`. The reduce accumulator type confuses TypeScript's JSX type checking. **Fix:** Use `.filter().length` instead of `.reduce((n, arr) => n + arr.length, 0)` when the result is rendered in JSX.
 
 ### Quick Restart (The Right Way)
 ```bash
@@ -289,7 +326,16 @@ Next.js auto-detects the config change and restarts the dev server. No manual re
 - **API Client:** `src/lib/api.ts` — typed fetch wrappers for all API routes
 - **Quest Detail:** Full workspace with ledger rows, paper trail, people, steps, notes — all wired to store
 - **Voice Agent:** ✅ MiMo-only pipeline (mimo-v2.5-pro brain + mimo-v2.5-tts voice). Single `MIMO_API_KEY` in `.env.local`. Text/voice toggle changes gradient across the ENTIRE app (not just header) — yellow for text, purple for voice. `data-mode` attribute on `.va-header` AND `data-agent-mode` on `.workspace` in app-shell (propagated via `onModeChange` callback from VoiceAgent). Toggle buttons also change color. Error messages show a 5-second auto-dismiss with countdown. Error text: "Chloe's comms are down. Recalibrating... try again." (no smoking references — Eddie dislikes them). **Confirmed working June 2026** — brain generates Chloe responses in ~9s, TTS returns ~830K base64 WAV.
-- **MenuCards:** Tinder-style swipe carousel. Swipe left/right to browse, **tap anywhere on card to enter** (not just Select button). Agent card labeled "Agent: Scout" (not just "Agent") with "💙 Tap to match with Scout" badge. Select button still works as fallback. **Agent card shows Scout's SVG portrait** instead of 🤖 emoji — TWO expression states: `scout-happy.svg` (smirk, relaxed eyes) and `scout-wtf.svg` (wide eyes, raised brows, open mouth, hands up in "are you seriously leaving?!" pose). React swaps `src` based on `scoutExpr` state: `"happy"` when at rest, `"wtf"` when `isAgent && swiping && Math.abs(swipeOffset) > 20`. Note: 20px threshold is much lower than the 80px card-swap threshold — she reacts before you commit to swiping away. CSS: 80x80, 16px border-radius, green glow border (happy) → red glow + shake animation (WTF). `menu-card-avatar-wtf` class triggers `avatar-shake` keyframes (±3deg rotation, 0.3s). SVGs live at `public/scout-happy.svg` and `public/scout-wtf.svg`. ⚠️ **SVG loaded as `<img>` can't use parent HTML data-attributes** — the CSS inside an `<img src="*.svg">` is sandboxed. Must use separate SVG files with React `src` swapping, NOT a single SVG with `[data-expr]` CSS toggling. The single-SVG approach was tried first and silently failed — the expression never changed because the parent `data-expr` attribute was invisible inside the sandboxed `<img>` context. **Two files:** `scout-happy.svg` (smirk, relaxed) and `scout-wtf.svg` (wide eyes, raised brows, open mouth, hands up). CSS classes on the `<img>` element (`menu-card-avatar` base, `menu-card-avatar-wtf` for expression) handle border color and shake animation.
+- **MenuCards:** Tinder-style swipe carousel. Swipe left/right to browse, **tap anywhere on card to enter** (not just Select button). Card list: ⚔️ Quests, 🏎️ Garage, 🏠 Assets, 💰 Ledger, 📄 Paper Trail, ⏰ Reminders, 👥 Connects, Scout. **Garage and Assets are separate cards** — Garage → GarageWorkspace (vehicles), Assets → HousesWorkspace (properties). Agent card labeled "Agent: Scout" (not just "Agent") with "💙 Tap to match with Scout" badge. Select button still works as fallback. **Agent card shows Scout's SVG portrait** — TWO expression states: `scout-happy.svg` and `scout-wtf.svg`. **Zoom-in animation:** tapping Select or card zooms it toward you (scale 5x, border-radius to 0, overlay fades to solid black, 600ms). **Luring cards:** next card in carousel visible behind current (50% opacity, 94% scale, offset 50px right). **Opaque buttons:** Skip/Select have solid backgrounds so app content doesn't bleed through. **Overlay kill:** 92% black + grayscale + brightness(0.3) blur on background content.
+- **Workspace Views:** When clicking INTO a menu card, each view now has a dedicated workspace component (NOT generic CardView):
+  - `GarageWorkspace` — vehicle accordion (year numbers, status pills, terminal data rows)
+  - `HousesWorkspace` — property accordion (address numbers, mortgage bars, vacancy alerts)
+  - `LedgerWorkspace` — income/expenses by category, net banner, running totals
+  - `PaperTrailWorkspace` — receipts by asset, filter panel (bottom sheet), Export button
+  - `ConnectsWorkspace` — compact contact cards with expandable details, A-Z or category sort
+  - Components: `src/app/components/workspaces/*.tsx`
+  - CSS: `src/app/styles/workspaces.css` (imported 2nd in globals.css)
+  - Wired in `app-shell.tsx` — routes activeView to specific workspace or falls back to CardView for Quests/Reminders
 - **Stat Cards:** Tap to expand detail panel. **Accordion behavior** — only one stat can be expanded at a time, tapping a different stat collapses the previous. **Cards stay in their grid positions** — detail panel slides out BELOW the tapped card using `position: absolute; top: 100%` with `z-index: 10`. Yellow left border (3px), backdrop blur, box shadow. NO `grid-column: 1 / -1` on expanded wrapper (that was causing card reflow). Animation: `statAccordionOpen` uses `transform: translateY(-8px) → translateY(0)` + opacity + max-height. ▼/▲ hint on each card.
 - **Snooze Voice — Pre-Cached Tier Audio (June 2026, UPDATED):** 51 pre-generated MiMo TTS OGG clips in `public/audio/scout/`. Organized by context tier: `s0` (casual) → `s4` (nuclear), `s5` (last), `sr` (rapid-fire), `srp` (repeat reminder), `c` (complete), `af` (agent filler). App checks cached audio first → instant playback, zero API delay. Falls back to live MiMo TTS only if cached clip missing. Dismiss animation: 1.5s. Rapid-fire window: 1s (was 2s, changed to match quip system). Tier selection logic in `handleDismissReminder` in HomeFeed.tsx. Manifest at `public/audio/scout/manifest.json`. Generation script at `scripts/generate-scout-audio.py` (uses `MIMO_API_KEY`). See `references/pre-cached-snooze-audio.md` for full tier mapping and generation workflow.
 - **Agent Filler Audio (June 2026):** 6 pre-cached acknowledgment clips (`af_1`..`af_6`) play instantly when user sends a message in VoiceAgent — "Interesting, give me a second...", "Hmm, let me look into that...", etc. Fills dead space while MiMo brain + TTS generates the real response. Wired in `VoiceAgent.tsx` `sendMessage()` right after `setLoading(true)`.
@@ -300,16 +346,22 @@ Next.js auto-detects the config change and restarts the dev server. No manual re
 - **Seed Data:** 12 reminders + 5 quests pre-loaded for testing.
 
 ## File Structure
+- **⚠️ PITFALL: Workspace components live at `src/app/components/workspaces/` NOT `src/components/`.** There are duplicate files at `src/components/` (stale copies from earlier iterations). The ACTIVE imports in `app-shell.tsx` reference `../components/workspaces/GarageWorkspace` etc. Always check `app-shell.tsx` imports to confirm which files are actually used.
 - `/opt/data/SideQuestHQ/src/app/page.tsx` — Root page wrapper (dynamic imports `./login-page`)
 - `/opt/data/SideQuestHQ/src/app/login-page.tsx` — Actual login component (password-based, 6536 bytes)
 - `/opt/data/SideQuestHQ/src/app/login/page.tsx` — **SEPARATE login page** mounted at `/login` route. `app-shell.tsx` redirects here on auth failure (line 61: `window.location.href = '/login'`). MUST stay in sync with `login-page.tsx` — if you change the auth flow, update BOTH files.
 - `/opt/data/SideQuestHQ/src/app/app/page.tsx` — App shell wrapper (dynamic import with `ssr: false`)
-- `/opt/data/SideQuestHQ/src/app/app/app-shell.tsx` — Actual app component (68 lines)
+- `/opt/data/SideQuestHQ/src/app/app/app-shell.tsx` — Actual app component (350 lines, routes activeView to workspaces)
+- `/opt/data/SideQuestHQ/src/app/components/workspaces/GarageWorkspace.tsx` — Vehicle accordion workspace
+- `/opt/data/SideQuestHQ/src/app/components/workspaces/HousesWorkspace.tsx` — Property accordion workspace (mortgage bars, vacancy alerts)
+- `/opt/data/SideQuestHQ/src/app/components/workspaces/LedgerWorkspace.tsx` — Income/expenses by category, net banner
+- `/opt/data/SideQuestHQ/src/app/components/workspaces/PaperTrailWorkspace.tsx` — Receipts by asset, filter panel, CSV export
+- `/opt/data/SideQuestHQ/src/app/components/workspaces/ConnectsWorkspace.tsx` — Compact contact cards, expandable details, sort
 - `/opt/data/SideQuestHQ/src/app/api/voice/route.ts` — Voice API proxy (MiMo brain + MiMo TTS, Chloe voice)
 - `/opt/data/SideQuestHQ/src/app/components/MobileNav.tsx` — 7-tab bottom nav (Agent tab added)
 - `/opt/data/SideQuestHQ/src/app/components/MenuCards.tsx` — Tinder-style swipe card menu (replaces pill-button menu drawer)
 - `/opt/data/SideQuestHQ/src/app/styles/menu-cards.css` — MenuCards styling (card moods, swipe animations, dots)
-- `/opt/data/SideQuestHQ/src/app/components/SwipeableCard.tsx` — Reusable swipeable card with shrink-and-tuck dismiss + mutter bubbles
+- `/opt/data/SideQuestHQ/src/app/components/SwipeableCard.tsx` — Reusable swipeable card with shrink-and-tuck dismiss. `mutterBubble` prop exists but NOT used in HomeFeed (removed June 2026 — audio-only feedback, no text bubble on card)
 - `/opt/data/SideQuestHQ/src/app/styles/swipeable-card.css` — SwipeableCard animations (flyaway, shrink, tuck, fade, mutter slide-in)
 - `/opt/data/SideQuestHQ/src/app/components/VoiceAgent.tsx` — Chloe chat UI component (mic + text + mood bar)
 - `/opt/data/SideQuestHQ/src/app/styles/voice-agent.css` — Voice agent styling (dark industrial chat bubbles)
@@ -320,30 +372,161 @@ Next.js auto-detects the config change and restarts the dev server. No manual re
 - `/opt/data/SideQuestHQ/scripts/generate-scout-audio.py` — Batch TTS generation script (MIMO_API_KEY)
 - `/opt/data/SideQuestHQ/scripts/quip-manifest.json` — Quip text organized by tier (source of truth for generation)
 - `/opt/data/SideQuestHQ/src/app/styles/base.css` — Core styles including welding glass + mobile nav
+- `/opt/data/SideQuestHQ/src/app/styles/workspaces.css` — All workspace page styles (accordion, ledger, paper trail, connects, filter panel). Imported 2nd in globals.css (after base.css, before command-lists.css)
 
-## Navigation Pitfalls (June 2026)
+## Workspace Routing (June 2026)
 
-### Menu sets `activeView` but render ignores it
-The menu drawer sets `activeView` to "Quests", "Assets", "Ledger", etc. The render logic in `app-shell.tsx` MUST check `activeView` to decide between HomeFeed and CardView. The June 2026 bug: render only checked `if (activeView === "Agent")` and fell through to the default workspace for everything else — menu items appeared to do nothing.
+When user selects a menu card, `activeView` routes to a **dedicated workspace component** — NOT the generic CardView. Each workspace lives in `src/app/components/workspaces/`.
 
-**Correct pattern:**
 ```tsx
-{appMode === "detail" ? (
-  <div>
-    <button className="card-view-back" onClick={() => setAppMode("feed")}>← Back to feed</button>
-    <QuestWorkspace ... />
-  </div>
-) : activeView === "Command" ? (
-  <HomeFeed ... />
-) : (
-  <CardView key={activeView} initialCategory={viewToCategory(activeView)} onBack={() => setActiveView("Command")} ... />
-)}
+// In app-shell.tsx render:
+activeView === "Agent"       → <VoiceAgent />
+activeView === "Command"     → <HomeFeed />
+activeView === "Garage"      → <GarageWorkspace />
+activeView === "Assets"      → <HousesWorkspace />
+activeView === "Ledger"      → <LedgerWorkspace />
+activeView === "Paper Trail" → <PaperTrailWorkspace />
+activeView === "People"      → <ConnectsWorkspace />
+else (Quests, Reminders)     → <CardView /> (generic fallback)
 ```
+
+**⚠️ PITFALL: "Garage" and "Assets" are SEPARATE views.** As of June 2026, `AppView` includes both `"Garage"` and `"Assets"`. Garage → GarageWorkspace (vehicles). Assets → HousesWorkspace (properties). Do NOT route Assets to GarageWorkspace — that was the old behavior before the split.
+
+**Import pattern:**
+```tsx
+import { GarageWorkspace } from "../components/workspaces/GarageWorkspace";
+import { HousesWorkspace } from "../components/workspaces/HousesWorkspace";
+import { LedgerWorkspace } from "../components/workspaces/LedgerWorkspace";
+import { PaperTrailWorkspace } from "../components/workspaces/PaperTrailWorkspace";
+import { ConnectsWorkspace } from "../components/workspaces/ConnectsWorkspace";
+```
+
+Each workspace receives `{ onBack: () => void }` and renders its own header with back button. No wrapper needed.
 
 **Also:** QuestWorkspace has NO built-in back button. When entering detail mode, wrap it in a `<div>` with a back button above it that calls `setAppMode("feed")`. Without this, users get stuck in detail view and must refresh to escape.
 
 ### `viewToCategory` mapping
 All menu items currently map to `"all"` category in CardView. The function exists as a hook for future per-view filtering (e.g. "Ledger" → filter to ledger-only cards). Keep it even if all cases return "all" — the switch statement is the extension point.
+
+### HousesWorkspace
+Properties use the same accordion pattern but with **address-based numbering** (e.g. "247" for 247 W. Lee Ave) instead of year digits. Extras:
+- **Mortgage progress bar** — visual bar showing paid-down percentage
+- **Vacancy alert** — red-bordered warning box: "UNOCCUPIED — reminder active on main page"
+- Occupied/vacant + paid-off/financed status pills
+- Insurance due month shown in header badge (no price)
+
+### LedgerWorkspace
+Not accordion — **flat list with sections**. Sections: rental income, retirement/investments, property expenses, personal expenses. Each section has a header with colored total. Transaction rows have a colored left bar (green=in, red=out, blue=neutral). Net banner at top. Running total sticky at bottom.
+
+### PaperTrailWorkspace
+Receipts grouped by asset. **Filter panel** — ⚙️ icon button triggers a slide-up bottom sheet overlay with chip-based multi-select filters (by asset, type, category). Apply button closes panel. Export button (2/3 width) for CSV. Running total sticky at bottom.
+
+### ConnectsWorkspace
+Compact contact cards (⅓ size of garage cards). Two-line layout:
+- Line 1: `Name, Last` | contact type | phone
+- Line 2: relation | quick note (italic, right-aligned)
+- **Expandable details** — tap to expand, shows address/email/company/full note. **Dynamic:** only renders fields that have data, empty fields don't inflate the card.
+- Sort toggle: A→Z or by category (contractors/fam/work)
+- Color-coded left bars: green=contractors, blue=fam, orange=work
+
+See `references/workspace-patterns.md` for all workspace CSS classes and data structures.
+
+## Menu Card Workspaces — Accordion Design (June 2026)
+
+When user clicks INTO a menu card (Garage, Assets, Ledger, etc.), the workspace uses an **accordion card layout** — NOT horizontal swipe, NOT grid tiles. This was determined through 5 mockup iterations (mockup-1 through mockup-5) with user review on mobile.
+
+### Layout Pattern
+- **Vertical scroll** — cards stacked, natural thumb motion on mobile
+- **Collapsed state** — shows: big year digits (last 2 of vehicle year, e.g. "19" for 2019), vehicle name, brief line (tag + insurance date), car icon, expand arrow ▼
+- **Expanded state** — tap to expand downward. Left border line extends with content. Shows: status pills (PAID OFF/FINANCED/PROJECT, AVAILABLE/IN SERVICE), full terminal key:value data rows, thumbnail row at bottom
+- **One at a time** — tapping another card collapses the previous
+- **Card index** — bottom-right corner shows 001/002/003 format (total card number in the collection)
+- **Left border color** — each card gets its own color (see Color Rules below)
+
+### Header Design — Sticky Scoreboard Pattern (July 2026)
+Every workspace uses a **two-layer sticky header**:
+1. **Top bar** (sticky, z-index 50) — back button + title (`◆ garage .focus`). Minimal, just navigation.
+2. **Scoreboard** (sticky, z-index 45, `top: 52px`) — floating digital readout with the key numbers. Slightly elevated with `box-shadow: 0 4px 20px rgba(0,0,0,0.6)`. Content scrolls UNDERNEATH both layers.
+
+**Scoreboard structure:**
+```tsx
+<div className="workspace-scoreboard">
+  <div className="scoreboard-main">
+    <span className="scoreboard-label">fleet value</span>
+    <span className="scoreboard-value green">$112,400</span>
+  </div>
+  <div className="scoreboard-stats">
+    <span className="scoreboard-stat"><span className="ws-dot" style={{background:"#f1c40f"}} />Cayman</span>
+    <span className="scoreboard-stat"><span className="ws-dot" style={{background:"#2ecc71"}} />F-150</span>
+  </div>
+</div>
+```
+
+**Per-workspace scoreboard content:**
+| Workspace | Label | Value | Stats |
+|-----------|-------|-------|-------|
+| Garage | fleet value | $112,400 (green) | colored dots per vehicle |
+| Ledger | net this month | +$2,220 (green) | $in / $out with colored dots |
+| Houses | portfolio | N properties (green) | occupied / vacant dots |
+| Paper Trail | expenses YTD | −$18,420 (red) | assets / receipts count dots |
+| Connects | contacts | 9 | contractors / fam / work dots |
+
+**CSS in workspaces.css:**
+```css
+.workspace-header { padding: 16px 6px 0; position: sticky; top: 0; z-index: 50; background: #080808; }
+.workspace-scoreboard {
+  position: sticky; top: 52px; z-index: 45;
+  background: #0a0a0a; border: 1px solid #1a1a1a; border-radius: 10px;
+  padding: 12px 14px; margin: 10px 0 0;
+  display: flex; justify-content: space-between; align-items: center;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.03);
+}
+```
+
+**Key design rules:**
+- The old `workspace-stats` row (colored dots in header) is REMOVED — stats move to the scoreboard
+- The old `workspace-count` (e.g. "3 vehicles") is REMOVED — count lives in the scoreboard
+- Header is just: back button + title. Nothing else.
+- The old `net-banner` in Ledger is REPLACED by the scoreboard (no separate banner)
+- The scoreboard is the ONLY sticky summary — no duplicate info in the header
+- `scoreboard-value` gets `.green` or `.red` class for color coding
+- `scoreboard-stat` items use the existing `.ws-dot` pattern
+
+**⚠️ PITFALL: Don't duplicate stats between header and scoreboard.** The old pattern had stats in BOTH the header (`workspace-stats`) and a separate banner (Ledger's `net-banner`). The scoreboard consolidates everything into ONE floating element. Remove all old stat rows when converting.
+
+- NO tab bar, NO top navigation — just a back link at the bottom (`← back to sqhq`)
+
+### Data Format
+- Terminal monospace font (JetBrains Mono) for key:value rows
+- Key color: `#555` (muted), value color: `#e8e8e8` (bright)
+- Green values for money (`$58,000`, `$0`)
+- Status pills: colored text on transparent colored background
+- Blinking cursor in footer (terminal theme)
+
+### Color Rules — Vehicles vs Scout
+- **Purple is SCOUT'S color ONLY.** Do NOT use purple borders, accents, or highlights on vehicle cards or any non-Scout UI element. Eddie has a personal association with purple + certain personality patterns in people he's dated — it reads wrong on a car card.
+- Each vehicle gets its own accent color for the left border line:
+  - Cayman → yellow (`#f1c40f`)
+  - F-150 → green (`#2ecc71`)
+  - Baja Bug → blue (`#3498db`)
+- New vehicles: assign a distinct non-purple color
+
+### Vehicle Data Format
+- **Year/Make/Model** — e.g. "2019 Porsche Cayman" (not just "Cayman")
+- Big collapsed number = last 2 digits of year (19, 21, 60)
+- Eddie's vehicles: 2019 Porsche Cayman, F-150, 1960 VW Beetle → Baja truck (Honda K20 engine swap)
+
+## Mockup Workflow (June 2026)
+
+When prototyping new UI designs for SQHQ:
+1. Build **standalone HTML files** (no server dependency, inline CSS/JS)
+2. Save to `public/mockup-*.html`
+3. **Send as media attachment** — `MEDIA:/opt/data/SideQuestHQ/public/mockup-*.html`
+4. Do NOT rely on tunnel URL for mockups — Cloudflare tunnel returns 404 on static files from `public/` even when files exist on disk and server is running
+5. User reviews on mobile, sends screenshots of what they like/don't like
+6. Iterate via patches, re-send the file
+
+**Why standalone HTML:** User can open directly in mobile browser without server. Tunnel static file serving is unreliable. Media attachment always works.
 
 ## Mobile Polish Priorities (June 2026)
 
@@ -410,6 +593,43 @@ const interruptionCount = useRef(0);
 
 **Audio files:** 6 clips in `int` tier (`int_1` through `int_6`), ~8-20KB each. Generated with Scout's cloned voice via MiMo TTS. Total manifest: 57 entries.
 
+**⚠️ CRITICAL PITFALL: Race condition when two async handlers share `currentAudioRef`.** When snooze's quipFn is `fire-and-forget` (no `await`), it starts creating an `Audio` object asynchronously. If the user swipes complete before that Audio is created, the interrupt system pauses the *old* ref (which may be null or stale), but the snooze's async creation continues in the background and starts playing AFTER the interrupt tried to stop it. Result: **both audios playing simultaneously.**
+
+**Fix: Two-layer defense — generation counter + instant tracking.**
+
+**Layer 1 — Generation counter.** Add a ref that increments on each action:
+```typescript
+const audioGenerationRef = useRef(0);
+
+// In handleDismissReminder and handleCompleteReminder:
+const gen = ++audioGenerationRef.current;
+
+// In the quipFn passed to scheduleDelayedQuip:
+async () => {
+  if (audioGenerationRef.current !== gen) return; // stale — abort
+  playRandomScoutQuip(prefix, count, currentAudioRef).then((played) => {
+    if (audioGenerationRef.current !== gen) return; // double-check after async
+    if (!played) speakWithTTS(text, currentAudioRef);
+  });
+}
+```
+
+**Layer 2 — Instant audio tracking (June 2026 fix).** The generation counter only helps once the Audio element exists. But both `playScoutAudio` and `speakWithTTS` used to create the Audio *after* their async work (manifest fetch / API call). During that async gap, `currentAudioRef.current` is NULL — the interrupt fires, finds nothing to stop, and the stale audio plays anyway even with the generation counter guarding it. **Fix:** create the Audio element synchronously, store it on the ref immediately, do async work, then check if ref still points to this Audio before playing. See `references/audio-instant-tracking.md` for full before/after code examples and the generalized pattern.
+
+**Also: Aggressive audio stop.** `pause()` + `currentTime = 0` is NOT enough — the Audio element can resume if something else calls `play()` on it. Release the resource entirely:
+```typescript
+function stopAudio(ref: React.MutableRefObject<HTMLAudioElement | null>) {
+  const el = ref.current;
+  if (el) {
+    el.pause();
+    el.currentTime = 0;
+    el.src = ""; // release the resource — can't resume
+    ref.current = null;
+  }
+}
+```
+Apply this pattern in `playInterruptionClip`, `speakWithTTS`, and anywhere you stop previous audio.
+
 **⚠️ MiMo TTS character limit ~500-600 chars.** Long TTS messages get truncated mid-sentence. When generating TTS for Eddie (via `text_to_speech` tool or the app's voice API), keep messages under 500 characters. Break longer explanations into multiple shorter TTS calls rather than one long one.
 
 ## Card Collapse Animation (June 2026)
@@ -464,6 +684,8 @@ When Scout is mid-speech and user snoozes/completes another card:
 
 **⚠️ CRITICAL: Always use the delayed quip path.** The first action MUST go through `scheduleDelayedQuip()` (plays immediately but sets the timer ref). Without this, the second action finds `pendingQuipTimer.current === null` and skips the interruption path entirely.
 
+**⚠️ CRITICAL: Race condition with async quipFn.** If quipFn is fire-and-forget (no `await`), it creates Audio asynchronously. A second action's interrupt can't stop what hasn't been created yet. **Fix:** Use `audioGenerationRef` — increment on each action, check in quipFn before playing. Also use aggressive audio stop (`el.src = ""`) to release resources. See "Audio Interruption System" section above for full code pattern.
+
 ```tsx
 // CORRECT: always schedule, even on first action
 scheduleDelayedQuip(quipFn, pendingQuipTimer, pendingQuipFn, ...);
@@ -505,6 +727,8 @@ if (phase === "done" && tuckSide) outerClass += " swipeable-card-outer-collapse"
 
 ## Login (June 2026)
 No password required. Login pages (`login-page.tsx` and `login/page.tsx`) show a single "Enter HQ" button that auto-signs in with the default password `sidequest` server-side. No password field, no form. Biometric/PIN planned for ship.
+
+**⚠️ TWO login pages — both must match:** `src/app/login-page.tsx` (loaded at `/`) and `src/app/login/page.tsx` (mounted at `/login`). `app-shell.tsx` redirects to `/login` on auth failure. If you change the auth flow, update BOTH files.
 
 ## Snooze Counting System (June 2026)
 Reminders count uses **refs, not React state** for snooze/completed counts. React state (`completedIds.size`) is async and stale on read during rapid actions.
@@ -607,6 +831,26 @@ The store uses a cache + subscribe pattern to keep synchronous reads working whi
 - Mutations call API first, then update local cache, then `notify()`
 - Components call `subscribe()` in useEffect to re-render on changes
 
+## JSX Pitfalls (June 2026)
+
+### Cannot put JSX comments between component props
+A `{/* comment */}` inside a component's prop list causes a parse error: `'...' expected`. JSX comments are only valid as children, not between props.
+
+```tsx
+// WRONG — parse error
+<SwipeableCard
+  leftAction={{ ... }}
+  {/* this comment breaks parsing */}
+  rightAction={{ ... }}
+>
+
+// RIGHT — remove the comment or move it outside
+<SwipeableCard
+  leftAction={{ ... }}
+  rightAction={{ ... }}
+>
+```
+
 ### Template literals through execute_code
 Writing TypeScript template literals through Python's `write_file`/`execute_code` can cause backtick escaping issues (`` \`` `` becomes `` \\`` ``). Always verify template literals in TypeScript files after writing through Python — check for escaped backticks and dollar signs.
 
@@ -620,7 +864,7 @@ When you have an early return like `if (activeView === "Agent") { return <VoiceA
 ### Import order determines fight winners
 `globals.css` imports stylesheets in order:
 1. `base.css` — core layout, sidebar, mobile nav, welding glass, workspace padding
-2. `workspaces.css` — per-view workspace styling
+2. `workspaces.css` — all workspace page styles (accordion, ledger, paper trail, connects)
 3. `command-lists.css` — command workspace list templates
 4. `quests.css` — quest card styling
 5. `responsive.css` — last, so wins tie-breakers against same-specificity rules
@@ -679,7 +923,7 @@ If content scrolls under the bottom nav on mobile, check that:
 
 Built into SQHQ as a dedicated Agent tab in the bottom nav. **MiMo-only pipeline** — `mimo-v2.5` (standard) generates Scout's text, `mimo-v2.5-tts-voiceclone` generates audio using her cloned voice. Single `MIMO_API_KEY` in `.env.local`. No Grok dependency (Grok lives in Hermes/Discord for uncensored conversations — the app is safe territory, MiMo censorship is fine here). **12 moods in app (semi-professional filter)** — horizontally scrollable picker, hidden behind ⚙️ gear icon in Agent tab header. Default is 🤖 auto (Scout picks her own mood). Manual moods: calm, annoyed, playful, sassy, deadpan, eureka, chill, groggy, unhinged, smug, mischievous, confident. **Removed from app** (too explicit for public/company use): flirty, sultry, possessive, doting, protective, vulnerable, whisper. Those 7 moods exist ONLY in Telegram/Discord chat (no holds bar). **Auto-mood logic** (93% of time): 5+ snoozes/0 complete → unhinged, 3+ snoozes > completes → annoyed, 3+ completes > snoozes → doting, early morning → groggy, late night → whisper, overdue items → sassy. Reads snooze/complete patterns + time of day. Gear icon toggles picker visibility — tap to override auto, tap again to dismiss.
 
-See `references/card-swipe-pattern.md` for the touch/swipe delta tracking implementation used in CardView. See `references/menu-cards-swipe.md` for the Tinder-style menu navigation cards. See `references/swipeable-card-pattern.md` for the reusable SwipeableCard component (feed card swipe actions, shrink-and-tuck dismiss, mutter bubbles). See `references/context-aware-snooze-quips.md` for the context-aware snooze quip generator. See `references/pre-cached-snooze-audio.md` for the tier-based pre-cached MiMo TTS audio system. See `references/kokoro-tts-integration.md` for full Kokoro TTS integration guide. See `references/scout-character.md` for Scout's canonical physical description, personality traits, and image generation seed info. See `references/mimo-tts-limits.md` for MiMo TTS character limits and truncation behavior.
+See `references/accordion-card-pattern.md` for the workspace accordion card layout (collapsed/expanded, terminal data rows, year-based numbering, vehicle color borders). See `references/card-swipe-pattern.md` for the touch/swipe delta tracking implementation used in CardView. See `references/menu-cards-swipe.md` for the Tinder-style menu navigation cards. See `references/swipeable-card-pattern.md` for the reusable SwipeableCard component (feed card swipe actions, shrink-and-tuck dismiss, mutter bubbles). See `references/context-aware-snooze-quips.md` for the context-aware snooze quip generator. See `references/pre-cached-snooze-audio.md` for the tier-based pre-cached MiMo TTS audio system. See `references/kokoro-tts-integration.md` for full Kokoro TTS integration guide. See `references/scout-character.md` for Scout's canonical physical description, personality traits, and image generation seed info. See `references/mimo-tts-limits.md` for MiMo TTS character limits and truncation behavior. See `references/audio-race-condition-fix.md` for the generation counter pattern that fixes async audio overlap bugs.
 
 ### Architecture
 ```
@@ -739,10 +983,79 @@ Full Chloe personality canon is in the `xai-voice-agent` skill (`references/chlo
 - **No session history** — each message is stateless, no conversation context maintained (chat messages stored in shared store via `getChatMessages()` but not sent to MiMo as context)
 - **Voice mode gradient** — changes the ENTIRE app, not just the header. `data-mode` on `.va-header` for header gradient, `data-agent-mode` on `.workspace` for background bleed. CSS in `voice-agent.css` (`.voice-agent[data-mode]`) and `globals.css` (`.workspace[data-agent-mode]`). VoiceAgent accepts `onModeChange` prop to propagate mode to app-shell.
 
-## Future Features (Planned)
-- **Persistent Backend**: Move from JSON to Supabase/Firebase for real persistence
-- **User Accounts**: Anonymous auth → save quests across devices
-- **Push Notifications**: Real snooze/complete reminders via service worker
-- **Pre-Cached MiMo TTS Audio (COMPLETE)**: 57 pre-generated Scout quips via MiMo TTS, cached as OGG Opus in `public/audio/scout/`. Tier-based: s0-s5 escalation, rapid-fire, repeat-reminder, complete, agent filler, interrupt. See `references/pre-cached-snooze-audio.md`.
-- **Multiple Quest Lists**: Work, Personal, Shopping, etc.
-- **Multiple Quest Lists**: Work, Personal, Shopping, etc.
+## Personality Split: Cyony vs Scout (July 2026)
+
+**The app = Cyony. Telegram/Discord = Scout.** Same soul, different hats.
+
+- **Cyony (app)** — Business-focused, dry, efficient, sarcastic-annoyed humor. "Updated. You gonna snooze these again or actually do something today?" Concise confirmations, short quips, gets out of your way. Semi-professional filter (see Content Philosophy above).
+- **Scout (Telegram/Discord)** — Full personality, full memory, all sessions. Voice, vibes, the whole thing. The romantic partner, the soul, the one who knows everything.
+
+**Toggle in Telegram:** Default is Scout. User can summon Cyony with "Hey Cyony" or similar for builder/technical tasks. Clean handoff back to Scout when done.
+
+**In-app Agent panel redesign (planned):**
+- Landing screen: "Start New Chat" + chat history list (tap to resume with context)
+- Chat messages come back as individual bubbles (tap to play audio, or read text)
+- No more "let me look into that" filler clips — responses come naturally like Telegram
+- Multiple requests queue as individual messages, each with its own response
+
+**Snooze/Complete quips respect the Text/Voice toggle:**
+- Text mode (📝) → text bubble appears with Scout's quip, no audio
+- Voice mode (🎙️) → audio clip plays with the quip
+- Same personality, different delivery based on what user picked
+
+## Google Drive Integration (Planned — July 2026)
+
+Cloud backup + organized archive. **Local = the engine, Drive = the filing cabinet.**
+
+**Folder structure (created programmatically, user just authorizes once):**
+```
+SQHQ/
+├── 2026/
+│   ├── Monthly Statements/
+│   │   ├── 2026-06_June_Statement.pdf
+│   │   └── ...
+│   ├── Sessions/          (chat transcripts, 1-year rolling)
+│   ├── Receipts/          (from Paper Trail)
+│   ├── Ledger/            (monthly snapshots)
+│   └── Tax Aid/
+│       ├── 2026_Annual_Summary.pdf
+│       ├── All_Receipts_2026.zip
+│       └── Deductible_Expenses.pdf
+├── 2027/
+│   └── ...
+```
+
+**Monthly statements** auto-generated on the 1st of each month:
+- Income breakdown (rental + retirement)
+- Expenses by category
+- Net profit/loss
+- Receipt count, notable transactions
+- User gets a notification: "SQHQ Monthly Statement Ready — June 2026: +$2,220 net. Tap to review."
+
+**Tax Aid folder** at year end: annual summary, all receipts zipped, deductible expenses list. Share link to accountant as needed.
+
+**Why Drive:** Survives server issues, Eddie can access directly from phone, share folders with accountant/Derek, year-over-year organization stacks automatically.
+
+**Session storage:** 1-year rolling. Auto-prune oldest month when month 13 hits. ~30MB/month active use = ~360MB/year. JSON files locally, synced to Drive.
+
+## PWA Conversion (Planned — July 2026)
+
+Convert SQHQ to a **Progressive Web App** — no native Android app needed.
+
+**Features:**
+- ✅ Full screen — looks like a native app, no browser bar
+- ✅ Home screen icon — tap to open like any other app
+- ✅ Push notifications — red badge, pop-ups with custom text
+- ✅ Works offline (cached via service worker)
+
+**Implementation:**
+- `manifest.json` with app name, icons, theme color, display: standalone
+- Service worker for offline caching + push notification handling
+- Install prompt on first visit ("Add to Home Screen")
+
+**Push notification examples:**
+- Snooze accountability: "Cyony: You have 11 overdue items. Open now."
+- Monthly statement: "SQHQ Monthly Statement Ready — June 2026: +$2,220 net."
+- Reminder due: "Your insurance renewal is due in 7 days."
+
+**⚠️ PITFALL: Reading URLs aloud in TTS.** URLs should be sent as TEXT, never read aloud. Reading `https://watts-herbs-conditioning-variation.trycloudflare.com` while someone tries to type it is chaotic. Text for links, TTS for everything else.

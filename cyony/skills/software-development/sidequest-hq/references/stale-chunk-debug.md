@@ -45,11 +45,29 @@ done
 ### 3. Zombie server process holding stale port
 Old `next-server` processes show as `<defunct>` in `ps aux` and the kernel (inetd) still considers the port in use even after the process died. Starting a new server fails silently or the old zombie serves the old build.
 
-**Fix:**
+**⚠️ ANTI-PATTERN: `pkill -f "next start"` from terminal() kills your own shell.** The `-f` flag matches the full command line including the bash process running your command. Always find specific PIDs first.
+
+**Diagnosis — find stale processes:**
 ```bash
-# Nuclear option — kill ALL node/npm/next processes
-kill -9 $(ps aux | grep -E "next|node|npm|cloudflared" | grep -v grep | awk '{print $2}') 2>/dev/null
+ps aux | grep -E "node|next" | grep -v grep
+# Look at START column — a next-server from "Jun20" is stale
+# Example output:
+# hermes  3187  ...  Jun20  next-server (v16.2.9)   ← STALE (days old)
+# root    31686 ...  02:51  next-server (v16.2.9)   ← recent but may have failed
+```
+
+**Fix — kill specific PIDs:**
+```bash
+kill -9 3187 31686 2>/dev/null   # kill the specific stale PIDs
 sleep 3  # Wait for kernel to clean up TIME_WAIT sockets
+# Verify port is free
+curl -s -o /dev/null -w "%{http_code}" http://localhost:3000 || echo "port free"
+```
+
+**Fallback — nuclear option (only if specific PIDs don't work):**
+```bash
+kill -9 $(ps aux | grep -E "next|node|npm|cloudflared" | grep -v grep | awk '{print $2}') 2>/dev/null
+sleep 3
 # Use a different port as escape hatch
 npx next start -p 3001 -H 0.0.0.0
 ```
