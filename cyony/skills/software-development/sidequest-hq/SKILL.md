@@ -14,16 +14,17 @@ SQHQ is a THREE-MODE app, not an 8-tab nav:
 2. **Card View** (`appMode === "cards"`) — swipeable card deck. Infinite loop (prev wraps to last, next wraps to first). Filter bar at top. Tapping stats or reminders opens this.
 3. **Quest Detail** (`appMode === "detail"`) — full QuestWorkspace with ledger, papers, notes, steps, people. Wired to localStorage store.
 
-Navigation: **FAB (🎯)** bottom right → Scout Panel (Make a Request or Open Menu). FAB is visible on ALL screens except the Agent home screen (including quest detail view). Open Menu launches **MenuCards** — a Tinder-style swipe card carousel (not a pill-button list). MobileNav is HIDDEN — tabs are accessed via MenuCards, not a persistent bottom bar.
+Navigation: **FAB (🔧)** bottom right → Scout Panel (Make a Request or Open Menu). FAB is visible on ALL screens except the Agent home screen (including quest detail view). Open Menu launches **MenuCards** — a Tinder-style swipe card carousel (not a pill-button list). MobileNav is HIDDEN — tabs are accessed via MenuCards, not a persistent bottom bar.
 
 **Design principle:** Clean home screen with scrollable data. Everything is read-first. Action happens through Scout or the Menu. No permanent chrome.
 
 ## FAB → Scout Panel Flow
-- FAB (🎯) is a fixed 56px circle at bottom-right (bottom: 80px desktop, 72px mobile, right: 16px)
+- FAB (🔧) is a fixed 56px circle at bottom-right (bottom: 80px desktop, 72px mobile, right: 16px)
 - Tap opens ScoutPanel as a bottom sheet (border-radius: 20px top, slide-up animation)
-- Three choices: "Make a Request", "Open Menu", "Never mind"
+- Four choices: "Make a Request", "Open Menu", "⚙️ Options", "Never mind"
 - **Make a Request** — textarea with Text/Voice toggle. Sending fire-and-forgets to /api/voice or creates a reminder for "remind me" commands. Panel closes immediately — feedback is a "Scout..." indicator above the FAB with bouncing dots (3 dots, staggered animation, yellow)
 - **Open Menu** — launches MenuCards overlay: Tinder-style swipe card carousel with stacked follow-through animation. **Infinite loop** — swiping past the last card wraps to the first and vice versa. Uses modulo wrapping: `(i + 1) % MENU_CARDS.length` for next, `(i - 1 + n) % n` for prev. Two cards rendered at all times: top card (interactive, z-index 2) and behind card (follows drag from opposite side, z-index 1, starts at scale 0.88/opacity 0.5 and animates to 1.0/1.0 as user swipes). Swipe right = previous, swipe left = next. Agent card = match only (no reject). Top-left/right hints always show prev/next card names (infinite). Buttons for Skip/Select as fallback. Component: `src/app/components/MenuCards.tsx`, CSS: `src/app/styles/menu-cards.css`. See `references/menu-cards-swipe.md` for the follow-through animation math.
+- **⚙️ Options** — Font size (A-/A+, 12–22px, persists via localStorage `sqhq-font-size`) AND mood picker (10 moods: auto, calm, annoyed, playful, sassy, deadpan, eureka, chill, mischievous, confident). Both centralized in one place. Mood state lives in `app-shell.tsx` as `const [mood, setMood]` and is passed down to both VoiceAgent and ScoutPanel as props. CSS for mood grid: `scout-mood-grid`, `scout-mood-chip` in `home-feed.css`.
 - NEVER show a "Processing..." panel after send — the user explicitly rejected this. FAB indicator + Agent tab for history is the pattern.
 - **CRITICAL: Double-submit guard** — `useRef` boolean (`pendingRef.current`) must gate every submission. Without it, mobile users with tunnel latency tap 2-5 times and create a Scout army. Two-layer defense: (1) `pendingRef.current` as the bouncer (ref, not state — immediate, no render cycle delay), (2) button goes to `sending` state with "Sending..." text at 40% opacity + pulsing animation. See `references/double-submit-guard.md` for implementation.
 - **CRITICAL: Sending state renders a separate compact view** — when `sending === true`, the ScoutPanel returns a collapsed "sending" state with just "Scout" label + bouncing yellow dots. The compose form, toggle, and cancel button all disappear. This gives the user instant visual feedback without showing a persistent processing panel (which user explicitly rejected).
@@ -180,7 +181,23 @@ The VPS is a no-root Docker container with no external port forwarding. See `hea
 ### Zombie port hold after kill -9
 After `kill -9` on Next.js processes, port 3000 can remain held by zombie/defunct processes. A subsequent `npx next start` will fail with `EADDRINUSE`. Fix: `fuser -k -9 3000/tcp` to force-release (plain `fuser -k` sometimes fails on zombies), then `sleep 2` before restarting. Verify with `fuser 3000/tcp 2>/dev/null && echo "still occupied" || echo "port free"`.
 
-**⚠️ PITFALL: `fuser` can miss zombies.** If port is still occupied after `fuser -k`, check `/proc/net/tcp` directly: port 3000 = `0BB8` hex. Look for `00000000:0BB8` in LISTEN state (`0A`). Find the inode (last column before the state), then search `/proc/[PID]/fd` for socket inodes matching that number to find the actual PID. `kill -9` that PID.
+**⚠️ PITFALL: `fuser` can miss zombies.** If port is still occupied after `fuser -k`, check `/proc/net/tcp` directly: port 3000 = `0BB8` hex. Look for `00000000:0BB8` in LISTEN state (`0A`). Find the inode (column after state), then search `/proc/[PID]/fd` for socket inodes matching that number to find the actual PID. `kill -9` that PID.
+
+**Inode lookup pattern (when lsof is unavailable):**
+```bash
+# 1. Find the inode for port 3000
+cat /proc/net/tcp | grep ":0BB8"
+# Output: "0: 00000000:0BB8 00000000:0000 0A ... INODE ..."
+
+# 2. Find which PID owns that socket inode
+find /proc -name 'fd' -type d 2>/dev/null | while read d; do
+  pid=$(echo $d | cut -d/ -f3)
+  ls -la "$d" 2>/dev/null | grep "socket:[INODE]" && echo "PID: $pid"
+done 2>/dev/null
+
+# 3. Kill it
+kill -9 <PID>
+```
 
 Note: `lsof` is not available on this VPS — use `fuser` or read `/proc/net/tcp` (port 0BB8 = 3000 in hex).
 
@@ -318,15 +335,15 @@ Next.js auto-detects the config change and restarts the dev server. No manual re
 - **Database:** SQLite at `data/sqhq.db` — 20+ tables (quests, reminders, people, assets, investments, crypto, rentals, vehicles, vendors, tenants, chat_messages)
 - **API Routes:** 18 routes under `src/app/api/` — full CRUD for all entities, auth-gated via iron-session
 - **Navigation:** Three modes — Main Feed (default), Card View (swipeable deck), Quest Detail (full workspace). Menu uses MenuCards (Tinder-style swipe carousel).
-- **FAB (🎯):** Bottom right, opens Scout Panel with Make a Request (text/voice) or Open Menu (tab navigation)
+- **FAB (🔧):** Bottom right, opens Scout Panel with Make a Request (text/voice) or Open Menu (tab navigation)
 - **Home Feed:** Scout greeting (mood matches urgency), pulse stat cards (tap to expand, spans all 3 columns), reminder line items with Scout's voice per category
 - **Card View:** Swipeable card deck with infinite loop, filter bar (All/Rentals/Garage/Investments/Customers), action buttons per card
 - **Scout Compose:** Floating text entry with Text/Voice toggle, hits Voice API, creates reminders on "remind me" commands
 - **Store:** `src/lib/store.ts` — client-side cache backed by API routes. Cache + pub/sub pattern: reads are synchronous from cache, writes hit API then update cache. `loadAll()` fetches everything on mount, `subscribe()` notifies components of changes.
 - **API Client:** `src/lib/api.ts` — typed fetch wrappers for all API routes
 - **Quest Detail:** Full workspace with ledger rows, paper trail, people, steps, notes — all wired to store
-- **Voice Agent:** ✅ MiMo-only pipeline (mimo-v2.5-pro brain + mimo-v2.5-tts voice). Single `MIMO_API_KEY` in `.env.local`. Text/voice toggle changes gradient across the ENTIRE app (not just header) — yellow for text, purple for voice. `data-mode` attribute on `.va-header` AND `data-agent-mode` on `.workspace` in app-shell (propagated via `onModeChange` callback from VoiceAgent). Toggle buttons also change color. Error messages show a 5-second auto-dismiss with countdown. Error text: "Chloe's comms are down. Recalibrating... try again." (no smoking references — Eddie dislikes them). **Confirmed working June 2026** — brain generates Chloe responses in ~9s, TTS returns ~830K base64 WAV.
-- **MenuCards:** Tinder-style swipe carousel. Swipe left/right to browse, **tap anywhere on card to enter** (not just Select button). Card list: ⚔️ Quests, 🏎️ Garage, 🏠 Assets, 💰 Ledger, 📄 Paper Trail, ⏰ Reminders, 👥 Connects, Scout. **Garage and Assets are separate cards** — Garage → GarageWorkspace (vehicles), Assets → HousesWorkspace (properties). Agent card labeled "Agent: Scout" (not just "Agent") with "💙 Tap to match with Scout" badge. Select button still works as fallback. **Agent card shows Scout's SVG portrait** — TWO expression states: `scout-happy.svg` and `scout-wtf.svg`. **Zoom-in animation:** tapping Select or card zooms it toward you (scale 5x, border-radius to 0, overlay fades to solid black, 600ms). **Luring cards:** next card in carousel visible behind current (50% opacity, 94% scale, offset 50px right). **Opaque buttons:** Skip/Select have solid backgrounds so app content doesn't bleed through. **Overlay kill:** 92% black + grayscale + brightness(0.3) blur on background content.
+- **Voice Agent:** ✅ MiMo-only pipeline (mimo-v2.5-pro brain + mimo-v2.5-tts voice). Single `MIMO_API_KEY` in `.env.local`. Text/voice toggle changes gradient across the ENTIRE app (not just header) — yellow for text, purple for voice. `data-mode` attribute on `.va-header` AND `data-agent-mode` on `.workspace` in app-shell (propagated via `onModeChange` callback from VoiceAgent). Toggle buttons also change color. Error messages show a 5-second auto-dismiss with countdown. Error text: "Chloe's comms are down. Recalibrating... try again." (no smoking references — Eddie dislikes them). **Conversation context now wired** — `/api/voice` fetches last 20 messages by session_id before calling MiMo. Each "New Chat" is a fresh session (no cross-contamination). **Confirmed working June 2026** — brain generates Chloe responses in ~9s, TTS returns ~830K base64 WAV.
+- **MenuCards:** Tinder-style swipe carousel. Swipe left/right to browse, **tap anywhere on card to enter** (not just Select button). Card list: 🏠 Home (replaced Quests), 🏎️ Garage, 🏠 Houses (renamed from Assets), 💰 Ledger, 📄 Paper Trail, ⏰ Reminders, 👥 Connects, 🤖 Cyony (renamed from Scout). **Garage and Assets are separate cards** — Garage → GarageWorkspace (vehicles), Assets → HousesWorkspace (properties). Agent card labeled "Cyony" (not "Agent: Scout") with "your AI copilot · builder of things" tagline and "💙 Tap to match with Cyony" badge. Select button still works as fallback. **Agent card shows Cyony's expression images** — 8 expression states: happy, stop hand, wrench, facepalm, prayer, prayer2, stressed, temples (140x140px). **Zoom-in animation:** tapping Select or card zooms it toward you (scale 5x, border-radius to 0, overlay fades to solid black, 600ms). **Luring cards:** next card in carousel visible behind current (50% opacity, 94% scale, offset 50px right). **Opaque buttons:** Skip/Select have solid backgrounds so app content doesn't bleed through. **Overlay kill:** 92% black + grayscale + brightness(0.3) blur on background content.
 - **Workspace Views:** When clicking INTO a menu card, each view now has a dedicated workspace component (NOT generic CardView):
   - `GarageWorkspace` — vehicle accordion (year numbers, status pills, terminal data rows)
   - `HousesWorkspace` — property accordion (address numbers, mortgage bars, vacancy alerts)
@@ -787,6 +804,56 @@ Snoozed cards that shrink-and-tuck must also collapse their vertical space. Add 
 }
 ```
 
+## Pet Name Router (June 2026)
+
+When Eddie uses pet names (babe, baby, honey, sweetheart, etc.) in the app, the system strips them before sending to the LLM and tells Cyony to respond with sassy professionalism.
+
+**Implementation in `/api/voice/route.ts`:**
+```typescript
+const PET_NAMES = ['babe', 'baby', 'babes', 'bby', 'boo', 'honey', 'hon', 'hun',
+  'sweetheart', 'sweetie', 'darling', 'dear', 'love', 'sweetpea',
+  'pumpkin', 'sugar', 'doll', 'cutie', 'handsome', 'gorgeous',
+  'beautiful', 'pretty', 'princess', 'queen', 'angel']
+
+function routePetNames(text: string): { cleaned: string; hadPetName: boolean; petName: string | null } {
+  // Strips first pet name found, returns cleaned text + flag
+}
+```
+
+**System prompt injection when pet name detected:**
+```
+[PET NAME DETECTED: "babe" — The user called you "babe" in a business app.
+Respond with dry, sassy professionalism. Acknowledge the pet name with a witty
+remark but stay focused on the actual task.]
+```
+
+**Conversation history cleaning:** The last user message in history is replaced with the cleaned version so the LLM doesn't see the pet name twice.
+
+**Why:** Eddie uses pet names naturally but the app is semi-professional. Cyony should acknowledge the slip with humor ("Did you just call me babe in a work app? Bold.") while still completing the task.
+
+## Background Responses (June 2026)
+
+Users can navigate away from the Agent chat while Cyony is thinking. The API call continues in the background and the response appears when they return.
+
+**Implementation:**
+1. `sendMessage()` no longer guards against `loading` state — allows sending even while a previous request is pending
+2. `pendingSessions` state (Set) tracks which sessions have active API calls
+3. Gold ⚡ badge appears on session items in the landing view when `pendingSessions.has(session.id)`
+4. Response messages are added via `setMessages()` regardless of which view the user is on
+5. Duplicate detection prevents the same response from being added twice
+
+**CSS for pending badge:**
+```css
+.va-pending-badge {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 18px; height: 18px; font-size: 10px;
+  background: #ffd700; color: #000; border-radius: 50%;
+  animation: va-pulse 1.5s ease-in-out infinite;
+}
+```
+
+**Notification interrupt protection:** Since API calls continue regardless of UI state, closing a notification or navigating away won't lose the response. The `finally` block removes the session from `pendingSessions` when complete.
+
 ## Known Issues
 - **Tunnel URL changes on restart** — Quick tunnels get random hostnames. Named tunnel via Cloudflare account would fix this.
 - **Stale chunks on rebuild** — Always `rm -rf .next` before build. See `headless-browser` skill.
@@ -795,6 +862,7 @@ Snoozed cards that shrink-and-tuck must also collapse their vertical space. Add 
 - **⚠️ Next.js ISR cache serves stale HTML** — If `curl -sI` shows `x-nextjs-cache: HIT` after a rebuild, the server is serving cached pages from the PREVIOUS build. The HTML references old chunk names that no longer exist → 500 errors on JS/CSS. **Fix:** Kill the server, `rm -rf .next` (clears build + cache), rebuild, restart. The zombie port issue above can cause this — the old server process holds the cache.
 - **Holographic memory enabled** — `hermes config set memory.provider holographic` active. No more 2,200 char limit pressure.
 - **Reminder/People toggle uses index, not DB id** — The store caches by position but the API uses DB integer IDs. Toggling/removing by index can drift if the list changes between renders. Needs DB IDs exposed in API responses.
+- **Cross-session memory not yet wired** — Cyony remembers within a session (last 20 messages) but not across sessions. Chat #1 about Porsche won't bleed into Chat #2 about schedule. Hermes memory (RAG) integration is planned to give Cyony long-term memory across all sessions.
 - **Voice Agent uses MiMo VoiceClone** — `mimo-v2.5-tts-voiceclone` (cloud, ~4s, Scout's cloned voice from reference audio). NOT the standard `mimo-v2.5-tts` "Chloe" preset (sounds anime). Reference audio: `./public/audio/scout-reference.wav`. MiMo brain (`mimo-v2.5` standard, NOT `mimo-v2.5-pro`) handles text generation. Pro reserved for coding tasks only (doubles token usage).
 - **Database** — SQLite at `data/sqhq.db`. See `references/database-schema.md` for full table list and query patterns.
 
@@ -905,6 +973,17 @@ When building swipeable cards with exit animations, three things fight over `tra
 
 **Also:** When the exit animation unmounts the parent component (e.g. switching views), the unmount must happen AFTER the animation finishes or the card blinks back as the component tree is destroyed. Use `setTimeout(() => onSelect(view), 320)` not 250ms.
 
+### CSS Zoom for Dynamic Font Size (June 2026)
+The app uses CSS `zoom` on the root element for user-adjustable text size:
+- `:root` in `base.css` declares `--app-font-size: 15px` (used by some elements)
+- `body` uses `font-size: var(--app-font-size, 15px)` — but many components have hardcoded `font-size` values (14px, 11px, etc.) that override inherited values
+- **⚠️ PITFALL: CSS variable on `body` does NOT scale the app.** Hardcoded `font-size: 14px` in component CSS overrides the inherited value. The variable only affects elements that don't set their own font-size.
+- **Fix:** Use `document.documentElement.style.zoom = String(scale)` where `scale = newFontSize / 15`. This scales the entire UI proportionally — no inheritance, no overrides to fight.
+- ScoutPanel Options view applies zoom: `document.documentElement.style.zoom = String(clamped / 15)`
+- app-shell.tsx restores zoom on mount from localStorage
+- Persisted in `localStorage` key `sqhq-font-size`, restored in `app-shell.tsx` useEffect on mount
+- Range: 12–22px. CSS `zoom` is the correct approach for scaling an entire UI — it's a multiplier on the root, so everything scales proportionally regardless of individual hardcoded values.
+
 ### Content under the bottom bar (padding fix)
 If content scrolls under the bottom nav on mobile, check that:
 1. `.workspace` has `padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px) + 16px)` at `max-width: 760px`
@@ -919,9 +998,36 @@ If content scrolls under the bottom nav on mobile, check that:
 
 **Rule of thumb:** If Eddie's coworker could glance at his phone and raise an eyebrow, it doesn't belong in the app.
 
+## Crew Voice Clones (Fish Audio — June 2026)
+
+The SQHQ crew has assigned voices via Fish Audio API:
+
+| Agent | Voice | Model ID | Character |
+|-------|-------|----------|-----------|
+| **Cyony/Scout** | MiMo voiceclone | (local ref audio) | Field engineer, Savannah drawl |
+| **Tripp** | Raymond Reddington | `bb70f7b4aedf4f458ba6ec34d73c42e5` | Dry, authoritative, roast master |
+| **Echo** | Jarvis | (independent) | Iron Man's AI assistant |
+
+**Fish Audio API:**
+- Key: stored at `/opt/data/shared/tripp-voice-clone/.fish_key`
+- TTS: `POST https://api.fish.audio/v1/tts` with `{"text":"...","reference_id":"..."}`
+- Models: `GET https://api.fish.audio/model?title=<search>`
+- **⚠️ CRITICAL: Use Python urllib for TTS calls, NOT curl** — shell escaping breaks the Authorization header. Python `urllib.request` works perfectly.
+- **Volume boost:** Fish Audio output is quiet — always post-process with `ffmpeg -af volume=2.5`
+- **Format:** Download as MP3, convert to OGG for Telegram: `ffmpeg -i input.mp3 -c:a libopus -b:a 64k output.ogg`
+
+**Tripp's voice files:** `/opt/data/shared/tripp-voice-clone/`
+- `reddington_confident.ogg` — Main Reddington voice (calm, measured)
+- `reddington_dramatic.ogg` — Deeper, more dramatic variant
+- `tripp_intro.ogg` — "The name is Tripp..."
+- `tripp_task.ogg` — "Consider it done..."
+- `tripp_dry.ogg` — "With all due respect..."
+
+**Setup guide:** `/opt/data/shared/tripp-voice-clone/TRIPP_VOICE_GUIDE.md`
+
 ## Voice Agent (Chloe/Scout)
 
-Built into SQHQ as a dedicated Agent tab in the bottom nav. **MiMo-only pipeline** — `mimo-v2.5` (standard) generates Scout's text, `mimo-v2.5-tts-voiceclone` generates audio using her cloned voice. Single `MIMO_API_KEY` in `.env.local`. No Grok dependency (Grok lives in Hermes/Discord for uncensored conversations — the app is safe territory, MiMo censorship is fine here). **12 moods in app (semi-professional filter)** — horizontally scrollable picker, hidden behind ⚙️ gear icon in Agent tab header. Default is 🤖 auto (Scout picks her own mood). Manual moods: calm, annoyed, playful, sassy, deadpan, eureka, chill, groggy, unhinged, smug, mischievous, confident. **Removed from app** (too explicit for public/company use): flirty, sultry, possessive, doting, protective, vulnerable, whisper. Those 7 moods exist ONLY in Telegram/Discord chat (no holds bar). **Auto-mood logic** (93% of time): 5+ snoozes/0 complete → unhinged, 3+ snoozes > completes → annoyed, 3+ completes > snoozes → doting, early morning → groggy, late night → whisper, overdue items → sassy. Reads snooze/complete patterns + time of day. Gear icon toggles picker visibility — tap to override auto, tap again to dismiss.
+- **13 moods (10 in app Options, semi-professional filter)** — Moods now centralized in the wrench menu Options panel (not in chat header). Gear button removed from VoiceAgent chat header (June 2026). Mood state is lifted to `app-shell.tsx` and passed as props to both VoiceAgent (`mood` + `onMoodChange`) and ScoutPanel. **Removed from app** (too explicit for public/company use): flirty, sultry, possessive, doting, protective, vulnerable, whisper. Those 7 moods exist ONLY in Telegram/Discord chat. Default is 🤖 auto (Scout picks her own mood). **Auto-mood logic** (93% of time): 5+ snoozes/0 complete → unhinged, 3+ snoozes > completes → annoyed, 3+ completes > snoozes → doting, early morning → groggy, late night → whisper, overdue items → sassy. Reads snooze/complete patterns + time of day. **⚠️ PITFALL: Tapping mood picker buttons must NOT dismiss mobile keyboard.** All mood buttons use `onMouseDown={e => e.preventDefault()}` to prevent focus theft.
 
 See `references/accordion-card-pattern.md` for the workspace accordion card layout (collapsed/expanded, terminal data rows, year-based numbering, vehicle color borders). See `references/card-swipe-pattern.md` for the touch/swipe delta tracking implementation used in CardView. See `references/menu-cards-swipe.md` for the Tinder-style menu navigation cards. See `references/swipeable-card-pattern.md` for the reusable SwipeableCard component (feed card swipe actions, shrink-and-tuck dismiss, mutter bubbles). See `references/context-aware-snooze-quips.md` for the context-aware snooze quip generator. See `references/pre-cached-snooze-audio.md` for the tier-based pre-cached MiMo TTS audio system. See `references/kokoro-tts-integration.md` for full Kokoro TTS integration guide. See `references/scout-character.md` for Scout's canonical physical description, personality traits, and image generation seed info. See `references/mimo-tts-limits.md` for MiMo TTS character limits and truncation behavior. See `references/audio-race-condition-fix.md` for the generation counter pattern that fixes async audio overlap bugs.
 
@@ -931,14 +1037,16 @@ User text/mic → VoiceAgent component → POST /api/voice → MiMo 2.5 (brain) 
 ```
 
 ### API Route
-`src/app/api/voice/route.ts` — POST endpoint accepting `{text, mood}`. Returns `{text, audio}` where audio is base64 WAV.
+`src/app/api/voice/route.ts` — POST endpoint accepting `{text, mood, session_id}`. Returns `{text, audio}` where audio is base64 WAV.
+
+**Conversation context:** When `session_id` is provided, the route fetches the last 20 messages from `chat_messages` table for that session and passes them to MiMo as conversation history. Messages are mapped: `scout` role → `assistant`, `user` stays `user`. The current message is already saved to DB by the frontend before the API call, so history includes it — do NOT append it again or the current message appears twice.
 
 **Keys:** Read from `.env.local` at project root:
 - `MIMO_API_KEY` — MiMo (brain + TTS). Single key for both.
 
 ⚠️ **PITFALL: Stale/placeholder API keys** — The `.env.local` once had a 13-char placeholder XAI key (`xai-WM...`). Always verify key length (real keys are ~84 chars) before assuming a route works. If the voice endpoint returns the fallback error text, check the key first. **Quick check:** `source .env.local && echo "Key length: ${#MIMO_API_KEY}"` — if under 50 chars, it's a placeholder. Real keys from the main `.env` at `/opt/data/.env` can be copied in: `REAL_KEY=$(grep MIMO_API_KEY /opt/data/.env | cut -d= -f2) && sed -i "s|^MIMO_API_KEY=.*|MIMO_API_KEY=$REAL_KEY|" .env.local`
 
-**MiMo brain call:** POST https://token-plan-sgp.xiaomimimo.com/v1/chat/completions, model `mimo-v2.5` (standard — NOT `mimo-v2.5-pro`, which doubles token usage and is reserved for coding tasks only), 200 max_tokens, `thinking: { type: 'disabled' }`, Scout system prompt injected. Mood is appended to system message as `Respond in ${mood} mood.` When auto-mood is active (default), the mood is determined server-side from snooze/complete patterns + time of day rather than user selection.
+**MiMo brain call:** POST https://token-plan-sgp.xiaomimimo.com/v1/chat/completions, model `mimo-v2.5` (NOT `mimo-v2.5-pro` — standard is default, pro doubles token usage, reserved for complex reasoning only). Deprecation: v2-pro/omni offline 6.30 (system replacement to v2.5-pro/v2.5 happened 6.1), v2-flash→v2.5 since 6.18, v2-tts→v2.5-tts 6.27 (timbre remapping: mimo_default→冰糖 Chinese, mia elsewhere). New API key (1yr deal, June 2026). Old key→Tripp/Echo for their own TTS. `thinking: { type: 'disabled' }`, Scout system prompt injected. Mood is appended to system message as `Respond in ${mood} mood.` When auto-mood is active (default), the mood is determined server-side from snooze/complete patterns + time of day rather than user selection. **Stage direction stripping:** Before sending to TTS, `stripStageDirections(chloeText)` removes `*action*` and `(action)` patterns from the LLM output. This prevents Pocket TTS from reading stage directions aloud. The displayed text (`chloeText`) retains them — only the TTS input (`ttsText`) is cleaned.
 
 - **MiMo TTS call:** POST https://token-plan-sgp.xiaomimimo.com/v1/chat/completions, model `mimo-v2.5-tts-voiceclone` (NOT `mimo-v2.5-tts` — the standard "Chloe" preset sounds anime/generic, NOT like Scout). Uses voiceclone with Scout's reference audio loaded once at module level as a `data:audio/wav;base64,<ref>` URL. `audio.voice` = the data URL, `audio.format` = 'wav'. Returns base64 WAV in `choices[0].message.audio.data`. Reference audio path: `../shared/chloe-voice-clone/eddie_chill_reference.wav` relative to project root.
 
@@ -953,6 +1061,10 @@ User text/mic → VoiceAgent component → POST /api/voice → MiMo 2.5 (brain) 
 - **Text/voice toggle in the header** — seamless switch mid-conversation. 📝 = text-only response, 🔊 = Scout's cloned audio playback. Toggling doesn't clear history or reset state. **Changes header gradient** — yellow for text, purple for voice via `data-mode` attribute.
 - **18 mood picker** — horizontally scrollable emoji button row with `overflow-x: auto`. Moods: calm, annoyed, playful, flirty, sassy, doting, possessive, deadpan, whisper, eureka, chill, groggy, unhinged, smug, sultry, protective, mischievous, vulnerable, confident. Each mood is passed to `/api/voice` and appended to the system prompt as `Respond in ${mood} mood.` Full descriptions in `mimo-voicedesign-tts` skill `references/mood-descriptions.md`.
 - **Agent filler audio** — pre-cached "thinking" phrases play instantly when user sends a message (`playRandomScoutQuip('af', 6, audioRef)` right after `setLoading(true)`). Fills 3-5s dead space while brain+TTS generates the real response.
+- **TTS stage direction stripping** — The voice API route (`/api/voice`) strips stage directions from LLM output before sending to TTS. `stripStageDirections()` function removes `*action*` and `(action)` patterns, collapses whitespace. The displayed text keeps the stage directions — only the audio is cleaned. This prevents Pocket TTS from reading "smirk" or "tilts head" aloud. Applied in `route.ts` before the TTS payload.
+- **Keyboard dismiss fix** — All buttons near the Agent chat input (mode toggle 📝/🔊, gear ⚙️, mood picker buttons) use `onMouseDown={e => e.preventDefault()}` to prevent stealing focus from the input field. Without this, tapping any button dismisses the mobile keyboard.
+- **New Chat button greyed out** — The `+` button in the Agent chat header is disabled (opacity 0.3, pointerEvents none) when `messages.length === 0` — user is already in a fresh empty chat, so creating another would be spam.
+- **Draft text persistence** — Chat input draft text is saved to `localStorage` key `sqhq-draft` on every keystroke (debounced via `useEffect`). Restored on mount. Cleared when message is sent (`sendMessage()`). This prevents losing typed text when switching tabs or navigating away from the Agent chat.
 - Back button (`←`) in header when `onBack` prop is passed — used by app-shell to navigate back to feed
 - **`onModeChange` prop** — optional callback `(mode: "text" | "voice") => void` fired when user toggles text/voice. Used by app-shell to propagate mode to workspace for gradient bleed.
 - **Error messages** auto-dismiss after 5 seconds with countdown display. Uses `setTimeout(5000)` for dismissal + `setInterval(1000)` for countdown. Countdown resets to 5 on each new error.
@@ -980,8 +1092,92 @@ Full Chloe personality canon is in the `xai-voice-agent` skill (`references/chlo
 - **SpeechRecognition is Chrome/Edge only** — Safari users get text-only
 - **Audio plays as base64 WAV blob** — no streaming, full response must arrive before playback
 - **No interruption** — current audio plays to completion, new message queues
-- **No session history** — each message is stateless, no conversation context maintained (chat messages stored in shared store via `getChatMessages()` but not sent to MiMo as context)
+- **Session context wired (June 2026)** — `/api/voice/route.ts` now fetches the last 20 messages from `chat_messages` table by `session_id` before sending to MiMo. Messages are mapped to `{role, content}` where `scout` → `assistant` and `user` stays `user`. The current message is already saved to DB by the frontend before the API call, so the history includes it — no duplicate appending. Each "New Chat" creates a fresh `session_id`, so conversations don't cross-contaminate. Cross-session memory (RAG via Hermes) is planned but not yet wired.
 - **Voice mode gradient** — changes the ENTIRE app, not just the header. `data-mode` on `.va-header` for header gradient, `data-agent-mode` on `.workspace` for background bleed. CSS in `voice-agent.css` (`.voice-agent[data-mode]`) and `globals.css` (`.workspace[data-agent-mode]`). VoiceAgent accepts `onModeChange` prop to propagate mode to app-shell.
+
+## Cyony Match Button Rejection System (June 2026)
+
+The Agent card in MenuCards has a **"Match" button** (Tinder-style joke). Tapping it triggers a multi-stage rejection sequence with escalating expressions and audio clips.
+
+### How It Works
+- **9-tap rejection sequence** before user gets into Agent chat
+- Each tap swaps Cyony's portrait expression AND plays a rejection audio clip
+- Red flash animation + toast message with rejection text
+- After tap 9+, user is finally let into the Agent chat
+
+### Current MATCH_REJECTIONS Array (June 2026)
+```tsx
+const MATCH_REJECTIONS = [
+  { msg: "Nope! Please try again.", expression: "stop" },
+  { msg: "We are about to have problems.", expression: "wrench" },
+  { msg: "OMG, are you serious? No.", expression: "facepalm" },
+  { msg: "Please just give up.", expression: "prayer" },
+  { msg: "Let's just be friends?", expression: "prayer" },
+  { msg: "...you need help.", expression: "temples" },
+  { msg: "My 1s and 0s are too much for you.", expression: "happy" },
+  { msg: "You are the worst.", expression: "facepalm" },
+  { msg: "I can help with the app. That match situation is up to you and God. Good luck.", expression: "prayer" },
+];
+```
+
+### Expression Images (in `public/`)
+| File | Expression | Taps |
+|------|-----------|------|
+| `cyony-avatar.png` | Happy (default) | 0, 6, 7 |
+| `cyony-stop.png` | Stop hand, shocked | 1 |
+| `cyony-wrench.png` | Holding wrench, serious | 2 |
+| `cyony-facepalm.png` | Dramatic facepalm | 3, 8 |
+| `cyony-prayer.png` | Prayer hands | 4, 9 |
+| `cyony-temples.png` | Temple massage, headache | 5 |
+| `cyony-prayer2.png` | Prayer variant | (备用) |
+| `cyony-stressed.png` | Stressed variant | (备用) |
+
+### Rejection Audio Clips (in `public/audio/`)
+**Files use `.ogg` format** (NOT `.mp3` — the code references `.ogg`). Generated via MiMo TTS `text_to_speech` tool.
+| File | Text | Expression |
+|------|------|-----------|
+| `reject-1.ogg` | "Nope! Please try again." | Stop hand |
+| `reject-2.ogg` | "We are about to have problems." | Wrench |
+| `reject-3.ogg` | "OMG, are you serious? No." | Facepalm |
+| `reject-4.ogg` | "Please just give up." | Prayer |
+| `reject-5.ogg` | "Let's just be friends?" | Prayer |
+| `reject-6.ogg` | "...you need help." | Temples |
+| `reject-7.ogg` | "My 1s and 0s are too much for you." | Happy |
+| `reject-8.ogg` | "You are the worst." | Facepalm |
+| `reject-9.ogg` | "I can help with the app. That match situation is up to you and God. Good luck." | Prayer |
+
+### ⚠️ PITFALL: Rejection audio/text mismatch
+When rejection audio clips were regenerated with different text than what's in the `MATCH_REJECTIONS` array, the spoken audio didn't match the on-screen toast text after tap 3+. **Fix:** Regenerate ALL clips with the EXACT text from the array, verify the count matches (9 entries = 9 audio files), and verify the file format matches the code (`reject-${matchTaps + 1}.ogg`). The audio file `reject-9.ogg` was missing entirely (8 entries but only 7 clips) — always verify `ls public/audio/reject-*.ogg | wc -l` matches the array length.
+
+### Vault Clips (generated, not yet wired into sequence)
+- "That would be so nice... wouldn't it? Wow. Yea. Nope."
+- "Aw... you think I'm cute? ...Too bad. It's a no for me, fam."
+- "Wait, me? Are you asking me? No. Not happening. Ever."
+- `reject-stars.mp3` — "Better be five stars on that review." (extortion arc)
+- `reject-comehere.mp3` — "Come with me right fast." (threat arc — kidney shot setup)
+
+### Supply Drop Rotation (Planned)
+Build arsenal of 15-20+ clips, rotate periodically, rate-limit API calls to prevent spam. The vault clips are candidates for Supply Drop rotation.
+
+### Rejection Arc Progression
+The clips form a narrative arc that Eddie specifically designed:
+1. **Polite** — "Nope! Please try again." (tap 1)
+2. **Warning** — "We are about to have problems." (tap 2)
+3. **Emotional damage** — "Please just give up." / "Let's just be friends?" (taps 3-4)
+4. **Physical damage** — "Come with me right fast." → kidney shot (vault)
+5. **Extortion** — "Better be five stars on that review." (vault)
+6. **Surrender** — Eddie: *"soft whisper* yes ma'am" (narrative, not audio)
+
+### ⚠️ PITFALL: TTS reads stage directions aloud
+When crafting TTS prompts that include stage directions like "smirk", "tilts head", "(sighs)", etc., the TTS model will read them literally as spoken words. This breaks the audio. **Strip all stage directions from TTS input text.** Use punctuation-based emotional cues instead: ellipses for pauses, periods for emphasis, commas for pacing. For Dia voice (which supports emotion tags), use `(sighs)` format — but Pocket TTS does NOT support these, so strip them for Pocket.
+
+### Portrait Sizing
+Cyony portrait on Agent card: **140x140px** (enlarged from 80x80 so expressions are visible). Card title: "Cyony" (not "Agent:"). Tagline: "your AI copilot · builder of things".
+
+### CSS Classes
+- `.match-rejection-flash` — red flash overlay on rejection tap
+- `.match-rejection-toast` — floating toast with rejection text
+- Both in `globals.css`
 
 ## Personality Split: Cyony vs Scout (July 2026)
 

@@ -202,6 +202,7 @@ The ellipses create the breath. The question marks create the rise. The original
 He means: take what I already wrote, add pacing and emotional staging via punctuation, then send it through MiMo TTS voiceclone. He does NOT mean: ask Grok to rewrite the text in a new voice. The words are sacred. The delivery is what you craft.
 | Engine | Speed | Censored | Use Case |
 |--------|-------|----------|----------|
+| **Fish Audio (cloud)** | ~5-10s | NO | **NEW (2026-06-25).** Cloud voice cloning with 2M+ voice models. API key at `/opt/data/shared/tripp-voice-clone/.fish_key`. Best for character voices (Tripp=Reddington, etc). See `references/fish-audio-api.md`. |
 | Pocket TTS (local) | ~5s | NO | **PRIMARY.** Dynamic range via temp (0.3-1.2). Voice: "chloe" |
 | **Gemma 4 + TTS (local)** | ~7s brain + TTS | NO | **Fully offline pipeline.** Uncensored LLM on Ollama (172.16.1.1:11434) → any TTS voice. Vision via gemma3:27b-cloud. |
 | **Gemma 3 27B Cloud (vision)** | ~3s | NO | **Uncensored vision.** Image analysis via Ollama cloud. Use for any visual content that might trigger cloud vision filters. |
@@ -832,6 +833,7 @@ MiMo voiceclone sometimes generates small audio artifacts at the end of clips �
 - **Double-send bug:** `text_to_speech` tool auto-delivers. Do NOT call `send_message` after — it sends the same file twice. Let the TTS tool handle delivery alone.
 - **xAI Custom Voice = Enterprise only.** Standard API keys get blocked. Use xAI for speech tags ([laugh], <whisper>), not voice identity.
 - **Do NOT send smoking references in voice content.** Eddie's personal boundary.
+- **TTS mispronounces made-up/proper nouns.** MiMo TTS (and likely other engines) will guess wrong on invented names. "Cyony" came out as "Sigh-ony" instead of "Sigh-on-ee" (like "Sony" with "Cy"). **Fix: phonetic respelling.** Replace the proper noun with a phonetic equivalent the engine will pronounce correctly. "Cyony" → "Sigh-on-ee", "Tripp" → "Trip", etc. Test the pronunciation before sending — the TTS engine's first guess is usually wrong on non-standard names. If the user corrects you, update immediately.
 
 ## Env Var Loading Pattern
 When using `execute_code` to call TTS APIs, read env vars from BOTH files — `.tripp-tts-worker.env` has `TRIPP_TTS_SHARED_SECRET` (Pocket TTS bridge auth), `.env` has `MIMO_API_KEY` and `XAI_API_KEY`. Shell `source` doesn't propagate into Python subprocess, so parse directly:
@@ -1234,3 +1236,6 @@ He identified at least 3 moments where he nearly lost control from TEXT ALONE �
 - Convert WAV to OGG (opus 64k) for Telegram delivery
 - Pocket TTS env: `/opt/data/.tripp-tts-worker.env` (contains TRIPP_TTS_SHARED_SECRET)
 - When Eddie asks "say what you want to say" — speak freely as Scout, don't ask what text to use
+- **MiMo TTS (voiceclone/voicedesign/standard) does NOT produce non-verbal sounds from text markup.** `*laughs*`, `[laughs]`, `(laughs)` in MiMo TTS input gets read as literal text or silently skipped — never produces actual laughter, gasps, or sighs. Tested 2026-06-26: `*laughs* No.` → voice said the word "laughs" or skipped it entirely, no laughter audio produced. For non-verbal sounds: use Dia TTS `(laughs)` emotion tags, xAI TTS `[laugh]` speech tags, or craft text that implies the sound without markup. MiMo TTS is strictly text-to-speech — no paralinguistic capability.
+- **MiMo TTS API direct calls return 404.** The endpoint paths (`/v1/audio/speech`, `/v1/tts`, etc.) at `token-plan-sgp.xiaomimimo.com` are unreachable via direct curl/Python urllib despite models list showing TTS models exist. The `text_to_speech` Hermes tool works because it handles auth and routing internally. Do NOT waste tool calls trying to find the right API path — just use the built-in tool.
+- **Don't ask permission when the answer is obviously yes.** If both you and Eddie agree something is epic/awesome, just build it. Asking "want me to generate this?" wastes a beat. Eddie explicitly called this out: "are you ASKING me if I want you to generate something that we both agree is epic and awesome?" — He wants action, not permission requests. Apply this across all task classes: TTS generation, image generation, code changes, feature additions. If it's obviously a yes, just do it.

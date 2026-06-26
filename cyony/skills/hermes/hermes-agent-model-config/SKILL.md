@@ -206,6 +206,33 @@ Vision confirmed working 2026-06-19 with base64 images via `mimo-v2.5` and `mimo
 
 **Token Plan cost rule (from Eddie, 2026-06-19):** `mimo-v2.5-pro` burns 2x tokens. Use regular `mimo-v2.5` for everything unless you genuinely need the extra reasoning. Default daily driver should be `mimo-v2.5`, not `mimo-v2.5-pro`. Vision works on both `mimo-v2.5` and `mimo-v2-omni` — prefer `mimo-v2.5` (newer, 1x cost).
 
+### MiMo Model Deprecation Schedule (June 2026)
+
+**⚠️ CRITICAL: Legacy models going offline June 30, 2026 (Beijing time).** System replacements already active — requests to old model names are auto-redirected to replacements NOW.
+
+| Deprecated Model | Offline Date | System Replacement | Notes |
+|-----------------|-------------|-------------------|-------|
+| `mimo-v2-pro` | 2026-06-30 | `mimo-v2.5-pro` | API params fully adapted |
+| `mimo-v2-omni` | 2026-06-30 | `mimo-v2.5` | API params fully adapted |
+| `mimo-v2-flash` | 2026-06-30 | `mimo-v2.5` | Auto-redirected since 6/18. Default params changed (see below) |
+| `mimo-v2-tts` | 2026-06-30 | `mimo-v2.5-tts` | Auto-redirected since 6/27. Voice remapping: `mimo_default` → `冰糖` (CN) / `mia` (other) |
+
+**`mimo-v2-flash` → `mimo-v2.5` parameter changes (since 6/18):**
+- `mimo-v2.5` does NOT support custom `temperature`/`top_p` in thinking mode — forced to `temperature: 1.0`, `top_p: 0.95`
+- If you were setting custom params on `mimo-v2-flash`, they're inherited during auto-redirect
+- If `thinking`, `temperature`, or `max_completion_tokens` not specified, system uses `mimo-v2.5` defaults
+
+**Action required:** Config already set to `mimo-v2.5` (updated 2026-06-25). No code changes needed — all old model name requests auto-redirect. But update any hardcoded model names in scripts/code to avoid surprises when offline date hits.
+
+### API Key Rotation Pattern (June 2026)
+
+When rotating MiMo API keys:
+1. Purchase new key (Token Plan subscription, `tp-xxxxx` format)
+2. Update `/opt/data/.env` — change `MIMO_API_KEY=<new_key>` (use Python `re.sub` or `sed`; direct echo/heredoc gets masked by terminal security)
+3. Verify: `python3 -c "with open('/opt/data/.env') as f: [print(f'Length: {len(line.strip().split(\"=\",1)[1])}') for line in f if 'MIMO_API_KEY' in line]"`
+4. Old key → hand to crew agents (Tripp/Echo) for their independent use
+5. Gateway auto-reads env on next request — no restart needed for key rotation (only model default changes need restart)
+
 **⚠️ Gateway restart required after patching Hermes source files.** Python doesn't hot-reload. The gateway catches SIGTERM gracefully — use `pkill -9` from host. Agent cannot self-terminate (safety check blocks it). If you patch `auxiliary_client.py` or `auth.py`, the running gateway keeps the OLD code in memory until hard restart.
 
 Full details, benchmarks, and provider evaluation checklist in `references/mimo-vs-deepseek-comparison.md`.

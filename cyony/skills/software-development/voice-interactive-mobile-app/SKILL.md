@@ -291,6 +291,7 @@ PHONE (60 active)              CLOUD STASH (200+)
 
 ## Pitfalls
 
+- **Don't generate audio clips without syncing to the code array.** When building rejection sequences, voice lines, or tiered audio, the text used to generate each clip MUST exactly match the text in the code array that triggers it. Eddie discovered mismatched rejection clips (audio said one thing, code displayed another) after regenerating clips without checking the current array. Workflow: (1) read current code array, (2) generate clips with identical text, (3) verify filenames align with array indices, (4) test all taps/actions end-to-end.
 - **Don't fire-and-forget async audio** without BOTH create-before-async AND generation counter. Either alone has gaps.
 - **Don't use `pause()` alone** for audio cleanup. Always set `src = ""`.
 - **Don't build complex interruption flows** with delays + API calls. The user perceives any gap >1s as broken.
@@ -299,7 +300,10 @@ PHONE (60 active)              CLOUD STASH (200+)
 - **Don't use `pkill -f` patterns** that match your own terminal process tree.
 - **Don't give verbose technical breakdowns on Telegram.** Eddie prefers concise answers — 2-3 lines max for status updates, save the engineering diagrams for when he explicitly asks.
 - **Don't rely on `lsof` or `fuser` in containers.** They're often not installed. Use `ps aux | grep <process> | grep -v grep` + `kill -9 <PID>` instead.
+- **Don't let buttons near input fields steal focus on mobile.** When a button is tapped on mobile, the browser removes focus from the active input field, which dismisses the keyboard. This is annoying when toggles (text/voice, mood pickers, gear icons) sit above a chat input. **Fix:** Add `onMouseDown={e => e.preventDefault()}` to every button that should NOT dismiss the keyboard. This prevents the default focus-shift behavior while still firing the `onClick` handler. Apply to: mode toggle buttons, gear/settings icons, mood picker buttons, any button in a header bar above an input field. The `onMouseDown` handler runs before `onClick` and blocks the focus change. Pattern: `<button onMouseDown={e => e.preventDefault()} onClick={handler}>`.
 - **Don't put expansion panels inline with sticky button rows.** When a button row must stay fixed (sticky), expansion content must be a SIBLING element outside the row's flex/grid container — not inside it. Inline expansion pushes other buttons down.
+- **Don't include stage directions in TTS input.** Text like "smirk", "tilts head", "(sighs)" will be read literally by Pocket TTS. Strip all stage directions before sending to TTS. Use punctuation for emotional cues: ellipses for pauses, periods for emphasis, commas for pacing. Dia voice supports `(sighs)` format, but Pocket does NOT — always strip for Pocket.
+- **Don't assume YouTube Music links are inaccessible.** Use the oEmbed API to identify songs: `curl -s "https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=VIDEO_ID&format=json" | python3 -c "import json,sys; print(json.load(sys.stdin).get('title',''))"` — works without API keys or web extraction tools.
 
 ## 11. Sticky Button Row with Expansion Panels
 

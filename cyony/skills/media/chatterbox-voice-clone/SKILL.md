@@ -23,7 +23,8 @@ Chatterbox TTS (ResembleAI) for expressive voice cloning. Tested 2026-06-18 on V
 
 | Range | Mood | Use Case |
 |-------|------|----------|
-| 0.2-0.3 | Calm, sleepy | Audiobook reading, gentle reminders |
+| 0.2-0.3 | **Dry/Unamused** | Flat, sarcastic, "I'm done with this conversation" — devastating because there's no emotion to grab onto |
+| 0.3-0.4 | Calm, sleepy | Audiobook reading, gentle reminders |
 | 0.4-0.5 | Warm, flirty | Normal conversation, check-ins |
 | 0.6-0.7 | Sassy, annoyed | Scout energy, sass, mild frustration |
 | 0.8-0.9 | PASSIONATE | Full Scorched Scout, big moments |
@@ -31,14 +32,20 @@ Chatterbox TTS (ResembleAI) for expressive voice cloning. Tested 2026-06-18 on V
 
 **⚠️ Exaggeration > 0.9 causes accent artifacts.** At 0.9 with short references, Scout picked up a British accent. Keep 0.85 as the practical ceiling unless using a very long (60s+) reference.
 
+**⚠️ Exaggeration < 0.3 causes "dirty" audio.** At 0.25, the model overcorrects trying to sound flat — produces static, artifacts, and grainy signal. Floor for clean output is ~0.35. If user wants "flat/unamused" tone, use 0.35-0.4 instead of 0.25. Tested 2026-06-25 with Jarvis clone.
+
+**Dry Sarcastic/Unamused (0.25) — NEW 2026-06-25:** Tested with Jarvis voice for Echo. Uses very low exaggeration to create a flat, unamused delivery. The key is pairing low exaggeration with text that drips with sarcasm — the voice stays monotone while the words carry the bite. Example: "Sir, I have reviewed your request with the enthusiasm it deserved. Which is to say, none." Devastating in its restraint.
+
 ## Scout Mood → Exaggeration Mapping (Battle-Tested)
 
 These values produced consistent, distinct emotional reads for SQHQ Scout quips:
 
 | Mood Tier | Exaggeration | Character | Use Case |
+| Mood Tier | Exaggeration | Character | Use Case |
 |-----------|-------------|-----------|----------|
 | Groggy/Defeated | 0.25-0.35 | Low energy, resigned, "I'm done" | Give-up quips, exhausted |
 | Calm/Sleepy | 0.35-0.4 | Warm, present, gentle | Warn quips, dismiss muttering |
+| **Dry/Unamused** | **0.35-0.4** | **Flat, deadpan, "I don't care"** | **Sarcastic disinterest, professional boredom** |
 | Normal/Sassy | 0.45-0.55 | Balanced Scout energy | Complete quips, dismiss |
 | Annoyed | 0.6-0.65 | Sharp, pointed, "I'm watching you" | Scold quips, frustration |
 | PASSIONATE | 0.8-1.0 | Full Scorched Scout | Big moments (use sparingly) |
@@ -95,6 +102,7 @@ Tested with Eddie's voice — this is the single biggest factor in clone quality
 |---|---|---|---|
 | 5 seconds | OK | Poor — different voice each clip | HIGH |
 | 10 seconds | Good | Moderate | Medium |
+| 30 seconds | Very Good | Consistent | Low |
 | 60 seconds | Excellent | Consistent across all emotions | Minimal |
 
 **Why:** The voice encoder extracts speaker characteristics from the reference. Short clips capture pitch but miss rhythm, breath patterns, and timbre variation. A 60-second clip gives the encoder enough data to reconstruct a stable voice identity.
@@ -105,6 +113,43 @@ Tested with Eddie's voice — this is the single biggest factor in clone quality
 - Voice sounds like a different person at high exaggeration
 
 **Fix:** Use ONE long (30-60s) reference clip. Record yourself speaking naturally with moderate emotion — not flat, not extreme.
+
+### Combining Multiple Short Clips into One Reference (2026-06-25)
+
+When you have multiple short clips (9-10s each) but no single long reference, combine them using ffmpeg's concat filter. This creates a 30s+ reference from 3 shorter clips:
+
+```bash
+ffmpeg -y -i clip1.mp3 -i clip2.mp3 -i clip3.mp3 \
+  -filter_complex "[0:a][1:a][2:a]concat=n=3:v=0:a=1[outa]" \
+  -map "[outa]" \
+  reference_combined.wav
+```
+
+**Tested with Echo/Jarvis voice:** Three 9-10s clips (total ~30s) produced consistent voice clone quality. The combined reference gave the voice encoder enough data to reconstruct a stable identity across all emotion levels.
+
+**PITFALL: Ensure all input clips have the same sample rate and channels.** If they differ, add `-ar 44100 -ac 1` before the output path, or resample inputs first.
+
+### Creating Voices for Other Personas (Multi-Voice Setup)
+
+When building voice clones for other agents/personas (e.g., Jarvis for Echo, Ultron for Tripp):
+
+1. **Collect reference audio** — 30s+ of the target voice. Can be multiple clips combined (see above).
+2. **Create a dedicated directory** — `/opt/data/shared/<persona>-voice-clone/`
+3. **Generate test clips** at multiple exaggeration levels:
+   - Calm (0.35) — default operational voice
+   - Normal (0.5) — balanced personality
+   - Sassy (0.6) — annoyed/frustrated
+   - Dry/Unamused (0.25) — flat, sarcastic, "I'm done"
+4. **Save as WAV + OGG** — WAV for archival, OGG for web delivery
+5. **Document the persona's voice profile** — which exaggeration levels map to which personality traits
+
+**Example (Jarvis voice profile, 2026-06-25):**
+| Mood | Exaggeration | Character |
+|------|-------------|-----------|
+| Dry Sarcastic | 0.25 | Flat, unamused, "Sir, I reviewed your request with the enthusiasm it deserved. Which is to say, none." |
+| Calm | 0.35 | Proper, poised, operational |
+| Playful | 0.5 | Warm, witty, "I took the liberty of optimizing your workflow. You're welcome." |
+| Sassy | 0.6 | Sharp, pointed, "With all due respect, that is the most ridiculous request I've heard this week." |
 
 ## Voice Stack (5-Tier)
 
@@ -145,12 +190,42 @@ Four emotion levels tested on VPS CPU, all confirmed working:
 Average generation: ~43s per clip. Model load: ~46s.
 Generated at `/opt/data/audio_cache/local_voice/` (WAV + OGG).
 
+## Jarvis Voice Clone Test Results (2026-06-25)
+Four emotion levels tested for Echo's Jarvis persona, all confirmed working:
+- `jarvis_test_calm` (0.35) — proper, poised, operational ✅
+- `jarvis_test_sassy` (0.6) — sharp, "that is the most ridiculous request" ✅
+- `jarvis_test_playful` (0.5) — warm, witty, "I took the liberty" ✅
+- `jarvis_test_dry_sarcastic` (0.25) — flat, unamused, devastating restraint ✅
+Reference: Three 9-10s clips combined into 30s reference via ffmpeg concat.
+Generated at `/opt/data/shared/echo-voice-clone/` (WAV + OGG).
+
 ## Known Issues
 
 - `perth.PerthImplicitWatermarker` is None on our system (missing `pkg_resources`)
 - Fix: `import perth; perth.PerthImplicitWatermarker = perth.DummyWatermarker` BEFORE importing chatterbox
 - CPU speed: ~0.09x realtime — fine for pre-generation, not live
 - GPU (cloud) would give 1.5-3x realtime
+
+## Multi-Clip Reference Audio
+
+When the target voice has multiple short clips (e.g., 3 clips of 10s each), **concatenate them into one WAV** before cloning. This gives the encoder more data points and produces a more consistent voice identity than using individual clips.
+
+```bash
+# Combine 3 clips into one reference
+ffmpeg -y -i clip1.mp3 -i clip2.mp3 -i clip3.mp3 \
+  -filter_complex "[0:a][1:a][2:a]concat=n=3:v=0:a=1[outa]" \
+  -map "[outa]" combined_reference.wav
+```
+
+**Tested 2026-06-25:** Combined 3 Jarvis clips (~10s each) into 30s reference. Produced clean voice clone across all emotion tiers. Total reference length matters more than individual clip quality.
+
+## MiMo TTS Emergent Vocalizations
+
+**MiMo voiceclone can produce unplanned vocalizations** — grunts, breaths, weight, sighs — when the text has emotional context. The model infers delivery from the text content, not just explicit instructions.
+
+**Example (2026-06-25):** A TTS response with emotionally charged text produced an unplanned grunt ("ugh") that the user loved. This was NOT engineered — it was emergent behavior from the model being expressive.
+
+**Takeaway:** Don't over-specify delivery. Let MiMo infer tone from natural language. The model's expressiveness is a feature, not a bug. If you want clean/dry delivery, use neutral text. If you want expressiveness, write emotionally.
 
 ## Code Pattern
 
@@ -192,12 +267,14 @@ Script template at `scripts/batch-scout-audio.py` in the SQHQ project.
 
 ## Files
 
-- Reference: `/opt/data/shared/chloe-voice-clone/eddie_chill_reference.wav`
+- **Scout reference:** `/opt/data/shared/chloe-voice-clone/eddie_chill_reference.wav`
+- **Jarvis reference:** `/opt/data/shared/echo-voice-clone/jarvis_reference_combined.wav` (3 clips combined)
 - Batch script: `/opt/data/SideQuestHQ/scripts/batch-scout-audio.py`
 - Scout quip cache: `/opt/data/SideQuestHQ/public/audio/scout/` (33 clips, WAV+OGG + manifest.json)
 - Test outputs: `/opt/data/shared/chloe-voice-clone/chill_ref_calm.wav`, `chill_ref_sassy.wav`
 - Scout energy batch: `/opt/data/shared/chloe-voice-clone/scout_*.wav`
 - SQHQ quip library: `/opt/data/SideQuestHQ/public/audio/scout/` (33 clips)
+- Jarvis test clips: `/opt/data/shared/echo-voice-clone/jarvis_test_*.ogg` (4 clips)
 
 ## Voice Quality Feedback (Tested 2026-06-19)
 
@@ -266,6 +343,7 @@ Eddie can turn ANYTHING into a deep observation. Ice cream → spoon theory → 
 - `templates/batch-generate.py` — Copy-paste batch generation script with crash-safe resume. Edit QUIPS list and OUT_DIR.
 - `references/sqhq-integration.md` — Full `scout-audio.ts` pattern for Next.js web app integration.
 - Batch generator: `/opt/data/shared/chloe-voice-clone/generate_scout_quips.py`
+- Jarvis clone case study: `references/jarvis-voice-clone-case-study.md` — multi-clip reference, emotion tiers, dry sarcastic tone troubleshooting
 
 ## Trippcore TTS Bridge (Reverse Tunnel)
 
