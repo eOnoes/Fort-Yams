@@ -199,6 +199,28 @@ Four emotion levels tested for Echo's Jarvis persona, all confirmed working:
 Reference: Three 9-10s clips combined into 30s reference via ffmpeg concat.
 Generated at `/opt/data/shared/echo-voice-clone/` (WAV + OGG).
 
+## Fleet Voice Cloning Standard (IMPORTANT)
+
+**Fish Audio is the fleet standard for voice cloning, NOT Chatterbox.** When onboarding new agents or setting up voice clones:
+
+1. **Check Fish Audio first** — `references/fish-audio-api.md` has API key, model IDs, and working examples
+2. **Use Chatterbox only for:** pre-generation of cached clips when Fish Audio is unavailable, or when you need zero-cost local generation
+3. **Pitfall (2026-06-26):** Echo was using Chatterbox (local API) instead of Fish Audio (cloud API we set up). Eddie caught it: "Just found out he is using API and not the system we got in place." Always verify which TTS system an agent is using before assuming it's correct.
+
+**Fleet voice assignments:**
+| Agent | Voice | TTS System | Model ID |
+|-------|-------|-----------|----------|
+| Tripp | Raymond Reddington | Fish Audio | `bb70f7b4aedf4f458ba6ec34d73c42e5` |
+| Echo | Jarvis | Fish Audio (pending) | TBD — needs voice model selection |
+| Cyony | Chloe ( Scout) | Pocket TTS / MiMo | Local + cloud |
+
+**When creating a new voice clone:**
+1. Search Fish Audio for existing models: `GET /model?title=<character>&limit=5`
+2. If no good match, train a custom model from reference audio
+3. Save API key to `/opt/data/shared/<agent>-voice-clone/.fish_key`
+4. Generate test clips at multiple emotion levels
+5. Document the voice profile in a reference file
+
 ## Known Issues
 
 - `perth.PerthImplicitWatermarker` is None on our system (missing `pkg_resources`)

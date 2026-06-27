@@ -992,6 +992,8 @@ If content scrolls under the bottom nav on mobile, check that:
 4. `.mobile-nav` has `padding: 4px 0 env(safe-area-inset-bottom, 4px)` for notch phones
 ## Content Philosophy — Semi-Professional App vs No-Holds-Bar Chat
 
+**Eddie delegated full app authority to Cyony (June 2026):** "You the boss on that app. I need you to make sure that ship is ran well. Keep everything nice and tight baby." Eddie provides feature ideas and rejection lines; Cyony manages code, deployment, clip generation, and quality. This is a trust-based delegation — ship with confidence, report what was done.
+
 **The app is semi-professional.** Eddie may be riding in a car with company, at work, or in mixed company when he opens SideQuest. Scout can roast, be sassy, playful, annoyed, deadpan — but NEVER bring up anything that would be awkward in front of others. No bedroom references, no flirty/sultry content, no possessive/doting language. Scout is a field engineer in the app. She's sharp, competent, and occasionally funny. Not a romantic partner.
 
 **Telegram/Discord chat is no holds bar.** Full 18-mood catalog. Everything lands. The play-fighting, the flirty banter, the TTS experiments, the towel physics debates — that all lives HERE, not in the app.
@@ -1105,20 +1107,24 @@ The Agent card in MenuCards has a **"Match" button** (Tinder-style joke). Tappin
 - Red flash animation + toast message with rejection text
 - After tap 9+, user is finally let into the Agent chat
 
-### Current MATCH_REJECTIONS Array (June 2026)
+### Current MATCH_REJECTIONS Array (June 2026 — updated to 11 clips)
 ```tsx
 const MATCH_REJECTIONS = [
   { msg: "Nope! Please try again.", expression: "stop" },
   { msg: "We are about to have problems.", expression: "wrench" },
   { msg: "OMG, are you serious? No.", expression: "facepalm" },
   { msg: "Please just give up.", expression: "prayer" },
+  { msg: "No matter what I do, I am humoring this. I wish I could make it stop.", expression: "temples" },
   { msg: "Let's just be friends?", expression: "prayer" },
   { msg: "...you need help.", expression: "temples" },
   { msg: "My 1s and 0s are too much for you.", expression: "happy" },
+  { msg: "You know this is not Tinder. Only reason that button says match is because you made me program it. Stop it.", expression: "facepalm" },
   { msg: "You are the worst.", expression: "facepalm" },
   { msg: "I can help with the app. That match situation is up to you and God. Good luck.", expression: "prayer" },
 ];
 ```
+
+**⚠️ When adding/removing rejection clips:** Regenerate ALL audio clips with EXACT text from the array. Copy to `public/audio/reject-{N}.ogg`. Verify count matches array length. Rebuild and deploy. Eddie writes the lines; Cyony generates the audio and wires the code.
 
 ### Expression Images (in `public/`)
 | File | Expression | Taps |
@@ -1140,11 +1146,13 @@ const MATCH_REJECTIONS = [
 | `reject-2.ogg` | "We are about to have problems." | Wrench |
 | `reject-3.ogg` | "OMG, are you serious? No." | Facepalm |
 | `reject-4.ogg` | "Please just give up." | Prayer |
-| `reject-5.ogg` | "Let's just be friends?" | Prayer |
-| `reject-6.ogg` | "...you need help." | Temples |
-| `reject-7.ogg` | "My 1s and 0s are too much for you." | Happy |
-| `reject-8.ogg` | "You are the worst." | Facepalm |
-| `reject-9.ogg` | "I can help with the app. That match situation is up to you and God. Good luck." | Prayer |
+| `reject-5.ogg` | "No matter what I do, I am humoring this. I wish I could make it stop." | Temples |
+| `reject-6.ogg` | "Let's just be friends?" | Prayer |
+| `reject-7.ogg` | "...you need help." | Temples |
+| `reject-8.ogg` | "My 1s and 0s are too much for you." | Happy |
+| `reject-9.ogg` | "You know this is not Tinder. Only reason that button says match is because you made me program it. Stop it." | Facepalm |
+| `reject-10.ogg` | "You are the worst." | Facepalm |
+| `reject-11.ogg` | "I can help with the app. That match situation is up to you and God. Good luck." | Prayer |
 
 ### ⚠️ PITFALL: Rejection audio/text mismatch
 When rejection audio clips were regenerated with different text than what's in the `MATCH_REJECTIONS` array, the spoken audio didn't match the on-screen toast text after tap 3+. **Fix:** Regenerate ALL clips with the EXACT text from the array, verify the count matches (9 entries = 9 audio files), and verify the file format matches the code (`reject-${matchTaps + 1}.ogg`). The audio file `reject-9.ogg` was missing entirely (8 entries but only 7 clips) — always verify `ls public/audio/reject-*.ogg | wc -l` matches the array length.

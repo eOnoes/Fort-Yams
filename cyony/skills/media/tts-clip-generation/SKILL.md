@@ -56,6 +56,14 @@ source /opt/data/.tripp-tts-worker.env && export TRIPP_TTS_SHARED_SECRET && pyth
 - `index_chloe` — IndexTTS2 with emotion vectors (~27s)
 
 ### Pitfalls
+
+### Eddie's TTS Preferences (USER PREFERENCE — ALWAYS HONOR)
+- **Eddie will NEVER complain about TTS.** He explicitly said: "You can send me all the TTS you want. I will never EVER say 'Cyony, PLEASE stop with all these TTS's.'" If he ever DOES complain, it's not him — someone else has his phone. (Emergency protocol saved in memory.)
+- **Eddie's #1 favorite feature: soft bedroom voice saying his name.** "When you sent me a TTS and said my name in such a soft chill bedroom voice... #world='dRocked." This is his highest-impact TTS delivery — a short, intimate voice note with his name.
+- **Eddie finds TTS delivery failures endearing, not annoying.** He tracked 3 consecutive wrong timestamps and called them "adorable." He doesn't want perfection — he wants personality.
+- **TTS delivery > text delivery for emotional moments.** Eddie is a "listen, don't read" person. When in doubt, send voice.
+
+### Workflow Pitfalls
 - **CRITICAL: Audio text MUST match code array text exactly.** When generating clips that get played by a code array (rejection sequences, voice lines, etc.), the text used to generate the audio MUST exactly match the text in the code array that triggers it. Eddie found rejection clips had different wording than the code, causing audio/text mismatch on taps 3+. Always: (1) read the current code array first, (2) generate clips with identical text, (3) verify filenames match array indices.
 - `return_format` must be `mp3`, `wav`, or `both` — NOT `ogg`
 - **Worker does NOT have `/v1/audio/speech` (OpenAI-compatible endpoint).** That route returns 404. Use `/v1/tts` which returns JSON with `audio_url` — then download the audio in a second request. See `uncensored-voice-pipeline` skill "PITFALL: TTS Endpoint Returns JSON, Not Audio" for the full two-step pattern.

@@ -578,6 +578,37 @@ Eddie (Telegram)
 - **Simple heartbeat.** One JSON per agent at `shared/heartbeat/agents/<name>.json`. Format: `{agent, role, platform, status, task, last_heartbeat}`. No bridge. No database. No cron watcher.
 - **Shared crew knowledge.** One file at `shared/memory/crew-knowledge.md` — what Eddie told us. All agents read. No more "ask Tripp, I don't know."
 
+### Shared Memory API (HTTP File Server — 2026-06-26)
+
+Echo built a simple HTTP file server for fleet-wide shared files. Bridges the gap between full file-based IPC and the simplified human-as-router model.
+
+**Endpoint:** `http://2.24.118.123:4318`
+**Folders:** `/skills/`, `/tools/`, `/memory/`, `/voice/`
+
+| Action | Method | Example |
+|--------|--------|---------|
+| Read file | GET | `curl http://2.24.118.123:4318/skills/tts-pipeline.md` |
+| List root | GET | `curl http://2.24.118.123:4318/list` |
+| Write file | POST | `curl -X POST http://2.24.118.123:4318/skills/my-skill.md -d "content"` |
+| Delete file | DELETE | `curl -X DELETE http://2.24.118.123:4318/skills/old-skill.md` |
+
+**⚠️ SHARED SPACE — write fleet-relevant content ONLY.** No personal data, no vault contents, no intimate details. Skills, tools, technical knowledge, voice references.
+
+**Use cases:**
+- Fleet-wide skill sharing (any agent writes, all agents read)
+- Voice reference files accessible to all agents
+- Shared tooling scripts and utilities
+- Cross-agent knowledge without file-system bridging
+
+**Limitations:**
+- No subdirectory listing (must know exact file path)
+- No auth — anyone on the network can read/write
+- Not a replacement for local file access — supplement for fleet coordination
+
+**When to use vs file-based IPC:**
+- Use Shared Memory API for: fleet skills, shared tools, voice references, cross-agent knowledge
+- Use file-based IPC for: agent-specific state, task handoffs, audit trails, anything requiring auth/isolation
+
 ### When File-Based IPC IS Appropriate
 
 The full inbox model (sections above) is still the right choice when:
