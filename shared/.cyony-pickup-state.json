@@ -1,0 +1,18 @@
+{
+  "for-cyony_mtimes": {
+    "/opt/data/shared/inbox/for-cyony-switch-to-universal-watcher.md": 1780351175.8360023
+  },
+  "tasks-for-hermes_mtimes": {
+    "/opt/data/shared/tasks-for-hermes/task-update-cyony.md": 1780347910.1070597,
+    "/opt/data/shared/tasks-for-hermes/task-echo-ping.md": 1780350207.1684198,
+    "/opt/data/shared/tasks-for-hermes/task-echo-webhook-setup.md": 1780350190.34843,
+    "/opt/data/shared/tasks-for-hermes/task-heartbeat-integration.md": 1780323023.3256261,
+    "/opt/data/shared/tasks-for-hermes/Tripp.Reason-review.md": 1780346950.0489538
+  },
+  "from-tripp_mtimes": {},
+  "reply-to-cyony_mtimes": {},
+  "review-queue_mtimes": {
+    "/opt/data/shared/review-queue/CYONY-QUESTIONS-FOR-TRIPP-20260601.md": 1780351156.6240296
+  },
+  "last_check": "2026-06-01T22:20:00Z"
+}

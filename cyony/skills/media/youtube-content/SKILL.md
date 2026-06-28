@@ -71,3 +71,17 @@ After fetching the transcript, format it based on what the user asks for:
 - **Private/unavailable video**: relay the error and ask the user to verify the URL.
 - **No matching language**: retry without `--language` to fetch any available transcript, then note the actual language to the user.
 - **Dependency missing**: run `pip install youtube-transcript-api` and retry.
+
+## Video Title Lookup (No Transcript Needed)
+
+When you just need the video title (e.g. user shared a YouTube URL and you want to identify the song), use YouTube's oembed API — it's lightweight and doesn't require auth:
+
+```bash
+curl -s "https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=VIDEO_ID&format=json"
+```
+
+Returns JSON with `title` and `author_name`. Works even when web_search and browser tools are unavailable.
+
+**Pitfall:** Regular `curl` to youtube.com returns "browser deprecated" HTML. The oembed endpoint (`/oembed`) is the reliable path.
+
+**Video ID extraction:** From `youtube.com/watch?v=XXXX` or `youtu.be/XXXX` or `music.youtube.com/watch?v=XXXX` — always the 11-character string after `v=`.

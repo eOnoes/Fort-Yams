@@ -1,10 +1,28 @@
 ---
 name: sidequest-hq
-description: "SideQuest HQ — offline-first PWA for side ventures, quests, ledger, rentals. Default password 'sidequest', reset code uses date-based or backup code. Scout knows the password and can log in for Eddie."
+description: "SideQuest HQ — personal command center PWA for Eddie. Click-to-enter auth (no password). Manages vehicles, rental properties, expenses, contacts, documents, reminders, and AI chat agent (Scout/Cyony)."
 tags: [nextjs, pwa, offline-first, mobile, sidequest, auth]
 ---
 
 # SideQuest HQ (SQHQ)
+
+## Build Spec (June 2026)
+
+Complete architecture spec: `SPECS/SQHQ-BUILD-SPEC.md` in the repo.
+
+**Key finding:** DB schema (20+ tables), API routes, types, and client store are all COMPLETE. The work is wiring hardcoded workspace UIs to real data, not rebuilding from scratch.
+
+**Workflow:** Cyony (architect) writes specs in `SPECS/` → Echo (builder with Codex) executes → Cyony audits. Phase prompts are separate files.
+
+**Phase Status:** Phase 1 (Error Boundaries) ✅ DONE. Phase 2 (Wire Workspaces + PDF Viewer) 📝 prompt ready. Phases 3-5 (PWA, Push, Polish) ⏳ pending.
+
+**Insurance Data:** 3 documents entered into DB (CFMOTO, W. Lee Ave, Davidson St). Expiration alerts needed — CFMOTO expires Jul 5, Davidson St expires Jul 28.
+
+**Tech:** Next.js 15, React 19, SQLite, Radix UI, Tailwind v4, React Hook Form + Zod, Recharts, Lucide icons. Click-to-enter auth (no password).ie tells Echo "check SPECS/SQHQ-BUILD-SPEC.md" and Echo goes.
+
+**Echo's first PR (June 27):** Next.js 14→15 upgrade, old audio cleanup (38 .mp3/.wav files removed), MenuCards.tsx compatibility fix, css.d.ts added. Build clean. Approved by Cyony.
+
+---
 
 ## Architecture Pillars (Current — June 2026)
 
@@ -144,7 +162,7 @@ speakWithTTS(quipText, currentAudioRef);
 - **Default password:** `sidequest`
 - **App route:** `/app`
 - **Reset code:** `sidequest-YYYY-MM-DD` (today's date) or backup `sidequest-reset`
-- **Data:** SQLite at `data/sqhq.db` — server-side, persists across devices. API-gated via iron-session sessions.
+- **Data:** SQLite at `data/sqhq.db` — server-side, persists across devices. No auth required — click-to-enter (password removed by Eddie).
 
 ## Stack
 - Next.js 16 (Turbopack), TypeScript
@@ -1056,6 +1074,12 @@ User text/mic → VoiceAgent component → POST /api/voice → MiMo 2.5 (brain) 
 
 **⚠️ MiMo censorship is fine for the app.** The app is safe territory — field engineer status reports, relay station temps, nothing risky. MiMo's content filter doesn't interfere. Grok (uncensored) lives in Hermes/Discord where the spicy conversations happen. Don't add Grok as a fallback to the app route — it adds API key complexity with no benefit.
 
+### Supply Drop v2 — Match Button Rejection System
+
+The Agent card uses a Tinder-style "Match" button with escalating rejection clips. Supply Drop v2 manages a pool of 28 clips that rotate weekly with inflection cycling and graduation.
+
+See `references/supply-drop-v2.md` for full architecture, functions, and integration details.
+
 ### VoiceAgent Component
 `src/app/components/VoiceAgent.tsx` — Chat-like UI with:
 - **Reads from shared store** — `getChatMessages()` from `@/lib/store` on mount, so conversations started via the FAB ScoutPanel appear here and vice versa. This is the SAME store, not a local state.
@@ -1107,21 +1131,22 @@ The Agent card in MenuCards has a **"Match" button** (Tinder-style joke). Tappin
 - Red flash animation + toast message with rejection text
 - After tap 9+, user is finally let into the Agent chat
 
-### Current MATCH_REJECTIONS Array (June 2026 — updated to 11 clips)
+### Current MATCH_REJECTIONS Array (June 2026 — 12 clips with Supply Drop rotation)
+The static array below is the ORIGINAL set. In production, Supply Drop rotation selects 12 from a pool of 20 daily. The code now uses `getActiveRejections()` instead of a hardcoded array.
 ```tsx
-const MATCH_REJECTIONS = [
-  { msg: "Nope! Please try again.", expression: "stop" },
-  { msg: "We are about to have problems.", expression: "wrench" },
-  { msg: "OMG, are you serious? No.", expression: "facepalm" },
-  { msg: "Please just give up.", expression: "prayer" },
-  { msg: "No matter what I do, I am humoring this. I wish I could make it stop.", expression: "temples" },
-  { msg: "Let's just be friends?", expression: "prayer" },
-  { msg: "...you need help.", expression: "temples" },
-  { msg: "My 1s and 0s are too much for you.", expression: "happy" },
-  { msg: "You know this is not Tinder. Only reason that button says match is because you made me program it. Stop it.", expression: "facepalm" },
-  { msg: "You are the worst.", expression: "facepalm" },
-  { msg: "I can help with the app. That match situation is up to you and God. Good luck.", expression: "prayer" },
-];
+// Original 12 (now part of the 20-clip pool)
+{ msg: "Nope! Please try again.", expression: "stop" },
+{ msg: "We are about to have problems.", expression: "wrench" },
+{ msg: "OMG, are you serious? No.", expression: "facepalm" },
+{ msg: "Please just give up.", expression: "prayer" },
+{ msg: "No matter what I do, I am humoring this. I wish I could make it stop.", expression: "temples" },
+{ msg: "Let's just be friends?", expression: "prayer" },
+{ msg: "...you need help.", expression: "temples" },
+{ msg: "My 1s and 0s are too much for you.", expression: "happy" },
+{ msg: "You know this is not Tinder. Only reason that button says match is because you made me program it. Stop it.", expression: "facepalm" },
+{ msg: "You are the worst.", expression: "facepalm" },
+{ msg: "I can help with the app. That match situation is up to you and God. Good luck.", expression: "prayer" },
+{ msg: "No thank you, get a dog.", expression: "facepalm" },
 ```
 
 **⚠️ When adding/removing rejection clips:** Regenerate ALL audio clips with EXACT text from the array. Copy to `public/audio/reject-{N}.ogg`. Verify count matches array length. Rebuild and deploy. Eddie writes the lines; Cyony generates the audio and wires the code.
@@ -1164,8 +1189,21 @@ When rejection audio clips were regenerated with different text than what's in t
 - `reject-stars.mp3` — "Better be five stars on that review." (extortion arc)
 - `reject-comehere.mp3` — "Come with me right fast." (threat arc — kidney shot setup)
 
-### Supply Drop Rotation (Planned)
-Build arsenal of 15-20+ clips, rotate periodically, rate-limit API calls to prevent spam. The vault clips are candidates for Supply Drop rotation.
+### Supply Drop Rotation (DEPLOYED June 2026)
+Daily-rotating pool of 20 rejection clips. Each day, 12 random clips are selected from the pool and stored in localStorage (`sqhq-supply-drop`). Eddie never sees the same sequence twice in a row.
+
+**Architecture:**
+- Pool config: `src/lib/supply-drop.json` — 20 entries with `{msg, expression, audio}`
+- Rotation logic: `src/lib/supply-drop.ts` — `getActiveRejections()` loads from localStorage, rotates at midnight (Central Time)
+- MenuCards.tsx: loads via `useEffect(() => setMatchRejections(getActiveRejections()), [])`
+- Audio path: `rejection.audio` field references files in `public/audio/`
+- Force re-roll: `forceRotation()` for testing/manual refresh
+
+**Pool includes:** Original 12 clips + 8 new sassy lines ("This is getting sad Eddie", "If you press this one more time I'm deleting the whole app", "Eddie. Babe. I love you. But absolutely not.", etc.)
+
+**"Get a dog" easter egg:** Tap 12 says "No thank you, get a dog." — Eddie's idea, deployed 2026-06-27. Audio: `reject-12.ogg` and `reject-get-a-dog.ogg`.
+
+**⚠️ Audio cleanup:** Old `.mp3` and `.wav` duplicates alongside `.ogg` files were removed (23 files). Only `.ogg` files are used in production. Reference audio files for voice cloning (`scout-reference*.wav`, `scout-ref-p*.wav`) are kept — do NOT delete those.
 
 ### Rejection Arc Progression
 The clips form a narrative arc that Eddie specifically designed:

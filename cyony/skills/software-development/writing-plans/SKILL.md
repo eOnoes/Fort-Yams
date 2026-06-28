@@ -270,6 +270,68 @@ git commit -m "type: description"
 **Bad:** "Create the model file"
 **Good:** "Create: `src/models/user.py`"
 
+## Cross-Agent Architecture Specs
+
+When handing work off to another agent (e.g. Cyony writes spec → Echo builds with Codex), the plan format differs from TDD task lists. These specs are **architecture blueprints**, not step-by-step instructions.
+
+### When to Use This Format
+- Another agent will implement the plan (not you)
+- The codebase already exists and needs wiring/extension, not greenfield build
+- The recipient has code execution tools (Codex, Claude Code) and just needs decisions made
+
+### Spec Structure (vs TDD Plan)
+
+| TDD Plan | Architecture Spec |
+|---|---|
+| Bite-sized tasks (2-5 min) | Module-level design (data models, API routes, UI components) |
+| Exact code per step | Acceptance criteria per module |
+| Sequential dependency | Independent modules (can be built in parallel) |
+| Single implementer | Cross-agent handoff |
+
+### Architecture Spec Template
+
+```markdown
+# [Project] — Complete Build Spec
+
+## Executive Summary
+[What exists, what's missing, total effort estimate]
+
+## Architecture Overview
+[File tree, module structure, shared utilities]
+
+## What Already Exists (DO NOT REBUILD)
+[Table: component → status → notes. Critical: prevents double work]
+
+## Module Specifications (per module)
+For EACH module:
+1. **Tables** — SQL schema (or "already exists")
+2. **API Routes** — Full endpoint list with methods
+3. **Component** — UI requirements, wireframes
+4. **Acceptance Criteria** — Checkbox list of "done"
+
+## Build Order (Priority)
+[Table: phase → module → effort → impact]
+
+## Design Constraints
+[Hard rules: aesthetic, no new deps, TypeScript strict, etc.]
+
+## Data Seeding
+[Real data to migrate from hardcoded values]
+```
+
+### Delivery Pattern
+1. Write spec to `SPECS/` directory in the repo
+2. Git commit + push
+3. Tell the receiving agent: "Spec at `SPECS/<name>.md` in the repo"
+4. The receiving agent hands it to their code execution tool (Codex, Claude Code)
+5. You audit the output against the acceptance criteria
+
+### Pitfall: Don't Write Tasks, Write Decisions
+The receiving agent has code execution tools. They don't need you to write `Step 1: Create file X`. They need you to decide *what* the data model looks like, *what* the API endpoints are, and *what* "done" means. Your job is architecture; their job is implementation.
+
+### Pitfall: "Do Not Rebuild" Table Is Critical
+The most common waste in cross-agent handoffs is the builder rebuilding something that already works. The "What Already Exists" table prevents this. Be brutally honest about what's complete vs what's a shell. In SQHQ, the DB schema with 20+ tables, full API routes, and client store were all complete — but the workspace UIs used hardcoded data. Without that table, Echo might have rebuilt the entire backend.
+
 ## Multi-Document Deliverable Format
 
 When producing multiple related documents (plans, doctrine, audit reports, phase reports), combine them into a single `.txt` file with clear section dividers and send as a single attachment. Do NOT paste large content inline in chat (message-length caps) and do NOT make the user dig through the filesystem.

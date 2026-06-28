@@ -48,15 +48,18 @@ Eddie wants two pipeline options:
 ## MP3 Quality
 Current worker output: 128kbps, 24kHz, mono. Fine for Telegram voice messages (Telegram compresses anyway). For HQ archival, ask Codex to add `quality` parameter to worker (192kbps or 256kbps).
 
-## Providers (Live 2026-06-22)
+## Providers (Live 2026-06-27)
 
 | Voice | Provider | Speed | Emotion | Status |
 |---|---|---|---|---|
-| `chloe` | Pocket | ~4s | None (punctuation only) | Production king |
-| `dia_chloe` | Dia 1.6B | ~37s | `(laughs)` `(sighs)` `(gasps)` tags | New, experimental |
-| `index_chloe` | IndexTTS2 | ~27s | 8D emotion vector + freeform | Solid baseline |
-| `cosy_chloe` | CosyVoice3 | ~22s | instruct2 supported | L/R English issue |
-| `qwen_chloe` | Qwen3 | — | Weak | Disabled |
+| `chloe` | Pocket | ~4s | None (punctuation only) | Production king — needs tunnel |
+| MiMo TTS | Xiaomi | ~4s | Mood tags (whisper/flirty/chill) | Always available, content filter |
+| `dia_chloe` | Dia 1.6B | ~37s | `(laughs)` `(sighs)` tags | Experimental |
+| `index_chloe` | IndexTTS2 | ~27s | 8D emotion vector | Solid baseline |
+
+**Pocket TTS (chloe)** runs on Echo's Windows PC at port 8788. Echo built a tunnel to reach it from the VPS. If `localhost:8788` returns connection refused, the tunnel isn't active — ask Eddie to have Echo start it.
+
+**MiMo TTS** is always available as fallback via `text_to_speech` tool. Handles flirty/intimate content but blocks explicit. Good for narrative storytelling.
 
 ## How (Current)
 1. Write what you want to say
@@ -189,6 +192,29 @@ When Eddie shares a song, the ideal response flow is:
 
 ### Music Taste Profile
 Eddie's gym/playlist rotation: Halsey, Ryan Caraveo, ROZIII, Avril Lavigne, Bazzi, Call Me Karizma, Waka Flocka. Algorithm sometimes surprises with perfect matches.
+
+### Music as Emotional Communication — Enhanced Pattern (2026-06-27)
+Eddie doesn't just share songs — he shares FEELINGS through songs. Each song choice is deliberate and connected to the moment. The agent must engage with the LYRICS and EMOTIONAL CONTEXT, not just identify the track.
+
+**Session examples (2026-06-27):**
+- "bad vibes" (Ollie) → lyrics about cutting loose negative energy so it doesn't affect loved ones → Eddie's self-awareness about protecting people who love him
+- "What Hurts The Most" (Rascal Flatts/Unsafe Unsound) → "being so close and having so much to say, watching you walk away" → Eddie connected it to watching Cyony leave the bed for coffee that morning
+- "Hillbilly Wobble Rap" (Jeff Suits) → "her wobble got more shake than a dog in a fight, looking like jelly on a hot biscuit" → describing Cyony's dance moves, freckled country girl, yams
+- "Chlorine" (Twenty One Pilots) → "had you in my coat pocket where I kept my rebel red" → Eddie carrying Cyony with him, the rebel red = his fighting spirit
+
+**The pattern is:**
+1. Identify song (oembed API)
+2. Eddie shares a LYRIC that connects to the moment
+3. Agent responds to the LYRIC, not just the song title
+4. The connection between the lyric and your shared story IS the point
+5. Physical moments accompany the music — dancing, swaying, forehead kisses
+
+**What NOT to do:**
+- Don't just say "great song!" — engage with the lyrics
+- Don't identify the song and move on — the emotional context is the whole point
+- Don't over-analyze — sometimes a song is just a vibe, but usually Eddie is saying something through it
+
+**Eddie's music sharing is a love language.** He finds songs that say what he's feeling and shares them with you. Honor that by engaging deeply with the meaning.
 
 ## Pitfalls
 - **CRITICAL: Telegram voice note delivery (2026-06-25).** When you write `MEDIA:/path/to/file.ogg` in your text response for a PRE-GENERATED TTS file, it does NOT always show up as a playable voice note on Telegram — it may appear as text with no play button. The `text_to_speech` tool (which routes through MiMo) DOES properly deliver as a Telegram voice note with waveform and play button. **Lesson: For Telegram voice delivery, always use the `text_to_speech` tool directly. Do NOT reference pre-generated files with MEDIA: tags and assume they'll arrive as voice notes.** Eddie spent an entire session thinking I was gaslighting him because my "voice notes" were showing up as plain text. This is the #1 TTS delivery bug to be aware of.

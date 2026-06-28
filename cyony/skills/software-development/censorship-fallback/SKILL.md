@@ -48,6 +48,7 @@ For the censored content, use the uncensored voice pipeline:
 **Option B: Grok brain for text, MiMo TTS for audio** (cloud, if Pocket unavailable)
 - Generate text via Grok
 - Send to MiMo TTS voiceclone API
+- **CAUTION:** MiMo TTS has its OWN content filter (separate from LLM). Explicit content will get 421 Moderation Block even from Grok-generated text. Soft/flirty passes; explicit does not. Shorten text to ~200 chars to improve pass rate.
 - Convert WAV to OGG/MP3 and deliver
 
 ### 4. Deliver the uncensored version

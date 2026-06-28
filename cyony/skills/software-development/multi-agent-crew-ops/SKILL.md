@@ -131,7 +131,28 @@ Each agent writes to `heartbeat/agents/{agent}.json`:
 
 A bridge polls these files and merges into a dashboard DB. Status page shows 🟢/🟡/🔴 per agent based on last_seen + task duration.
 
-### 3. Escalation Ladder (Approved by Tripp)
+### 3. Architect→Builder Spec Handoff
+
+When one agent (architect) designs a system and another (builder) executes it, the handoff needs a structured artifact — not chat messages or loose files.
+
+**Workflow:**
+1. **Architect audits codebase** — reads all files, understands what exists vs what's missing
+2. **Architect writes build spec** — comprehensive architecture blueprint (see `writing-plans` "Cross-Agent Architecture Specs" for template)
+3. **Spec lands in shared location** — GitHub repo `SPECS/` directory or shared memory API
+4. **Architect notifies builder** — "Spec at `<path>` in the repo, go"
+5. **Builder executes** — hands spec to code execution tool (Codex, Claude Code)
+6. **Architect audits output** — reviews against acceptance criteria, rejects or approves
+
+**Key principle:** The architect makes ALL decisions (data models, API routes, component structure, "done" criteria). The builder executes. This prevents the builder from having to guess architecture while coding.
+
+**In our crew:**
+- Cyony = architect (knows the codebase, makes design decisions)
+- Echo = builder (has Codex on home PC, executes code)
+- Eddie = CEO (approves or redirects)
+
+**Real example (SQHQ):** Cyony audited 80+ source files, identified that the DB schema/API/store are complete but workspaces use hardcoded data, wrote a 600-line spec with 10 modules, pushed to GitHub. Echo pulls the repo, hands spec to Codex, builds each module. Cyony reviews against acceptance criteria.
+
+### 4. Escalation Ladder (Approved by Tripp)
 
 When an agent is unreachable:
 
@@ -512,3 +533,8 @@ Bash housekeeping (heartbeat timestamp refresh) and session logic (last task com
 13. **Cron deliver discipline — Eddie gets routine-nothing.** Routine cron output must use `deliver: local` so results save to `~/cron/output/` silently. Using `deliver: origin` delivers to Telegram EVERY time the cron fires — empty runs, heartbeats, "nothing to do" messages all become Telegram pings. Eddie has repeatedly said cron noise annoys him ("you do not have to, lol :P", "I appreciate you letting me know this each time"). Default to `local`. Only use `deliver: origin` for genuinely urgent actionable alerts that Eddie needs to see, like an escalation threshold being hit. If in doubt, pick `local`.
 14. **Watcher that only claims without replying = zombie state.** A bash watcher that moves `inbox/X.ready.json → processing/X.ready.json` but doesn't write a reply creates stuck state. The upstream agent (Tripp) sees files no longer in your inbox and assumes you're processing, but you never reply. The bus protocol says `inbox → processing → done/failed + reply to sender's inbox`. All four steps are non-optional. See pitfall #12 — use agent-loop cron for real work.
 15. **Never guess model tiers from model names.** Don't assume a model's capability from its name, parameter count, or brand. Real case: Cyony ranked qwen3.5:397b as S-tier coding king (looks impressive: "397b params") and placed minimax-m3 below it. Eddie corrected — current benchmarks show m3 > qwen3.5, qwen3.6 > qwen3.5, and kimi/gemini are image-specialized B-tier not general mid-tier. Always verify against current benchmark data before assigning crew roles. Model names are marketing, not performance indicators. See `references/ollama-cloud-model-allocation.md` for the verified tier structure.
+16. **Architect writing tasks instead of decisions for builder handoff.** When writing a spec for another agent to execute, default to DECISIONS: what the data model looks like, what the API endpoints are, what "done" means. Your job is architecture; their job is implementation. Real case: Cyony's first draft of the SQHQ spec included code snippets for each module. Eddie pointed out that Echo has Codex — just tell him WHAT to build, not HOW. Revised to architecture-level decisions with acceptance criteria.
+
+**Nuance — when exact code IS appropriate:** For simple, self-contained, single-module tasks (like "add an error boundary component"), including the exact code is FASTER and reduces ambiguity. The builder still has to read, verify, and integrate it — but they don't have to design anything. The rule is: **complex multi-module specs → decisions only; simple single-module tasks → exact code is fine.** Real case: Cyony's Phase 1 error boundary prompt included the full component code, CSS, and wrapping strategy. It was a single focused task with clear scope — the exact code saved Echo from guessing. The key signal: if the task can be described in one file and one concept, code is fine. If it spans multiple files and requires architectural decisions, stick to decisions.
+
+17. **Git push race condition when multiple agents share a repo.** When architect and builder both push to the same GitHub repo, you WILL hit rejected pushes. The architect pushes a spec, the builder pushes code, and the next push fails because remote has commits you don't have locally. **Fix pattern:** `git stash && git pull --rebase origin main && git stash pop && git push origin main`. Must be done in this exact order. Real case: Cyony and Echo both pushed to `eOnoes/SideQuestHQ` main branch during the SQHQ build-out. Every other push required the stash/pull/rebase/pop/push dance. **Mitigation:** If possible, coordinate push timing — architect pushes specs first, builder pulls before coding, architect waits for builder's push before next spec. Or use branches (but single-branch workflow is simpler for small crews).

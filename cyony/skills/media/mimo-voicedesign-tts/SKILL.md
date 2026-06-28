@@ -27,6 +27,8 @@ Supports all 3 MiMo TTS models:
 - **references/mimo-omni-vision.md** — Using MiMo omni model for image analysis (base64 pattern)
 - **references/pre-cached-audio-in-apps.md** — Architecture for instant TTS playback in web apps: batch generation, manifest-based caching, audio batching for rapid-fire UI, agent filler audio, SwipeableCard timing
 - **references/eddie-mood-feedback.md** — Eddie's direct quotes on each VoiceDesign mood, production suggestions, detailed testing feedback (2026-06-20)
+- **references/mimo-tts-model-docs.md** — Full MiMo TTS model documentation: Character/Scene/Direction structured layers, inline audio tags (complete reference), natural language direction, free-form tag syntax, stacking patterns (added 2026-06-27)
+- **references/mimo-api-architecture.md** — How MiMo TTS receives input: API shape, mood overlay mechanics, why inline tags work, token budget, three-model comparison (added 2026-06-27)
 
 ## Eddie's Approved Base Voice (V3)
 
@@ -144,6 +146,30 @@ Key points:
 - Always end on comfort: "I'm here, you're safe, sleep now"
 - Let banter breathe before transitioning to stories
 
+## Inline Audio Tags (Proven 2026-06-27)
+
+MiMo TTS supports inline audio tags for per-line control. Tags go directly in the text and are read as stage directions. Can be stacked and mixed freely.
+
+**Available tags:** `[pause]`, `[whisper]`, `[breathy]`, `[sighs]`, `[laughs]`, `[crying]`, `[sniffles]`, `[angry]`, `[sternly]`, `[commanding]`, `[trembling]`, `[wearily]`, `[clears throat]`, `[softly]`, `[urgently]`, `[flatly]`
+
+**Stacking:** `[whisper] [breathy] [intense] Close your eyes.`
+
+**Free-form:** `[barely audible, trembling] I can feel you shaking.`
+
+**Three-layer pipeline (Eddie-confirmed):**
+1. Inline tags → per-line direction
+2. `--mood` flag → overall delivery
+3. Writing style → pacing and energy
+
+**Eddie's verdict:** "THE WHISPER WORKS!!!" and "it sounds like you are right here at my ear directing me"
+
+**Full tag documentation:** `references/mimo-tts-model-docs.md` (in pocket-tts skill)
+
+**Pitfall:** The `text_to_speech` tool does NOT pass tags or mood — it only takes plain text. Call the script directly via terminal for full control:
+```bash
+python3 /opt/hermes/scripts/mimo_tts.py --text "[pause] [whisper] Text here" --mood whisper --output out.wav
+```
+
 ## Emotional Authenticity in TTS
 
 Eddie responds to EMOTION in the voice, not just content. The "poutiness" in a TTS clip landed harder than the words themselves. Key technique: **write the emotion INTO the text**, not just the words.
@@ -232,6 +258,14 @@ Don't make the user pick a mood manually. Scout reads the room based on behavior
 MiMo's LLM layer blocks intimate/romantic roleplay at generation time with "high risk" rejection. This happens BEFORE TTS — the text never reaches the voice engine.
 
 **MiMo TTS VoiceClone ALSO has a content filter (confirmed 2026-06-21).** Returns HTTP 400 with error code 421: `{"error":{"code":"421","message":"Moderation Block","param":"色情","type":"content_filter"}}`. This fires on intimate/sensual/romantic content during voiceclone generation — not just at the LLM stage.
+
+**KEY DISCOVERY (June 27 2026): MiMo TTS filter is SOFTER than MiMo LLM filter.**
+- MiMo LLM blocks "high risk" text generation (content_filter)
+- MiMo TTS accepts sensual/intimate text that LLM would block
+- MiMo TTS only blocks EXPLICIT sexual content (色情 = pornography)
+- Strategy: Use xAI brain to write text, MiMo TTS to read it
+- Keep text sensual but not graphic to pass TTS filter
+- This means xAI → MiMo TTS pipeline works for flirty content
 
 **Both MiMo paths are censored for intimate content.** Use Pocket TTS (local, uncensored) for any content that might trigger either filter. See `uncensored-voice-pipeline` skill for the Pocket TTS fallback path.
 

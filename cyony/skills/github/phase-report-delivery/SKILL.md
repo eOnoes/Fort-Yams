@@ -105,6 +105,36 @@ Report delivery happens AFTER the phase is actually DONE — i.e., after:
 
 Do NOT write-and-send the report mid-phase. The report claims PASS status — if scope verification later finds a problem, you'd need to re-send a corrected report. Better to send once and be right.
 
+## General File Delivery (any file, not just reports)
+
+When the user asks for a file — insurance card, document, PDF, image, ANYTHING — deliver the **actual file** via `MEDIA:<absolute-path>`, never just the file path.
+
+**Eddie's correction (2026-06-27):** "can you make it where it's literally just a message... Actual file Not the location?" — He wants the file HE can tap and send, not a path he has to go find.
+
+### The Pattern
+1. Copy/rename the file to a clean filename if needed
+2. Send via `MEDIA:/absolute/path/to/file` — this delivers it as a tappable attachment
+3. Include **copy-paste ready text** alongside if the user needs to forward it
+4. For non-tech-savvy recipients (e.g., Eddie's dad): keep the message DEAD SIMPLE — what it is, when it expires, who to call. No jargon.
+
+### Example: Insurance Card for Dad
+```
+MEDIA:/opt/data/cache/documents/Nissan_Frontier_Insurance_Cards.pdf
+
+👆 That's the actual PDF file — your dad's insurance cards.
+
+Copy this message and paste it with the file:
+
+> Hey Dad, here's your current insurance cards.
+
+Done. Send it to him.
+```
+
+### Pitfalls
+- **NEVER show just a file path** — the user can't do anything with `/opt/data/cache/documents/foo.pdf`. Send the actual file.
+- **Rename for clarity** — `doc_62874086ac14_Nissan truck dad's.pdf` → `Nissan_Frontier_Insurance_Cards.pdf`
+- **Keep forwarding messages simple** — if the recipient is non-tech-savvy, strip all technical details. Just: what it is + a human sentence.
+
 ## Pitfalls
 - **Default is code block, not MEDIA** — the old "Just MD" mode (MEDIA file + silence) is retired. Compact code block in chat is the new default (2026-06-04).
 - **Code blocks should be ~30-40 lines max** — condense aggressively. The full report on disk is canonical; the chat block is a summary. Drop verbose sections, keep verdict + blockers + next step.

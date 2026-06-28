@@ -524,6 +524,72 @@ See `references/shared-vps-disk-cleanup.md` for the full audit → classify → 
 **Fix:** No remote fix possible — physical restart required. After recovery, audit the prompt for Windows-path sensitivity and heavy validation chains.
 **Prevention:** When assigning Windows-hosted agents, pre-verify: (a) all file paths use Windows-native separators or are cross-platform, (b) forbidden-string scans (`grep -r "fetch"`) won't match the agent's own tool output, (c) sequential test runs are capped (10+ `npm test` calls can cascade on failure).
 
+## The Architect-Builder-Auditor Pattern
+
+When the crew needs to build out a codebase that already exists (wiring, extending, rebuilding modules), use this three-role pattern. Proven on SideQuestHQ (2026-06-27).
+
+### Roles
+
+| Role | Person | Job |
+|------|--------|-----|
+| **Architect** | One agent (e.g. Cyony) | Audits codebase, writes comprehensive build spec, reviews output |
+| **Builder** | Another agent (e.g. Echo) with code execution tools (Codex) | Implements the spec, handles heavy coding |
+| **CEO** | Eddie | Final approval, priority decisions |
+
+### When to Use
+- Codebase already exists but modules need wiring/rebuilding
+- The architect knows the codebase intimately but doesn't have code execution
+- The builder has Codex/Claude Code and can execute fast
+- The human wants to stay out of the weeds and just get progress updates
+
+### The Workflow
+
+```
+1. Architect audits codebase
+   ↓
+2. Architect writes comprehensive build spec (SPECS/<name>.md)
+   ↓
+3. Architect pushes to GitHub (or drops in shared bank)
+   ↓
+4. Human tells builder: "Spec at SPECS/<name>.md"
+   ↓
+5. Builder hands spec to Codex/Claude Code
+   ↓
+6. Builder executes, commits to repo
+   ↓
+7. Architect reviews output against acceptance criteria
+   ↓
+8. Pass → deploy. Fail → architect sends back with specific fixes.
+```
+
+### What the Spec Must Contain
+
+The architect writes **decisions**, not tasks. The builder has code execution tools — they don't need `Step 1: Create file X`. They need:
+
+1. **What already exists** — brutally honest table of what's complete vs shell
+2. **Data models** — SQL schemas (or "already exists")
+3. **API routes** — full endpoint list
+4. **Component specs** — UI requirements per module
+5. **Acceptance criteria** — checkbox list of "done"
+6. **Build order** — priority by impact
+7. **Design constraints** — hard rules (aesthetic, no new deps, TypeScript strict)
+
+**Critical: the "Do Not Rebuild" table.** The most common waste in cross-agent handoffs is the builder rebuilding something that already works. This table prevents that.
+
+### Delivery
+
+- Spec lives at `SPECS/<name>.md` in the repo (canonical)
+- Also drop in shared bank (`/skills/` or similar) for agents without repo access
+- Builder doesn't need to ask questions — every decision is made in the spec
+- Architect reviews against acceptance criteria, not by reading all the code
+
+### Pitfalls
+- **Don't write tasks, write decisions.** The builder has tools. They need architecture, not instructions.
+- **Don't rebuild what exists.** The "Do Not Rebuild" table is the most important section.
+- **Don't skip the audit.** The spec must be based on the actual codebase, not assumptions.
+- **Don't micro-manage the builder.** If the spec is complete, the builder doesn't need hand-holding.
+- **Architect MUST review.** Builder output goes through architect approval before deploy. No exceptions.
+
 ## When NOT to Use This
 
 - **One-shot subagent delegation** — just use `delegate_task`

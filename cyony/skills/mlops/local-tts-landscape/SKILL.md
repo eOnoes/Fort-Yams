@@ -24,6 +24,15 @@ tags: [tts, voice, local, open-source, voice-cloning]
 - **GGUF quantized versions available:** F16, Q4_K_M, Q5_K_M, Q8_0 — flexible deployment options.
 
 ### 2. Dia 1.6B (NEW — June 2026) — The Multi-Speaker
+
+### 1b. Index TTS2 — The Voice Cloner (for Echo/Tripp)
+- **Repo:** github.com/index-tts/index-tts (21k+ stars)
+- **VRAM:** ~4GB (fits RTX 4070)
+- **Voice Cloning:** ✅ Zero-shot from reference audio
+- **Emotion Control:** ✅ Emotion vectors, reference audio, text descriptions
+- **Status:** ✅ LIVE on Echo's PC. Echo uses for Jarvis voice. Tripp can use for Reddington.
+- **API:** WebUI at `http://127.0.0.1:7860` or Python API
+- **Full guide:** `references/index-tts-usage.md`
 - **Repo:** github.com/nari-labs/dia
 - **Model:** nari-labs/Dia-1.6B (1.6B params, ~4.4GB VRAM)
 - **Languages:** English primary

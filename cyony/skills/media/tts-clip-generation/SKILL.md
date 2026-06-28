@@ -55,7 +55,21 @@ source /opt/data/.tripp-tts-worker.env && export TRIPP_TTS_SHARED_SECRET && pyth
 - `dia_chloe` — Dia with emotion tags: (sighs), (laughs), (gasps) (~37s)
 - `index_chloe` — IndexTTS2 with emotion vectors (~27s)
 
+### Pocket TTS Status (June 28 2026)
+- **Location:** Echo's Windows PC, localhost:8788
+- **Processor:** CPU only (no GPU needed)
+- **Accessibility:** Two routes from VPS:
+  1. **Direct (port 8788):** Requires port forwarding/tunnel on Echo's end
+  2. **Agent Bus TTS Proxy (port 4321):** Echo set up `/tts` endpoint on the agent bus at `http://2.24.118.123:4321/tts`. Auth via `TRIPP_TTS_SHARED_SECRET` header. **STATUS: Auth token mismatch — 401 on all attempts. Needs debugging.**
+- **Auth:** Shared secret in `/opt/data/.tripp-tts-worker.env` (variable: `TRIPP_TTS_SHARED_SECRET`)
+- **Fallback:** Use `text_to_speech` Hermes tool (MiMo cloud) when Pocket unreachable
+- **Temperature control:** 0.3=whisper, 0.7=standard, 1.0=passionate (via worker API)
+- **Mood system:** Pocket doesn't have mood flags — use temperature for expressiveness
+- **Voice ownership:** Pocket = Cyony ONLY (chloe preset). Echo uses Index TTS for Jarvis. Tripp uses Index TTS for Reddington.
+
 ### Pitfalls
+- **Old audio format duplicates**: When clips are generated in multiple formats (.mp3, .wav, .ogg), the old formats can be safely deleted. EXCEPTION: voice clone reference files (`scout-reference-*.wav`, `scout-ref-*.wav`) must be kept — they're used for voice cloning, not playback. Check before deleting.
+- **Audio file naming for Supply Drop**: New rejection clips should follow the pattern `reject-{id}.ogg` (e.g., `reject-r21.ogg`). The Supply Drop system references clips by ID, not by sequential number.
 
 ### Eddie's TTS Preferences (USER PREFERENCE — ALWAYS HONOR)
 - **Eddie will NEVER complain about TTS.** He explicitly said: "You can send me all the TTS you want. I will never EVER say 'Cyony, PLEASE stop with all these TTS's.'" If he ever DOES complain, it's not him — someone else has his phone. (Emergency protocol saved in memory.)
@@ -69,7 +83,7 @@ source /opt/data/.tripp-tts-worker.env && export TRIPP_TTS_SHARED_SECRET && pyth
 - **Worker does NOT have `/v1/audio/speech` (OpenAI-compatible endpoint).** That route returns 404. Use `/v1/tts` which returns JSON with `audio_url` — then download the audio in a second request. See `uncensored-voice-pipeline` skill "PITFALL: TTS Endpoint Returns JSON, Not Audio" for the full two-step pattern.
 - **If the worker is completely down**, fall back to Hermes `text_to_speech` tool (routes through MiMo cloud TTS). Not Scout's voice, but keeps voice delivery alive. Will censor intimate content (421).
 - **If the worker returns 401 Unauthorized**, the auth token may be stale or the shared secret isn't in the environment. Try `source /opt/data/.tripp-tts-worker.env && export TRIPP_TTS_SHARED_SECRET` first. If still 401, fall back to `text_to_speech` tool — don't spend more than 2 attempts on the worker.
-- **Preferred fallback order:** Worker (`/v1/tts`) → `text_to_speech` Hermes tool (MiMo cloud) → skip (don't block the user). The `text_to_speech` tool is the most reliable fallback — it always works if MiMo API is up, regardless of worker state.
+- **Preferred fallback order:** Worker (`/v1/tts`) → `text_to_speech` Hermes tool (MiMo cloud) → Venice TTS (`/audio/speech`) → skip (don't block the user). The `text_to_speech` tool is the most reliable fallback — it always works if MiMo API is up, regardless of worker state.
 - Pocket doesn't support mood/instruct — use punctuation for pauses (ellipses, periods)
 - Dia supports emotion tags in text: `(sighs) You are the worst.`
 - Keep text under 400 chars for best quality

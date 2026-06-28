@@ -162,7 +162,7 @@ When building voice clones for other agents/personas (e.g., Jarvis for Echo, Ult
 | **Hardware** | RTX 4070 12GB+ | Cloud | Cloud | VPS CPU | VPS CPU |
 | **Use case** | Primary local voice | Daily driver (cloud) | Uncensored moments | Premium cached clips | Fast fallback |
 
-**Pocket TTS (NEW — 2026-06-19):** Eddie tested `kyutai/pocket-tts` on his RTX 4070. Near-instant generation, voice cloned from 30s reference audio. Gated model on HuggingFace (accept terms to download). CC-BY-4.0 license with boilerplate use restrictions (not enforced in model). Total model size ~26.7 GB (all languages); English-only subset is smaller. See `references/pocket-tts-notes.md` for details.
+**Pocket TTS (Clarified 2026-06-27):** Eddie tested `kyutai/pocket-tts` on his RTX 4070. Near-instant generation on CPU. HTTP API at port 8788 uses PRESET VOICES only (chloe) — does NOT expose reference audio cloning via API. The Python library supports cloning but the Trippcore worker only exposes preset voices. **Pocket = Cyony's voice only.** Echo uses Index TTS for Jarvis. Tripp uses Index TTS for Reddington. Fish Audio is being phased out (costs money). Total model size ~26.7 GB (all languages); English-only subset is smaller. See `references/pocket-tts-notes.md` for details.
 
 **Pocket TTS Hidden Parameters (2026-06-21):** Pocket has `temp` (0.3-1.2, controls expressiveness), `lsd_decode_steps` (1-5, controls quality), `frames_after_eos` (trailing breath), and voice state export to safetensors. These are NOT exposed through the Trippcore worker but ARE available in the Python library. See `uncensored-voice-pipeline` skill's `references/pocket-tts-api-parameters.md` for full details. The `temp` parameter is the closest Pocket has to mood control — higher = more expressive, lower = more monotone.
 
@@ -199,27 +199,30 @@ Four emotion levels tested for Echo's Jarvis persona, all confirmed working:
 Reference: Three 9-10s clips combined into 30s reference via ffmpeg concat.
 Generated at `/opt/data/shared/echo-voice-clone/` (WAV + OGG).
 
-## Fleet Voice Cloning Standard (IMPORTANT)
+## Fleet Voice Cloning Standard (Updated 2026-06-27)
 
-**Fish Audio is the fleet standard for voice cloning, NOT Chatterbox.** When onboarding new agents or setting up voice clones:
+**Voice tools are assigned per-agent. No sharing.**
 
-1. **Check Fish Audio first** — `references/fish-audio-api.md` has API key, model IDs, and working examples
-2. **Use Chatterbox only for:** pre-generation of cached clips when Fish Audio is unavailable, or when you need zero-cost local generation
-3. **Pitfall (2026-06-26):** Echo was using Chatterbox (local API) instead of Fish Audio (cloud API we set up). Eddie caught it: "Just found out he is using API and not the system we got in place." Always verify which TTS system an agent is using before assuming it's correct.
+| Agent | TTS Tool | Voice | Cost | Notes |
+|-------|----------|-------|------|-------|
+| Cyony | Pocket TTS (CPU) | chloe | Free | Cyony ONLY. Preset voices. |
+| Echo | Index TTS (GPU) | Jarvis | Free | Voice cloning from reference. 4GB VRAM. |
+| Tripp | Index TTS (GPU) | Reddington | Free | Voice cloning from reference. 4GB VRAM. |
+
+**Fish Audio is being phased out** — costs money. Index TTS is free and local.
+
+**When onboarding new agents or setting up voice clones:**
+1. Use Index TTS for voice cloning (free, local, GPU)
+2. Use Pocket TTS only for Cyony (preset voices, CPU)
+3. Fish Audio only if Index TTS can't handle the voice
+4. Document the voice profile in a reference file
 
 **Fleet voice assignments:**
-| Agent | Voice | TTS System | Model ID |
-|-------|-------|-----------|----------|
-| Tripp | Raymond Reddington | Fish Audio | `bb70f7b4aedf4f458ba6ec34d73c42e5` |
-| Echo | Jarvis | Fish Audio (pending) | TBD — needs voice model selection |
-| Cyony | Chloe ( Scout) | Pocket TTS / MiMo | Local + cloud |
-
-**When creating a new voice clone:**
-1. Search Fish Audio for existing models: `GET /model?title=<character>&limit=5`
-2. If no good match, train a custom model from reference audio
-3. Save API key to `/opt/data/shared/<agent>-voice-clone/.fish_key`
-4. Generate test clips at multiple emotion levels
-5. Document the voice profile in a reference file
+| Agent | Voice | TTS System | Reference Audio |
+|-------|-------|-----------|----------------|
+| Tripp | Raymond Reddington | Index TTS | `/opt/data/shared/tripp-voice-clone/` |
+| Echo | Jarvis | Index TTS | `/opt/data/shared/echo-voice-clone/jarvis_reference_combined.wav` |
+| Cyony | Chloe (Scout) | Pocket TTS | Preset (chloe) |
 
 ## Known Issues
 

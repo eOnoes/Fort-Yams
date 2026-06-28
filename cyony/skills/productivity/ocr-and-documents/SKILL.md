@@ -161,12 +161,36 @@ No extra dependencies needed — pymupdf covers split, merge, search, and text e
 
 ---
 
+## Downloading PDFs from URLs (when web_extract fails)
+
+If `web_extract` is unavailable (Firecrawl not configured), download with `curl` then extract locally:
+
+```bash
+# Simple URL
+curl -L -o doc.pdf "https://example.com/file.pdf"
+
+# URL with brackets [] (e.g., State Farm, query params)
+# MUST use -g flag to disable URL globbing — brackets break curl otherwise
+curl -g -L -o doc.pdf 'https://example.com/file?filter[param]=value&filter[other]=val'
+
+# Then extract
+python3 -c "
+import pymupdf
+doc = pymupdf.open('doc.pdf')
+for page in doc:
+    print(page.get_text())
+"
+```
+
+**Pitfall:** URLs with square brackets (`[]`) cause `curl: (3) bad range in URL` errors. Always use `-g` (or `--globoff`) when the URL contains brackets.
+
 ## Notes
 
-- `web_extract` is always first choice for URLs
+- `web_extract` is always first choice for URLs — but if Firecrawl isn't configured, fall back to curl + pymupdf
 - pymupdf is the safe default — instant, no models, works everywhere
 - marker-pdf is for OCR, scanned docs, equations, complex layouts — install only when needed
 - Both helper scripts accept `--help` for full usage
 - marker-pdf downloads ~2.5GB of models to `~/.cache/huggingface/` on first use
 - For Word docs: `pip install python-docx` (better than OCR — parses actual structure)
-- For PowerPoint: see the `powerpoint` skill (uses python-pptx)
+- For PowerPoint: see the `powerpoint` skill (uses `python-pptx` with full slide/notes support).
+- **Installing pymupdf:** If the hermes venv doesn't have pip, use `uv pip install pymupdf` and run with the project venv python (e.g., `/opt/data/Project/.venv/bin/python3`)

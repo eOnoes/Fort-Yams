@@ -1,0 +1,14 @@
+{
+  "tripp": {
+    "model_id": "bb70f7b4aedf4f458ba6ec34d73c42e5",
+    "name": "Raymond Reddington",
+    "voice": "James Spader",
+    "clips_generated": 28
+  },
+  "echo": {
+    "model_id": "f6c05dabb94440428ec893da40768578",
+    "name": "Jarvis",
+    "reference": "jarvis_reference_combined.wav",
+    "clips_generated": 19
+  }
+}
