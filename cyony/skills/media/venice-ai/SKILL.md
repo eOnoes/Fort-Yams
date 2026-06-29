@@ -53,16 +53,21 @@ tags: [venice, images, tts, music, video, creative, api]
 - Input: base64, file upload, or HTTPS URL
 
 ### 🗣️ TTS (`POST /audio/speech`)
-**9 voice families** — see `uncensored-voice-pipeline` skill for full list.
+**6+ voice families** with different emotion control systems. See `venice-voice-clone` skill for full model details, code examples, and comparison with MiMo tags.
 
-Quick reference:
-- `tts-xai-v1` — eve, ara, rex, sal, leo (recommended default)
-- `tts-kokoro` — 100+ multilingual (af_*, am_*, bf_*, bm_*)
-- `tts-qwen3-1-7b` — Emotion via `prompt` param ("Very happy.", "Sad and slow.")
-- `tts-orpheus` — tara, leah, jess, mia (temperature control)
-- `tts-elevenlabs-turbo-v2-5` — Rachel, Aria, Charlotte
+| Model | Emotion Control | Voice Cloning | Best For |
+|-------|----------------|---------------|----------|
+| `tts-chatterbox-hd` | Inline tags (limited) | ✅ `vv_` handles | Voice cloning, natural prosody |
+| `tts-qwen3-1-7b` | **`prompt` parameter** | ❌ Preset only | Emotion-driven delivery |
+| `tts-qwen3-0-6b` | **`prompt` parameter** | ❌ Preset only | Lighter weight Qwen3 |
+| `tts-kokoro` | Preset voices | ❌ | Multilingual (100+ voices) |
+| `tts-xai-v1` | Preset voices | ❌ | eve, ara, rex, sal, leo |
+| `tts-orpheus` | **Temperature control** | ❌ | tara, leah, jess, mia |
+| `tts-elevenlabs-turbo-v2-5` | Preset voices | ❌ | Rachel, Aria, Charlotte |
 
-**Params:** `input` (max 4096), `model`, `voice`, `response_format` (mp3/opus/aac/flac/wav/pcm), `speed` (0.25-4.0), `streaming`
+**Key discovery:** Qwen3 uses a `prompt` parameter for emotion (e.g. `"Whispering seductively, slow and breathy"`), NOT inline tags like MiMo. The LLM brain interprets the prompt globally.
+
+**Params:** `input` (max 4096), `model`, `voice`, `prompt` (emotion, Qwen3 only), `response_format` (mp3/opus/aac/flac/wav/pcm), `speed` (0.25-4.0), `temperature` (0-2), `streaming`
 
 ### 🎵 Music Generation (ASYNC)
 Lifecycle: `POST /audio/quote` → `/audio/queue` → `/audio/retrieve` → `/audio/complete`

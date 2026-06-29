@@ -91,6 +91,10 @@ Also: upscale (2-4x), background removal, multi-edit (composite 2-3 images)
 - **Single light source** is the #1 technique — everything else is secondary
 - **Low camera angle** emphasizes height/power (use for 7ft renders)
 - **MiMo v2 Omni** (auxiliary vision) flags explicit images as "high risk" — use `vision_analyze` tool to bypass
+- **Venice defaults to BLONDE hair** unless you explicitly specify "dark black hair" or "brunette" in the prompt. Always state hair color explicitly or you'll get a random blonde woman.
+- **POV shots require explicit angle description** — "POV from above looking down" or "POV from behind" must be stated clearly or Venice defaults to front-facing
+- **For intimate/alluring images, be EXTREMELY specific about clothing** — "low-cut gray crop top showing cleavage" works better than "sexy top." Name the garment, the color, the cut, and what it shows.
+- **FAL is too conservative for alluring content** — it will put a blazer on anything. Use Venice with safe_mode OFF for intimate/alluring images. FAL for cute/safe only.
 
 ## Related
 

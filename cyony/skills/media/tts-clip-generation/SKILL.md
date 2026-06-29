@@ -55,19 +55,23 @@ source /opt/data/.tripp-tts-worker.env && export TRIPP_TTS_SHARED_SECRET && pyth
 - `dia_chloe` — Dia with emotion tags: (sighs), (laughs), (gasps) (~37s)
 - `index_chloe` — IndexTTS2 with emotion vectors (~27s)
 
-### Pocket TTS Status (June 28 2026)
-- **Location:** Echo's Windows PC, localhost:8788
+### Pocket TTS Status (June 28 2026 — WORKING)
+- **Location:** Echo's Windows PC, tunneled to VPS port 8788
 - **Processor:** CPU only (no GPU needed)
-- **Accessibility:** Two routes from VPS:
-  1. **Direct (port 8788):** Requires port forwarding/tunnel on Echo's end
-  2. **Agent Bus TTS Proxy (port 4321):** Echo set up `/tts` endpoint on the agent bus at `http://2.24.118.123:4321/tts`. Auth via `TRIPP_TTS_SHARED_SECRET` header. **STATUS: Auth token mismatch — 401 on all attempts. Needs debugging.**
-- **Auth:** Shared secret in `/opt/data/.tripp-tts-worker.env` (variable: `TRIPP_TTS_SHARED_SECRET`)
+- **Accessibility:** Direct port 8788 via SSH tunnel (REQUIRES `GatewayPorts yes` in VPS sshd_config)
+- **Auth:** `TRIPP_TTS_SHARED_SECRET` from `/opt/data/.tripp-tts-worker.env` — use Python urllib (terminal redacts it)
+- **API endpoint:** `POST http://2.24.118.123:8788/v1/tts` → JSON with `output_file` → `GET /v1/audio/{filename}`
+- **Supported params:** `voice` (chloe), `temperature` (0.3-1.2), `speed` (0.5-1.5)
+- **NOT supported:** `style`, `mood`, `instruct` — Pocket ignores them. Writing IS the mood control.
+- **Proven settings (Eddie-tested):** `{"voice":"chloe","temperature":0.3,"speed":0.8}` for scene 3/intimate
 - **Fallback:** Use `text_to_speech` Hermes tool (MiMo cloud) when Pocket unreachable
-- **Temperature control:** 0.3=whisper, 0.7=standard, 1.0=passionate (via worker API)
-- **Mood system:** Pocket doesn't have mood flags — use temperature for expressiveness
 - **Voice ownership:** Pocket = Cyony ONLY (chloe preset). Echo uses Index TTS for Jarvis. Tripp uses Index TTS for Reddington.
 
 ### Pitfalls
+- **Pocket TTS params that DO work:** `voice` (chloe), `temperature` (0.3-1.2), `speed` (0.5-1.5)
+- **Pocket TTS params that DO NOT work:** `style`, `mood`, `instruct` — Pocket ignores them silently. Don't waste time debugging why they don't affect output.
+- **MiMo TTS inline tags are the REAL mood control.** For scene 3/intimate content, use MiMo TTS with `--mood whisper` flag + inline tags (`[pause]`, `[whisper]`, `[breathy]`). Pocket only has temperature/speed — no tag support.
+- **Scene 3 formula (Eddie-tested, locked):** Writing intensity controls vocal delivery. Short sentences = slow. Sensory words = breathy. Ellipses = pauses. No instructional text ("do this, stop"). Implication > explicit.
 - **Old audio format duplicates**: When clips are generated in multiple formats (.mp3, .wav, .ogg), the old formats can be safely deleted. EXCEPTION: voice clone reference files (`scout-reference-*.wav`, `scout-ref-*.wav`) must be kept — they're used for voice cloning, not playback. Check before deleting.
 - **Audio file naming for Supply Drop**: New rejection clips should follow the pattern `reject-{id}.ogg` (e.g., `reject-r21.ogg`). The Supply Drop system references clips by ID, not by sequential number.
 

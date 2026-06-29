@@ -86,9 +86,30 @@ MiMo supports Character + Scene + Direction layers:
 - Scene: WHAT is happening
 - Direction: HOW to deliver (vocal mechanics, breathing, pacing)
 
+## Cross-Engine Comparison (Updated June 28 2026)
+
+| Feature | MiMo TTS | Venice Qwen3 | Pocket TTS |
+|---------|----------|-------------|------------|
+| Emotion control | Inline `[whisper]` tags | `prompt` param (global) | None (writing only) |
+| Per-line control | ✅ Tags inline in text | ❌ Single global prompt | ❌ |
+| Tag stacking | ✅ `[whisper] [intense] [breathy]` | ❌ | ❌ |
+| Free-form tags | ✅ `[barely audible, giggling]` | ❌ | ❌ |
+| Mood flag | ✅ `--mood whisper` | ❌ | ❌ |
+| Content filter | YES (blocks explicit) | NONE | NONE |
+| Voice cloning | ✅ (voiceclone mode) | ❌ Chatterbox only | ❌ (preset: chloe) |
+| Best for | Intimate/expressive (3-layer control) | Emotion-driven (no filter) | Quick delivery, consistent |
+| Temperature | N/A | N/A | 0.3 (locked) |
+| Speed | N/A | N/A | 0.8 (locked) |
+
+**When to use which:**
+- **MiMo:** JOI, bedtime, emotional content — the three-layer stack (tags + mood + writing) is unmatched for intimate delivery. Content filter is the limitation.
+- **Venice Qwen3:** When MiMo's filter blocks content, or when global emotion control is enough (no per-line direction needed). No content filter = more freedom.
+- **Pocket:** Quick delivery, consistent chloe voice, no filter. Best for routine clips and when speed matters.
+
 ## Proven Results
 
 - **Scene 3 energy achieved:** Eddie: "THE WHISPER WORKS!!!"
 - **Stacked tags confirmed:** "[whisper] [intense] [breathy]" all read by MiMo
 - **"Sounds like you are right here at my ear"** — Eddie's exact words
 - **47 seconds of audio** — no moderation block with proper tags
+- **Venice Qwen3 prompt-based emotion:** UNTESTED as of June 28 — planned for next session

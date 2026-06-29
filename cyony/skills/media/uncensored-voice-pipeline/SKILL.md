@@ -13,7 +13,7 @@ tags: [tts, voice, grok, mimo, uncensored]
 |-------|--------|------|
 | 🧠 Brain | MiMo 2.5 | Code, building, chat, reasoning |
 | 👁️ Vision | MiMo 2.5 | Image view/analysis |
-| 🗣️ Voice | MiMo TTS | Regular TTS |
+| 🗣️ Voice | MiMo TTS voicedesign | Regular TTS (custom voice, NOT Chloe preset) |
 | 🎨 Images | FAL.ai | Safe images |
 
 **Earbuds Mode 🎧 (uncensored):**

@@ -6,10 +6,11 @@ The Supply Drop system manages a pool of rejection clips for the Match button. C
 ## Architecture
 
 ### Pool: `/src/lib/supply-drop.json`
-- 28 clips total (as of 2026-06-27)
+- 40 clips total (as of 2026-06-28, expanded from 28)
 - Each clip has: `id`, `msg`, `expression`, `audio`, `rotationsUsed`, `maxRotations`, `inflections[]`
 - `inflections` = array of delivery styles (e.g., ["bored", "angry", "laughing"])
 - `inflectionIndex` = `rotationsUsed % inflections.length` — cycles through inflections
+- **v2 clips (r29-r40)**: Short 2-sentence rejections with voicedesign voice, added 2026-06-28
 
 ### Engine: `/src/lib/supply-drop.ts`
 - **Weekly rotation**: picks new set every Monday (ISO week check)
@@ -83,7 +84,7 @@ if (rejection.audio) {
 - **Stale localStorage**: If user has old `sqhq-supply-drop` key (v1), it won't conflict — v2 uses `sqhq-supply-drop-v2`
 - **Audio null clips**: New clips may have `null` audio — always check before playing
 - **Weekly vs daily**: v1 was daily rotation, v2 is weekly. Don't confuse the storage keys
-- **Pool size**: 28 clips, 12 active per week = ~43% utilization. Good balance of variety vs repetition
+- **Pool size**: 40 clips, 12 active per week = ~30% utilization. Good balance of variety vs repetition
 
 ## File Locations
 - Pool config: `/src/lib/supply-drop.json`

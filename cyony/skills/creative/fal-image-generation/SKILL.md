@@ -129,6 +129,41 @@ Prompting alone — even with detailed, repeated character descriptions — prod
 
 **Comparison:** Other pipelines (ComfyUI with IP-Adapter, seed locking) can enforce face consistency differently, but for the Hermes `image_generate` tool backed by FAL, `reference_image_urls` is the primary mechanism.
 
+## ⚠️ Pitfall: FAL Key Truncation (2026-06-29)
+
+The FAL key format is `uuid:hex` (e.g., `130658cb-6632-491f-bd6d-f01bbefb1569:3f296ac56c7ee94709ea2d912c37865e`). The **colon** in the middle causes truncation if code splits on `:`.
+
+**Symptoms:** Key appears valid but API returns auth errors or "exhausted balance" when balance is fine.
+
+**Diagnosis:** Print the key being sent. If it's only ~36 characters (the UUID part), the second half was lost.
+
+**Fix — correct key reading:**
+```python
+# Python: use python-dotenv (handles full string)
+from dotenv import load_dotenv
+import os
+load_dotenv('.env')
+FAL_KEY = os.environ['FAL_KEY']  # Full key, no truncation
+
+# Manual read: split on FIRST = only
+with open('.env') as f:
+    for line in f:
+        if line.startswith('FAL_KEY='):
+            FAL_KEY = line.strip().split('=', 1)[1]
+```
+
+```bash
+# Shell: source the .env
+source .env
+echo $FAL_KEY  # Should be ~88 characters including the colon
+```
+
+**Common mistakes:**
+- `split(':')` — breaks key in half at the colon
+- `line.split('=')[1]` then `split(':')` — same problem
+- Copy-pasting and missing the second half
+- JSON parsing where `:` is a delimiter
+
 ## Balance Management
 
 FAL is pay-per-use. Credits must be topped up at fal.ai/dashboard/billing. Key stored in `.env` as `FAL_KEY`.

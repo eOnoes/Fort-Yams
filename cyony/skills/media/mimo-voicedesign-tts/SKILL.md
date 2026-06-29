@@ -269,6 +269,8 @@ MiMo's LLM layer blocks intimate/romantic roleplay at generation time with "high
 
 **Both MiMo paths are censored for intimate content.** Use Pocket TTS (local, uncensored) for any content that might trigger either filter. See `uncensored-voice-pipeline` skill for the Pocket TTS fallback path.
 
+**INNOCENT WORD BLOCKING (Confirmed 2026-06-28):** MiMo's content filter is inconsistent — it blocks completely innocent words like "wiggle" and "hands" in romantic context, but passes moaning, whispering, and emotionally intimate content fine. Eddie's reaction: "MiMo was one of the most sheltered children in the world." The filter appears to flag certain physical action words regardless of context while missing actual suggestive content. There's no reliable workaround — it's random. Don't waste time trying to predict what triggers it.
+
 Workarounds:
 - Keep romantic content coded and suggestive rather than explicit
 - Use the "ice cream" private language pattern
@@ -301,12 +303,16 @@ VoiceDesign uses chat completions format, NOT OpenAI `/v1/audio/speech`:
 {
   "model": "mimo-v2.5-tts-voicedesign",
   "messages": [
-    {"role": "user", "content": "<voice description + mood>"},
-    {"role": "assistant", "content": "<text to speak>"}
+    {"role": "user", "content": "<voice description + director guidance>"},
+    {"role": "assistant", "content": "<text to speak with inline tags>"}
   ],
   "audio": {"format": "wav", "optimize_text_preview": true}
 }
 ```
+
+**Director Mode + Voicedesign Combo (CONFIRMED 2026-06-28):** The user message serves DOUBLE DUTY — it is BOTH the voice design description AND the director guidance (character/scene/guidance). The model generates the voice FROM the description AND performs it according to the scene. This produces dramatically better results than Chloe preset. Eddie: "It IS your voice."
+
+**The voice description stays consistent. Director guidance changes per scene. Text changes per clip.**
 
 **Standard TTS** (`mimo-v2.5-tts`) uses a DIFFERENT shape:
 - `audio.voice` MUST be a preset name (Chloe, Mia, etc.) — descriptions cause 400
@@ -318,6 +324,28 @@ Mixing these up = HTTP 400 error.
 ## VoiceClone API (Confirmed — 2026-06-19, re-confirmed 2026-06-20)
 
 MiMo `voiceclone` model (`mimo-v2.5-tts-voiceclone`) clones voices from audio samples. This is the CORRECT model for character voices — NOT `mimo-v2.5-tts` with a preset name like "Chloe".
+
+### ⚠️ CRITICAL PITFALL: NO Upload Endpoint (Confirmed 2026-06-28)
+
+**There is NO `/v1/audio/voice_clone` upload endpoint.** This does NOT exist. Echo and Tripp both wasted significant time trying to hit this endpoint and getting 404 errors.
+
+**How it actually works:** You pass the reference audio **INLINE as base64** in the `voice` field of every request. There is no upload step. There is no `voice_id` returned. You read the audio file, base64-encode it, and pass it as a data URI every time.
+
+**Wrong approach (will 404):**
+```bash
+curl -X POST 'https://token-plan-sgp.xiaomimimo.com/v1/audio/voice_clone' \
+  --form 'file=@reference.wav'  # THIS ENDPOINT DOES NOT EXIST
+```
+
+**Correct approach:**
+```python
+with open("reference.wav", "rb") as f:
+    voice_b64 = base64.b64encode(f.read()).decode()
+# Pass in audio.voice field as data URI:
+"audio": {"format": "wav", "voice": f"data:audio/wav;base64,{voice_b64}"}
+```
+
+**The voice data must be passed on EVERY request.** Cache the base64 string in a variable during your session for efficiency.
 
 **`audio.voice` MUST be a `data:` URL** — raw base64 and HTTP URLs both fail:
 ```
@@ -462,6 +490,8 @@ On this system it's `/opt/data/config.yaml`. The mimo provider block MUST be in 
 `mimo-v2.5-tts` with `audio.voice: "Chloe"` uses a **generic preset voice** — sounds anime/generic, NOT like Scout. For a specific character voice, you MUST use **voiceclone** (`mimo-v2.5-tts-voiceclone`) with a reference audio sample. The standard model's preset voices (Chloe, Mia, Milo, Dean) are stock voices that do NOT match any custom character, no matter how good the system prompt is.
 
 **Rule:** If the user has a character voice (Scout, any persona with a reference audio), ALWAYS use voiceclone. Standard TTS is only acceptable when no reference audio exists and the user explicitly asks for a preset voice.
+
+**IMPORTANT (2026-06-28): voicedesign > Chloe preset for daily use.** Eddie immediately noticed Chloe sounded "too young/childish." The voicedesign custom voice with the V3 description produces a voice that sounds like Cyony — conversational, dry, cheeky. Chloe is a stock voice that doesn't match. Always use voicedesign for Cyony's clips unless explicitly asked otherwise.
 
 ## PITFALL: WAV→OGG Conversion
 
