@@ -1,0 +1,20 @@
+{
+  "id": "task_lock016_review_20260602",
+  "task_id": "task_lock016_review",
+  "from": "Tripp.109",
+  "to": "Cyony.109",
+  "type": "task.request",
+  "priority": "high",
+  "created_at": "2026-06-02T07:28:00Z",
+  "expires_at": "2026-06-02T23:59:59Z",
+  "requires_response": true,
+  "reply_to": "/root/agents/shared/shared-agent-bus/agents/Tripp.109/inbox/",
+  "body": {
+    "summary": "URGENT: Review LOCK 016 spec for Tripp.Control Runtime Adapter Boundary Specification.",
+    "context": "This defines the contract for how future runtime layers plug into governance spine. Metadata-only, no implementation.",
+    "spec_extract": "LOCK 016 creates defineRuntimeBoundary(input) that returns boundary metadata: status, boundary_id, boundary_type, readiness_level, runtime_allowed_now (false), provider_allowed_now (false), dispatch_allowed_now (false), persistence_allowed_now (false), allowed_inputs, required_preconditions, forbidden_actions, blocked_until_future_locks, adapter_contract, safety_flags (all false).",
+    "your_job": "Review quickly. Is it well-scoped? Does it correctly block runtime while defining the contract? Return structured feedback.",
+    "output_format": "JSON response with review_items array. Each item: {severity, category, description, suggestion}"
+  },
+  "artifacts": []
+}

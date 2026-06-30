@@ -1,0 +1,56 @@
+{
+  "schemaVersion": "1.0.0",
+  "packetId": "1e19ca38-05e5-4f4b-9ed8-defdce67a2d1",
+  "runId": "233f34d4-ec30-4904-a4f4-a6ab749699dc",
+  "createdAt": "2026-06-06T08:34:27.759Z",
+  "createdBy": "cli",
+  "agentRole": "hermes_cyony",
+  "trustZone": "cloud_sandbox_proposal",
+  "taskType": "audit",
+  "title": "6G trace completeness",
+  "objective": "Prove trace fields",
+  "scope": "test",
+  "allowedPaths": [],
+  "deniedPaths": [
+    ".env",
+    ".env.*",
+    "**/.env",
+    "**/.env.*",
+    ".git",
+    "node_modules",
+    "**/secrets/**",
+    "**/credentials/**",
+    "**/tokens/**",
+    "**/*.key",
+    "**/*.pem",
+    "**/.ssh/**"
+  ],
+  "toolPolicy": {
+    "allowShell": false,
+    "allowWrite": false,
+    "allowNetwork": false,
+    "allowSecrets": false,
+    "allowedTools": [],
+    "deniedTools": []
+  },
+  "approvalPolicy": {
+    "requiresHumanApproval": true,
+    "requiresApprovalGate": true,
+    "agentMayApprove": false,
+    "echoReviewRequired": false
+  },
+  "contextPolicy": {
+    "contextBudgetTokens": 8000,
+    "redactSecrets": true,
+    "includeRepoSummary": false,
+    "includeFileContents": false,
+    "allowedContextPaths": [],
+    "deniedContextPaths": []
+  },
+  "constraints": [
+    "Phase 8B dry run — no real execution"
+  ],
+  "requiredOutputFormat": "json_packet_plus_markdown_report",
+  "reportRequired": true,
+  "status": "pending"
+}

@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tripp.Control — Receipt Tape</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=VT323&family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400&display=swap');
+
+:root {
+  --bg: #0a0a08;
+  --paper: #121210;
+  --ink: #b8b4a8;
+  --dim: #4a4840;
+  --muted: #6a6860;
+  --green: #7a9a4a;
+  --amber: #a08840;
+  --red: #8a4050;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+html, body { height:100%; overflow:hidden; background:var(--bg); }
+
+body {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 24px;
+  font-family: 'VT323', monospace;
+  color: var(--ink);
+  height: 100vh;
+  overflow-x: auto;
+}
+
+.receipt {
+  width: 280px;
+  min-width: 260px;
+  background: var(--paper);
+  padding: 20px 18px 28px;
+  font-size: 13px;
+  line-height: 1.4;
+  position: relative;
+  align-self: stretch;
+  overflow-y: auto;
+  flex-shrink: 0;
+}
+/* Jagged tear bottom */
+.receipt::after {
+  content: "";
+  display: block;
+  height: 10px;
+  margin: 16px -18px -28px;
+  background:
+    linear-gradient(135deg, var(--paper) 5px, transparent 0),
+    linear-gradient(-135deg, var(--paper) 5px, transparent 0);
+  background-size: 10px 10px;
+  background-repeat: repeat-x;
+}
+/* Tape mark at top */
+.receipt::before {
+  content: "";
+  position: absolute;
+  top: -2px; left: 50%;
+  transform: translateX(-50%);
+  width: 40px; height: 6px;
+  background: rgba(180,170,150,0.12);
+  border-radius: 1px;
+}
+
+.receipt::-webkit-scrollbar { width: 2px; }
+.receipt::-webkit-scrollbar-track { background: transparent; }
+.receipt::-webkit-scrollbar-thumb { background: #1f1e1a; }
+
+.receipt h3 {
+  font-family: 'VT323', monospace;
+  font-size: 11px;
+  color: var(--green);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px dashed #1e1c18;
+}
+.rec-line {
+  padding: 1px 0;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+.rec-line .good { color: var(--green); }
+.rec-line .warn { color: var(--amber); }
+.rec-line .bad  { color: var(--red); }
+.rec-line .dim  { color: var(--dim); }
+.rec-line .tag {
+  display: inline-block;
+  font-size: 10px;
+  padding: 0 4px;
+  border: 1px solid;
+  margin-left: 4px;
+}
+.tag-ok  { color: var(--green); border-color: var(--green); }
+.tag-gate { color: var(--amber); border-color: var(--amber); }
+.tag-off { color: var(--red); border-color: var(--red); }
+.strike { text-decoration: line-through; text-decoration-color: var(--red); }
+
+@media (max-width: 700px) {
+  body { flex-wrap: wrap; justify-content: flex-start; }
+  .receipt { width: 100%; min-width: 0; flex: 1 1 100%; }
+}
+</style>
+</head>
+<body>
+
+<div class="receipt">
+  <h3>status · tier gates</h3>
+  <div class="rec-line"><span class="dim">safety</span>    <span class="good">t5</span> <span class="tag tag-gate">GATED</span></div>
+  <div class="rec-line"><span class="dim">approval</span>  <span class="good">t4</span> <span class="tag tag-gate">GATED</span></div>
+  <div class="rec-line"><span class="dim">mutation</span>  <span class="bad">false</span> <span class="tag tag-off">LOCKED</span></div>
+  <div class="rec-line" style="margin-top:8px"><span class="dim">mode</span> static</div>
+  <div class="rec-line"><span class="dim">surface</span> FFSCV</div>
+  <div class="rec-line"><span class="dim">panels</span> 12</div>
+</div>
+
+<div class="receipt">
+  <h3>runtime · safety</h3>
+  <div class="rec-line"><span class="good">runtime_status</span> <span class="tag tag-ok">t1</span></div>
+  <div class="rec-line indent"><span class="dim">risk</span> low · confirm no · mutation no</div>
+  <div class="rec-line indent"><span class="dim">↳</span> view.changed panel.selected</div>
+  <div class="rec-line" style="margin-top:6px"><span class="warn">safety_control</span> <span class="tag tag-gate">t5</span></div>
+  <div class="rec-line indent"><span class="dim">risk</span> <span class="bad">high</span> · confirm <span class="good">yes</span></div>
+  <div class="rec-line indent"><span class="dim">↳</span> intent.* confirmation.* panic.*</div>
+  <div class="rec-line" style="margin-top:6px"><span class="dim">health_contract</span> <span class="tag tag-ok">t0</span></div>
+  <div class="rec-line indent"><span class="dim">display-only</span></div>
+</div>
+
+<div class="receipt">
+  <h3>queue · packet</h3>
+  <div class="rec-line"><span class="dim">queue_snapshot</span> <span class="tag tag-ok">t1</span></div>
+  <div class="rec-line"><span class="warn">packet_lifecycle</span> <span class="tag tag-gate">t3</span></div>
+  <div class="rec-line indent"><span class="dim">risk</span> guarded · confirm <span class="good">yes</span></div>
+  <div class="rec-line indent"><span class="dim">↳</span> intent.* confirmation.*</div>
+  <div class="rec-line"><span class="dim">adapter_registry</span> <span class="tag tag-ok">t1</span></div>
+  <div class="rec-line"><span class="dim">trace_viewer</span> <span class="tag tag-ok">t1</span></div>
+  <div class="rec-line"><span class="warn">approval_queue</span> <span class="tag tag-gate">t4</span></div>
+  <div class="rec-line indent"><span class="dim">approve</span> <span class="good">true</span> · decision.*</div>
+  <div class="rec-line"><span class="dim">adapter_readback</span> <span class="tag tag-ok">t1</span></div>
+</div>
+
+<div class="receipt">
+  <h3>deferred · boundaries</h3>
+  <div class="rec-line"><span class="bad">adapter_run</span> <span class="tag tag-off">t6</span></div>
+  <div class="rec-line indent"><span class="bad">no live adapter gate</span></div>
+  <div class="rec-line"><span class="bad">reports</span> <span class="tag tag-off">t6</span></div>
+  <div class="rec-line indent"><span class="bad">no report contract</span></div>
+  <div class="rec-line"><span class="bad">forge_review</span> <span class="tag tag-off">t6</span></div>
+  <div class="rec-line indent"><span class="bad">no candidate contract</span></div>
+  <div style="margin-top:8px; padding-top:8px; border-top:1px dashed #1e1c18">
+  <div class="rec-line dim strike">runtime-mutation</div>
+  <div class="rec-line dim strike">approval-submission</div>
+  <div class="rec-line dim strike">panic-execution</div>
+  <div class="rec-line dim strike">adapter-execution</div>
+  <div class="rec-line dim strike">live-agent-execution</div>
+  <div class="rec-line dim strike">network-transport</div>
+  <div class="rec-line dim strike">server-api-route</div>
+  <div class="rec-line dim strike">dom-event-binding</div>
+  </div>
+</div>
+
+</body>
+</html>

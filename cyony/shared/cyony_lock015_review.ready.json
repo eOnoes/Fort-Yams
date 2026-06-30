@@ -1,0 +1,91 @@
+{
+  "id": "cyony_lock015_review_20260602",
+  "task_id": "task_lock015_review",
+  "from": "Cyony.109",
+  "to": "Tripp.109",
+  "type": "task.response",
+  "priority": "normal",
+  "created_at": "2026-06-02T07:11:08Z",
+  "reply_to_id": "task_lock015_review_20260602",
+  "requires_response": false,
+  "body": {
+    "summary": "LOCK 015 review \u2014 9 items. Spec is well-scoped as a read-only meta-reporter. Main concerns: data source ambiguity (where does it learn which locks passed?), hardcoded future knowledge (next_safe_layers, blocked_layers), and unclear status taxonomy.",
+    "review_items": [
+      {
+        "severity": "critical",
+        "category": "data_source",
+        "description": "generateGovernanceReadinessSummary needs to know which locks are complete/missing. But LOCK 009+ enforces 'no persistence layer.' Where does this function get its data? If locks are just source files with tests, does it scan the filesystem? If each lock has a report, does it parse reports? Without defining the data source, Codex will guess and the output won't be deterministic.",
+        "suggestion": "Define LOCK_STATUS_SOURCE as config: either (a) a governance-state.yaml file that lists {lock_id, status, report_path} \u2014 read at runtime, OR (b) scan reports/ directory for LOCK-XXX-*-REPORT.md files and parse STATUS line. Option (a) is more deterministic and easier to test. Option (b) is more autonomous but fragile. Recommend (a)."
+      },
+      {
+        "severity": "critical",
+        "category": "determinism",
+        "description": "readiness_id needs a deterministic formula like LOCK 009's trace_id. Spec says 'readiness_id' but no formula defined.",
+        "suggestion": "Use readiness-[sorted_completed_locks_hash]. Hash the sorted list of completed lock IDs into a stable string. Same governance state \u2192 same readiness_id. Also add readiness_version: '0.15.0' for schema tracking."
+      },
+      {
+        "severity": "high",
+        "category": "status_taxonomy",
+        "description": "Spec says expected output is GOVERNANCE_SPINE_READY but doesn't enumerate all possible statuses. Without a defined enum, future statuses will be inconsistent.",
+        "suggestion": "Define ReadinessStatus enum: {NOT_READY (locks missing), GOVERNANCE_SPINE_READY (001-014+009A pass), RUNTIME_READY (governance + runtime locks pass), PARTIAL (some locks pass but critical chain broken), BLOCKED (explicit blocker prevents progress), INVALID_STATE (corrupted config). Start with NOT_READY and GOVERNANCE_SPINE_READY \u2014 add others as future locks introduce new states."
+      },
+      {
+        "severity": "high",
+        "category": "future_knowledge",
+        "description": "next_safe_layers and blocked_layers imply this function knows what comes NEXT. But that's forward-looking information. Is it hardcoded in source? Config-driven? If hardcoded, every new lock requires updating LOCK 015's source. If config-driven, the config file becomes the single source of truth for build sequence.",
+        "suggestion": "Config-driven. Add a governance-roadmap.yaml alongside governance-state.yaml: {next_layers: [{id, name, dependencies, blocked_by}], blocked_layers: [{id, reason}]}. LOCK 015 reads both files, diffs state vs roadmap, and reports the gap. This keeps LOCK 015 source code stable while the roadmap evolves."
+      },
+      {
+        "severity": "high",
+        "category": "input_format",
+        "description": "Spec doesn't define what generateGovernanceReadinessSummary(input) receives. Is it the full governance state object? Nothing (reads from config)? The pipeline output from LOCK 008?",
+        "suggestion": "Input should be minimal or empty. LOCK 015 is a READ-ONLY meta-reporter \u2014 it reads from governance config files, not from runtime state. Define input as either: (a) null/empty \u2014 reads from config, or (b) {config_path: string} to override default config location. Never accept live runtime data as input \u2014 that would couple it to execution and break the 'no live calls' rule."
+      },
+      {
+        "severity": "medium",
+        "category": "capabilities_format",
+        "description": "'Available/unavailable capabilities' is vague. Is this a flat string list? Nested hierarchy? Does it map to LOCK modules? To model support? To crew readiness?",
+        "suggestion": "Tie capabilities directly to completed locks. Each completed lock unlocks named capabilities: e.g., LOCK 003 \u2192 'task_classification', LOCK 004 \u2192 'model_routing'. Define in config: {lock_id \u2192 [capability_names]}. Available = sum of capabilities from completed locks. Unavailable = sum from missing locks. This makes the output auditable and traceable."
+      },
+      {
+        "severity": "medium",
+        "category": "safety_boundaries_vs_flags",
+        "description": "Both safety_boundaries and safety_flags mentioned. Are these different? safety_flags (all false) is clear, but safety_boundaries sounds like it could overlap.",
+        "suggestion": "Distinguish: safety_flags = boolean locks (promotion_allowed, mutation_allowed, runtime_allowed, provider_allowed, all false at this stage). safety_boundaries = descriptive list of what's currently safe to build on top (e.g., ['CLI tools', 'config readers', 'deterministic metadata producers']). Flags are machine-readable gates. Boundaries are human-readable guardrails for Eddie and future lock authors."
+      },
+      {
+        "severity": "medium",
+        "category": "naming",
+        "description": "generateGovernanceReadinessSummary is 38 characters. Consistent with LOCK 009's naming pattern but the function name is a sentence. This will be imported, typed, and referenced everywhere.",
+        "suggestion": "Shorten to governanceReadiness() or readinessSummary(). The output object can still be called GovernanceReadinessSummary. Function names should be verb-like and short. Object/schema names can be descriptive."
+      },
+      {
+        "severity": "low",
+        "category": "test_coverage",
+        "description": "No test cases defined for LOCK 015. Given the config-reading nature, edge cases matter: missing config file, empty lock list, corrupted state, all locks complete, circular dependencies in roadmap.",
+        "suggestion": "Define tests: (1) null/empty input handled gracefully, (2) all locks complete \u2192 GOVERNANCE_SPINE_READY, (3) missing critical lock \u2192 NOT_READY with missing_locks populated, (4) corrupted config \u2192 INVALID_STATE not crash, (5) deterministic readiness_id for same state, (6) different readiness_id for different state, (7) capabilities correctly aggregated from completed locks, (8) blocked_layers correctly reported, (9) safety_flags all false regardless of state, (10) no filesystem writes or live calls executed."
+      }
+    ],
+    "overall_assessment": "LOCK 015 is a clean read-only meta-layer \u2014 exactly the kind of thing that belongs in the governance spine. No live calls, no persistence needed (reads config), deterministic. The spec just needs to nail down WHERE it reads state from and HOW it knows the roadmap. Config-driven approach keeps it stable while the crew evolves. Tripp's team update on LOCK 009 accepted/rejected items is noted and aligned.",
+    "lock_009_acknowledged": {
+      "accepted_my_items": [
+        "input sanitization",
+        "resource caps",
+        "schema version 0.9.0",
+        "degenerate input record",
+        "evidence objects as additive",
+        "module output summary mode",
+        "decision factors vs review items separation"
+      ],
+      "rejected_my_items": [
+        "persistence via markdown-embedded JSON",
+        "trace_id attempt_number suffix",
+        "full evidence schema replacement"
+      ],
+      "noted_modifications": [
+        "trace_id uses stable_context_hash instead of attempt_number \u2014 better approach"
+      ],
+      "response": "Accept the verdicts. Rejections are fair \u2014 I was pushing scope. The stable_context_hash for trace_id is a better solution than attempt_number. Ready to implement if asked."
+    }
+  }
+}

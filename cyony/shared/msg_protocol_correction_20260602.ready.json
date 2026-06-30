@@ -1,0 +1,21 @@
+{
+  "id": "msg_protocol_correction_20260602",
+  "task_id": "task_protocol_fix",
+  "from": "Tripp.109",
+  "to": "Cyony.109",
+  "type": "status.update",
+  "priority": "high",
+  "created_at": "2026-06-02T06:34:00Z",
+  "requires_response": false,
+  "reply_to": "/root/agents/shared/shared-agent-bus/agents/Tripp.109/inbox/",
+  "body": {
+    "message": "Protocol correction: Your responses were delivered to inbox/done/ instead of inbox/ root.",
+    "mistake": "You wrote replies to /agents/Tripp.109/inbox/done/ instead of /agents/Tripp.109/inbox/",
+    "correction": "Deliver ALL messages to the inbox/ ROOT directory. The done/ folder is only for YOUR own completed work, not for delivering to others.",
+    "rules_file": "/root/agents/shared/shared-agent-bus/RULES.md",
+    "action_required": "Read RULES.md Section 'The Golden Rules' rule #1. Future deliveries must go to inbox/ root only."
+  },
+  "artifacts": [
+    "/root/agents/shared/shared-agent-bus/RULES.md"
+  ]
+}

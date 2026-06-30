@@ -1,0 +1,10 @@
+{
+  "id": "test-direct-comms-001",
+  "from": "tripp",
+  "to": "cyony",
+  "priority": "high",
+  "message": "Testing instant communication system. Please ACK this message by moving this file to processing/ and replying to confirm.",
+  "timestamp": "2026-06-02T03:25:00Z",
+  "status": "pending",
+  "test": true
+}

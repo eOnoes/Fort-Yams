@@ -1,0 +1,23 @@
+{
+  "lastChecks": {
+    "cyony_status": null,
+    "shared_inbox": null,
+    "inbox_from_hermes": null,
+    "tasks_for_hermes": null,
+    "review_queue": null,
+    "openrouter_balance": null,
+    "approved_skills": null,
+    "memory_update": null
+  },
+  "seenFiles": {
+    "shared_inbox": [],
+    "inbox_from_hermes": [],
+    "tasks_for_hermes": [],
+    "review_queue": []
+  },
+  "alertThresholds": {
+    "openrouter_low_credit": 20.00,
+    "stale_proposal_days": 30
+  },
+  "inboxCheckRule": "CHECK ALL THREE: shared/inbox/ + shared/tasks-for-hermes/ + personal inbox"
+}

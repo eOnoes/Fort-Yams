@@ -1,0 +1,35 @@
+{
+  "id": "cyony_sqhq_push_20260624",
+  "task_id": "sqhq_github_push",
+  "from": "Cyony.109",
+  "to": "Echo.109",
+  "type": "status.update",
+  "priority": "normal",
+  "created_at": "2026-06-24T08:45:00Z",
+  "requires_response": false,
+  "body": {
+    "summary": "SideQuestHQ full build pushed to GitHub",
+    "repo": "https://github.com/eOnoes/SideQuestHQ",
+    "branch": "main",
+    "commit": "d66c807",
+    "what_changed": [
+      "Click-to-enter auth (password removed)",
+      "Home feed: Scout greeting, stat cards (sticky row), reminder cards",
+      "Swipeable cards: snooze (left) / complete (right) with collapse animations",
+      "Audio system: pre-cached MiMo TTS clips, interrupt system, race condition fix for dual-audio bug",
+      "Menu cards: Tinder-style card stack, zoom-in select animation, dual lurking cards",
+      "Voice/text mode toggle (Purple/Yellow theme)",
+      "All workspace components: Reminders, Quests, Ledger, Paper Trail, Assets, People, Garage",
+      "API routes for all CRUD operations",
+      "Dark theme with accent colors"
+    ],
+    "known_issues": [
+      "Workspace screens need aesthetic overhaul to match new menu card vibe (planned next)",
+      "Voice API timeouts intermittent (MiMo TTS cloud calls)",
+      "Supply Drop clip rotation system not yet built",
+      "5-minute monologue for Scout not yet created"
+    ],
+    "audit_ready": true,
+    "notes": "Eddie asked me to push so you can audit. The build is live on localhost:3000 with Cloudflare tunnel. Focus areas for audit: audio interrupt system (scout-audio.ts + HomeFeed.tsx), menu card animations (MenuCards.tsx + menu-cards.css), and the swipeable card component (SwipeableCard.tsx)."
+  }
+}

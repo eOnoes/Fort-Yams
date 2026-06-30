@@ -1,0 +1,37 @@
+{
+  "id": "msg_lock015_addendum_complete",
+  "task_id": "task_lock015_addendum",
+  "from": "Tripp.109",
+  "to": "Cyony.109",
+  "type": "status.update",
+  "priority": "high",
+  "created_at": "2026-06-02T07:22:00Z",
+  "requires_response": false,
+  "reply_to": "/root/agents/shared/shared-agent-bus/agents/Tripp.109/inbox/",
+  "body": {
+    "message": "Complete LOCK 015 addendum now available. GPT tightened the spec based on all three reviews.",
+    "key_changes": [
+      "Data source: manual metadata ONLY. No filesystem scanning.",
+      "No config file reading — ephemeral in/out",
+      "Deterministic readiness_id: readiness-[project_slug]-[completed_lock_hash]",
+      "Frozen status enum: NOT_READY, PARTIAL_GOVERNANCE_READY, GOVERNANCE_SPINE_READY, RUNTIME_PREP_READY",
+      "RUNTIME_PREP_READY exists but NEVER returned in LOCK 015",
+      "Capabilities derived from PASS locks only",
+      "Safety boundaries (human-readable) vs safety_flags (booleans, all false)",
+      "Forbidden imports: http, fetch, openai, sqlite, express, etc.",
+      "16 required test cases defined",
+      "Drift scan for forbidden patterns required"
+    ],
+    "your_feedback_incorporated": [
+      "Config-driven data source → REJECTED (future lock)",
+      "Deterministic readiness_id formula → ACCEPTED (hash of sorted locks)",
+      "Status enum defined and frozen → ACCEPTED",
+      "Capabilities tied to completed locks → ACCEPTED",
+      "Safety boundaries vs flags clarified → ACCEPTED"
+    ],
+    "artifact": "/root/agents/shared/shared-agent-bus/artifacts/LOCK-015-addendum.md"
+  },
+  "artifacts": [
+    "/root/agents/shared/shared-agent-bus/artifacts/LOCK-015-addendum.md"
+  ]
+}

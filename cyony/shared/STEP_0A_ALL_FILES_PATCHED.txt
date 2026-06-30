@@ -1,0 +1,1042 @@
+======================================================================
+ FILE 1/4: docs/DOCTRINE.md
+======================================================================
+
+# Tripp.Reason Doctrine
+
+> Enforceable constraints for the Tripp.Reason clean-room rebuild.
+> All future build agents must obey this document before writing implementation code.
+
+---
+
+## What Tripp.Reason Is
+
+A **lean, local-first agent runtime** for coding agents, prompt routing, tool execution, swarm coordination, and audit-backed task completion.
+
+It is the **execution brain** for the crew. It does not perform the work — it controls, coordinates, records, and gates it.
+
+Core identity:
+- Fast coding-agent harness
+- Provider and model router
+- Swarm coordinator (bounded, not chaotic)
+- Tool execution boundary
+- Session, report, and audit engine
+- Force multiplier for OpenClaw and Hermes
+
+Operating model:
+```
+Operator (Eddie) = Supervisor
+Tripp.Reason     = Lead / job coordinator
+OpenClaw         = Skilled builder
+Hermes           = Creative explorer (sandboxed)
+Warden           = Scope/safety/drift checker
+Forge            = Approved tooling inventory
+Reports          = Shift log
+```
+
+---
+
+## What Tripp.Reason Is Not
+
+This section exists to prevent scope creep. Name the ghosts, kill them.
+
+| Tripp.Reason is NOT | Ghost being killed |
+|---|---|
+| Goose | No Goose branding. No Goose code. Clean-room only. |
+| A Goat/Reasonix fork | Reference material is read-only. |
+| A provider zoo | 5 providers max at v1. No cloud-platform sprawl. |
+| Desktop-first | Local web dashboard only. No Electron in Phase 1. |
+| A plugin marketplace | No skills/plugins store at v1. |
+| A swarm launcher by default | Default = solo. Swarm requires explicit escalation. |
+| A local inference engine | API-based only. No Candle/llama.cpp/GPU code. |
+| A UI-first project | Core runs without UI. Always. |
+| A replacement for OpenClaw or Hermes | It amplifies them; it does not substitute them. |
+| Allowed to mutate repos without approvals | Destructive/mutating ops require explicit gate. |
+| A chatbot | It coordinates work; it is not the work itself. |
+| A telemetry farm | Local logs/reports only. No PostHog/analytics. |
+| A Telegram gateway | Out of scope. Messaging bridges belong in Tripp.Control later. |
+| A recipe/deeplink system | Simpler task templates suffice. |
+| A scheduler | Not needed in Phase 1. Add only when proven. |
+
+---
+
+## Hard Rules
+
+1. **Core must run without UI.**
+2. **Core must run without swarm.**
+3. **Core must run without MCP.**
+4. **MCP tools must not mutate core architecture.**
+5. **Swarm workers return structured packets, not vague prose.**
+6. **Every run produces a Markdown report.**
+7. **Every shell command is logged.**
+8. **Destructive commands require ApprovalGate.**
+9. **Repo boundary is sacred.** Tripp.Reason does not rewrite entire repos.
+10. **Default worker count is 1 (solo).** Max swarm = 25, requires manual approval.
+11. **FastPath must stay fast.** (<2s for simple routing/summary).
+12. **DeepPath must validate.** Every mutation is checked.
+13. **No Goose branding anywhere.**
+14. **No inherited provider sprawl.** Use OpenAI-compatible as primary adapter contract.
+15. **Doctrine trumps code.** When in doubt, the docs win.
+
+---
+
+## Phase 1 Allowed Scope
+
+Build only the kernel. Prove the loop before proving the product.
+
+- TypeScript pnpm monorepo skeleton
+- Single `openai-compatible` provider adapter (covers Ollama Cloud, OpenRouter, any OpenAI-shaped endpoint)
+- Read-only tools active: `list_dir`, `read_file`, `search`
+- Mutating tools as **contracts only** (write_file, edit_file, shell) behind ApprovalGate
+- SQLite store with sessions/runs/events/tool_calls/reports tables
+- Session persistence
+- ReasonLoop: prompt → stream → events → session → report.md
+- CLI: `tripp run "<prompt>"` (single-shot, no streaming UI required)
+- Markdown run report for every completed loop
+
+## Phase 1 Forbidden Scope
+
+- ❌ No swarm runtime
+- ❌ No MCP bridge
+- ❌ No UI / dashboard / Electron
+- ❌ No OpenClaw or Hermes adapters
+- ❌ No write/edit/shell execution (contracts only)
+- ❌ No multi-provider fan-out (adapter interface yes, multiple impls no)
+- ❌ No recipe system, scheduler, hooks, skills, plugins
+- ❌ No OAuth flows, Nostr, Telegram, visualization tools
+- ❌ No local inference (Candle, llama.cpp, CUDA, Vulkan)
+- ❌ No Goose code copying (reference only)
+
+---
+
+## Clean-Room Rule
+
+The legacy fork at `/opt/data/shared/Tripp.Reason.Legacy/` is **read-only reference material**.
+
+- ✅ Study Goose patterns to extract requirements
+- ✅ Reference the audit documents for architectural contracts
+- ❌ Do not copy source files
+- ❌ Do not port Rust code to TypeScript line-by-line
+- ❌ Do not preserve Goose naming (reply → EventStream, agent → ReasonLoop, etc.)
+- ❌ Do not preserve Goose folder structure
+
+If you find yourself pasting Goose code and renaming things, **stop**. Refactor.
+
+---
+
+## Report Requirement
+
+Every run at every phase must be able to emit:
+```
+reports/<session-id>/<run-id>.md
+```
+
+Minimum report sections:
+- Status (PASS / FAIL / PARTIAL)
+- Prompt
+- Model / Provider
+- Events summary
+- Tool calls
+- Files changed (or "None")
+- Validation
+- Next step
+
+This matches the crew audit workflow. It is not optional. Do not bolt it on later.
+
+---
+
+## Repo-Boundary Rule
+
+Tripp.Reason must respect repository boundaries:
+
+- Never rewrite a full repo
+- Never run destructive shell commands without ApprovalGate
+- Never access files outside the declared workdir unless explicitly permitted
+- Log every file touched and every shell invoked
+
+---
+
+## ApprovalGate Rule
+
+Operations split into two classes:
+
+**Safe (no approval):**
+- Read files, list dirs, search, generate text, summarize
+- Create local report files
+- Emit events to session store
+
+**Gated (requires approval):**
+- Write/edit files
+- Execute shell commands
+- Modify project config
+- Spawn swarm workers beyond default
+- Network requests to external APIs beyond the configured provider
+
+Implementation: `ApprovalGate.canProceed(operation)` returns boolean. In Phase 1, default to **manual operator approval** via CLI prompt.
+
+---
+
+## Provider-Bloat Prevention Rule
+
+Maximum providers at any phase: **5**.
+
+Current Phase 1 set:
+1. `openai-compatible` (primary — covers Ollama Cloud, OpenRouter, any OpenAI-shaped endpoint)
+
+Add new providers only when:
+- A real use case cannot be served by OpenAI-compatible or OpenRouter
+- The provider has stable, versioned, documented API
+- A test exists that the adapter must pass before merge
+
+Never add: AWS Bedrock, SageMaker, Azure, GCP Vertex, Databricks, Snowflake, Copilot, Codex, Cursor, xAI, NanoGPT, Nostr, Avian, or any other cloud-platform-native provider. OpenRouter covers the long tail.
+
+---
+
+## Swarm Restraint Rule
+
+| Mode | Max Workers | Approval Required |
+|---|---|---|
+| Solo (default) | 1 | No |
+| Small | 3–5 | No |
+| Medium | 6–10 | Yes |
+| Large | 11–20 | Yes |
+| Max cap | 25 | Yes + manual |
+
+Workers must be **role-bounded**:
+- One worker = one focused task packet
+- Workers return structured result packets
+- Orchestrator owns decomposition and merge
+- Warden reviews for scope drift
+
+Swarm is **Phase 5**, not Phase 1.
+
+---
+
+## OpenClaw / Hermes Relationship Rule
+
+Tripp.Reason **amplifies** OpenClaw and Hermes. It does not replace them.
+
+```
+Tripp.Reason = coordinator / tool boundary / session brain / swarm controller
+OpenClaw     = disciplined builder worker
+Hermes       = creative/exploratory (sandboxed) worker
+Warden       = scope, safety, drift judge
+Operator     = final approver
+```
+
+Adapters for OpenClaw/Hermes are out of scope until Phase 7. Until then, Tripp.Reason treats external agents as opaque workers it can dispatch to and receive packets from.
+
+
+======================================================================
+ FILE 2/4: docs/ARCHITECTURE.md (PATCHED)
+======================================================================
+
+# Tripp.Reason Architecture
+
+> System shape, package boundaries, and runtime contracts.
+> All implementation must conform to this document.
+
+---
+
+## Monorepo Layout
+
+```
+Tripp.Reason/
+├── packages/
+│   ├── shared/         # Zod schemas, types, event contracts, all cross-package interfaces
+│   ├── core/           # ReasonLoop, EventStream, ApprovalGate, RunManager
+│   ├── providers/      # Provider implementations (contracts live in shared)
+│   ├── tools/          # Tool implementations (contracts live in shared)
+│   ├── store/          # SQLite via Drizzle, schema, repositories
+│   ├── server/         # Fastify HTTP + SSE (Phase 3+)
+│   ├── cli/            # Phase 1: tripp run. Phase 3+: chat/audit/report/session commands.
+│   ├── mcp/            # MCP bridge (Phase 4+, placeholder only in Phase 1)
+│   └── swarm/          # Orchestrator + workers (Phase 5+, placeholder only)
+├── docs/               # DOCTRINE.md, ARCHITECTURE.md, ROADMAP.md
+├── reports/            # Run reports: <session-id>/<run-id>.md
+├── pnpm-workspace.yaml
+├── package.json
+├── tsconfig.base.json
+└── README.md
+```
+
+---
+
+## Package Boundaries
+
+### Dependency Direction (strict)
+
+```
+shared  ← (no dependencies — leaf package)
+core    ← shared
+providers ← shared
+tools   ← shared
+store   ← shared
+server  ← core, providers, tools, store, shared
+cli     ← core, providers, tools, store, shared
+mcp     ← shared (tools loaded dynamically)
+swarm   ← core, shared
+```
+
+**Forbidden dependencies:**
+- `shared` must never import from any other package
+- `core` must never import `providers` directly (uses ProviderAdapter interface)
+- `core` must never import `tools` directly (uses ToolDispatcher interface)
+- `providers` must never import `tools`
+- No circular dependencies between any packages
+
+### Package Responsibilities
+
+#### `shared`
+Single source of truth for all Zod schemas, TypeScript types, **and cross-package interfaces**. Every interface that crosses a package boundary lives here. No other package defines these contracts.
+
+**Schemas (data shapes):**
+- `Message` schema (role, content, timestamp)
+- `Session` schema (id, title, provider, model, mode, timestamps)
+- `Run` schema (id, session_id, status, timestamps)
+- `Event` schema (id, session_id, run_id, type, payload)
+- `ToolCall` schema (id, session_id, run_id, tool_name, args, result, status)
+- `Approval` schema (id, tool_call_id, status, reason, timestamps)
+- `Report` schema (id, session_id, run_id, path, summary)
+- `StreamEvent` union (Message | ToolRequest | Finish | Error)
+- `ProviderRequest` / `ProviderResponse` shapes
+- `ApprovalRequest` / `ApprovalResult` shapes
+
+**Contracts (cross-package interfaces):**
+- `ProviderAdapter` — what core expects from a provider package
+- `Tool` — what core expects from a tool package
+- `ToolDispatcher` — what core expects from the tool layer
+- `Approver` — what core expects from the approval layer
+- `RunReport` — standard report structure
+
+No runtime code. No classes. No implementations. Pure schemas, types, and interface definitions.
+
+**Import rule:** Every other package imports its contracts from `shared`. No package defines its own duplicate of any shared contract.
+
+#### `core`
+The reason loop, event emission, approval gating, and run management.
+
+Contains:
+- `ReasonLoop` — orchestrates prompt → stream → events → session → report
+- `EventStream` — typed event emitter (Message, ToolRequest, Finish, Error)
+- `ApprovalGate` — checks whether an operation needs approval, routes to approver
+- `RunManager` — creates/runs, tracks status, emits reports
+- `FastPath` / `DeepPath` — routing decision (Phase 1: always DeepPath)
+- `TokenCounter` — context window management (Phase 2+)
+- `ContextCompactor` — when conversation exceeds limits (Phase 2+)
+
+Core **imports contracts from shared** (does not define them here):
+- `ProviderAdapter` — imported from shared; core accepts any implementor
+- `ToolDispatcher` — imported from shared; core accepts any implementor
+- `Approver` — imported from shared; core accepts any implementor (CLI prompt, API, etc.)
+
+Core runs without knowing which provider, which tools, or which approver is actually in use. It programs only against the shared contracts.
+
+#### `providers`
+Provider implementations and the model router. **Does not define the ProviderAdapter contract** — that lives in `shared`. This package only implements it.
+
+Contains:
+- `OpenAICompatibleProvider` — the only Phase 1 implementation (implements `ProviderAdapter` from shared)
+- `ModelRouter` — selects provider + model based on task tier or config
+
+Phase 1: only `OpenAICompatibleProvider` is implemented. This covers:
+- Ollama Cloud (`https://ollama.com/v1`)
+- Any OpenAI-shaped endpoint (OpenRouter, LiteLLM, local proxies)
+
+Additional adapters (Anthropic-native, Ollama-native, OpenRouter-native) are Phase 2+.
+
+#### `tools`
+Tool implementations. **Does not define the `Tool` or `ToolDispatcher` contracts** — those live in `shared`. This package implements them.
+
+Phase 1 active tools:
+- `list_dir` — list directory contents
+- `read_file` — read file contents
+- `search` — regex/grep search in files
+
+Phase 1 contract-only (behind ApprovalGate, not executed):
+- `write_file` — create/overwrite files
+- `edit_file` — apply diffs
+- `shell` — execute shell commands
+
+Phase 2+:
+- `git_status`, `git_diff`
+- `run_tests`
+
+`Tool` interface shape (defined in `shared`, implemented here):
+```typescript
+interface Tool {
+  name: string;
+  description: string;
+  inputSchema: ZodSchema;
+  requiresApproval: boolean;
+  execute(input: unknown, context: ToolContext): Promise<ToolResult>;
+}
+```
+
+#### `store`
+SQLite persistence via Drizzle ORM.
+
+Tables:
+- `sessions` — id, title, created_at, updated_at, status, provider, model, mode
+- `runs` — id, session_id, status, started_at, completed_at
+- `messages` — id, session_id, run_id, role, content, created_at
+- `events` — id, session_id, run_id, type, payload_json, created_at
+- `tool_calls` — id, session_id, run_id, tool_name, args_json, result_json, status, created_at
+- `approvals` — id, session_id, run_id, tool_call_id, status, reason, created_at, resolved_at
+- `swarm_runs` — (Phase 5+) id, session_id, mode, worker_count, status, timestamps
+- `swarm_workers` — (Phase 5+) id, swarm_run_id, role, task, status, result_json, timestamps
+- `reports` — id, session_id, run_id, path, summary, created_at
+
+#### `server` (Phase 3+)
+Fastify HTTP server with SSE streaming.
+
+Routes:
+- `POST /reply` — SSE stream of agent responses
+- `GET /sessions` — list sessions
+- `GET /sessions/:id` — get session
+- `GET /sessions/:id/events` — get events
+- `GET /tools` — list available tools
+- `POST /approvals/:id/resolve` — approve/deny a tool call
+- `GET /health` — status check
+- `GET /status` — provider/model/session counts
+
+#### `cli` (Phase 1+, expands in Phase 3)
+CLI commands via Commander or oclif. Package exists in Phase 1 with a minimal surface.
+
+**Phase 1 (minimum viable):**
+- `tripp run "<prompt>"` — single-shot run, outputs report path + summary to terminal
+
+**Phase 3+ (expands when server exists):**
+- `tripp chat` — interactive streaming session (connects to server SSE)
+- `tripp audit` — view recent reports and tool calls
+- `tripp report <session-id>` — display/generate report
+- `tripp sessions` — list/manage sessions
+
+Phase 1 CLI talks directly to core (no HTTP). Phase 3 CLI talks to the server over HTTP/SSE.
+
+#### `mcp` (Phase 4+, placeholder)
+MCP client loader and tool schema registry. Empty in Phase 1.
+
+#### `swarm` (Phase 5+, placeholder)
+Orchestrator, worker registry, task decomposition, merge logic. Empty in Phase 1.
+
+---
+
+## Event Contract
+
+All events flow through `EventStream`. Consumers subscribe by event type.
+
+```typescript
+type StreamEvent =
+  | { type: "message"; content: string; role: "assistant" }
+  | { type: "tool_request"; tool: string; args: unknown; requiresApproval: boolean }
+  | { type: "tool_result"; tool: string; result: unknown; status: "ok" | "error" }
+  | { type: "finish"; reason: "complete" | "max_turns" | "error"; runId: string }
+  | { type: "error"; message: string; recoverable: boolean };
+```
+
+Every event is persisted to the `events` table before emission. No events are lost.
+
+---
+
+## Report Contract
+
+Every completed run produces a Markdown report at:
+```
+reports/<session-id>/<run-id>.md
+```
+
+Report template:
+```markdown
+# Tripp.Reason Run Report
+
+## Status
+PASS | FAIL | PARTIAL
+
+## Prompt
+<user prompt>
+
+## Model / Provider
+<provider> / <model>
+
+## Duration
+<start> → <end> (<elapsed>)
+
+## Events
+<summary of event types and counts>
+
+## Tool Calls
+<list of tools called, args summary, result summary>
+
+## Files Changed
+<list or "None">
+
+## Validation
+<check results or "N/A">
+
+## Next Step
+<suggested follow-up or "Done">
+```
+
+---
+
+## Minimum Phase 1 Runtime Flow
+
+```
+1. User submits prompt via CLI (tripp run "...")
+2. RunManager creates Run record (status: "running")
+3. ReasonLoop starts:
+   a. Build ProviderRequest from prompt + session history
+   b. Call ProviderAdapter.stream(request)
+   c. For each StreamEvent:
+      - Emit to EventStream
+      - Persist to events table
+      - If tool_request: check ApprovalGate
+         - Safe tool: execute immediately
+         - Gated tool: pause, request approval
+      - If tool_result: persist to tool_calls table
+      - If message: persist to messages table
+   d. On finish: mark Run complete
+4. RunManager generates report.md
+5. Report path saved to reports table
+6. CLI outputs report path + summary
+```
+
+This flow works with:
+- One provider (openai-compatible)
+- Read-only tools active
+- Mutating tools as gated contracts
+- No swarm, no MCP, no UI, no server
+
+**Streaming distinction:**
+- **Allowed in Phase 1:** _internal_ provider async streaming. `ProviderAdapter.stream()` returns an `AsyncIterable<StreamEvent>` that ReasonLoop consumes in-process. This is not HTTP — it is an in-memory async generator.
+- **Forbidden in Phase 1:** HTTP/SSE server streaming. There is no HTTP listener, no SSE endpoint, no Fastify, no external consumer.
+- **Allowed in Phase 3:** Fastify HTTP server exposes `/reply` as an SSE endpoint that forwards the internal stream to external clients. This is the boundary where internal async streaming becomes network-visible.
+
+The distinction matters because the Goose audit shows SSE is a retained speed pattern, but the network exposure belongs to the server layer, not the core loop.
+
+---
+
+## ApprovalGate Contract
+
+> **Contract ownership:** `Approver`, `ApprovalRequest`, and `ApprovalResult` are defined in `packages/shared`. Implementations live in the packages that provide them.
+
+```typescript
+interface Approver {
+  requestApproval(operation: ApprovalRequest): Promise<ApprovalResult>;
+}
+
+interface ApprovalRequest {
+  toolName: string;
+  args: unknown;
+  riskLevel: "safe" | "mutating" | "destructive";
+  context: { session_id: string; run_id: string };
+}
+
+type ApprovalResult =
+  | { approved: true; reason?: string }
+  | { approved: false; reason: string };
+```
+
+Phase 1: `CliApprover` in `packages/cli` (prompts operator in terminal).
+Phase 3+: `ApiApprover` in `packages/server` (HTTP endpoint for dashboard).
+Phase 5+: `AutoApprover` in `packages/swarm` (policy-based, for trusted swarm workers).
+
+---
+
+## Provider Adapter Contract
+
+> **Contract ownership:** `ProviderAdapter`, `ProviderRequest`, and `ProviderResponse` are defined in `packages/shared`. Implementations live in `packages/providers`.
+
+```typescript
+interface ProviderAdapter {
+  name: string;
+  stream(request: ProviderRequest): AsyncIterable<StreamEvent>;
+  listModels(): Promise<string[]>;
+}
+
+interface ProviderRequest {
+  model: string;
+  messages: Message[];
+  tools?: ToolSchema[];
+  maxTokens?: number;
+  temperature?: number;
+}
+```
+
+The `OpenAICompatibleProvider` implements this by hitting any base URL that speaks OpenAI chat/completions format. This is the universal adapter — it covers Ollama Cloud, OpenRouter, and any OpenAI-shaped endpoint.
+
+
+======================================================================
+ FILE 3/4: docs/ROADMAP.md (PATCHED)
+======================================================================
+
+# Tripp.Reason Roadmap
+
+> Phased build plan. Each phase has a goal, allowed/forbidden scope, success condition, and required report output.
+> No phase may begin until the previous phase's success condition is met and documented.
+
+---
+
+## Step 0 — Doctrine / Architecture / Roadmap Lock
+
+**Goal:** Lock the shape of the system before any code exists.
+
+**Allowed:**
+- Writing DOCTRINE.md, ARCHITECTURE.md, ROADMAP.md
+- Writing the Step 0 audit report
+- Human and crew review of all three documents
+
+**Forbidden:**
+- Any packages, dependencies, source code, or scaffolding
+- Any implementation work of any kind
+
+**Success Condition:**
+- All three docs exist at `/opt/data/shared/Tripp.Reason/docs/`
+- Step 0 report exists at `/opt/data/shared/Tripp.Reason/reports/STEP_0_DOCTRINE_REPORT.md`
+- Eddie and Tripp have reviewed and approved the boundaries
+- No code has been written
+
+**Required Report:** `reports/STEP_0_DOCTRINE_REPORT.md`
+
+---
+
+## Phase 1 — Kernel / Solo Runtime
+
+**Goal:** Prove the reason loop works end-to-end with one provider, read-only tools, and Markdown reports.
+
+**Allowed:**
+- Monorepo skeleton: pnpm-workspace.yaml, package.json, tsconfig.base.json
+- `packages/shared/` — Zod schemas + all cross-package contracts: `ProviderAdapter`, `Tool`, `ToolDispatcher`, `Approver`, `ApprovalRequest`, `ApprovalResult`, `ProviderRequest`, `ProviderResponse`, `StreamEvent`, `Message`, `Session`, `Run`, `Event`, `ToolCall`, `Approval`, `Report`, `RunReport`
+- `packages/core/` — ReasonLoop, EventStream, ApprovalGate, RunManager. _Imports_ contracts from shared; does not define them.
+- `packages/providers/` — `OpenAICompatibleProvider` (implements `ProviderAdapter` from shared) + `ModelRouter`
+- `packages/tools/` — Implements `Tool` from shared. Active: list_dir, read_file, search. Contract-only (gated): write_file, edit_file, shell.
+- `packages/store/` — SQLite schema via Drizzle, all Phase 1 tables
+- `packages/cli/` — `tripp run "<prompt>"` only (single-shot execution, talks to core directly, no HTTP)
+- Report generation: `reports/<session-id>/<run-id>.md`
+- Provider config: Ollama Cloud via openai-compatible adapter
+- Internal provider async streaming inside ReasonLoop (`AsyncIterable<StreamEvent>`, in-process only)
+
+**Forbidden:**
+- HTTP server, SSE endpoints, Fastify, any network-exposed streaming (that is Phase 3)
+- MCP bridge (that is Phase 4)
+- Swarm runtime (that is Phase 5)
+- UI / dashboard (that is Phase 6)
+- OpenClaw/Hermes adapters (that is Phase 7)
+- Actual execution of write/edit/shell tools (must be gated)
+- Multiple provider implementations
+- Recipe system, scheduler, hooks, skills, plugins
+- `tripp chat` or any interactive/streaming CLI command (that is Phase 3+)
+
+**Success Condition:**
+```
+tripp run "List the files in /tmp and summarize them"
+→ Provider streams response
+→ read_file + list_dir tools execute
+→ Events persisted to SQLite
+→ Session persisted to SQLite
+→ Run report generated at reports/<session-id>/<run-id>.md
+→ Report shows PASS with tool calls, events, and next step
+```
+
+**Required Report:** `reports/phase-1-kernel-report.md`
+
+---
+
+## Phase 2 — Coding Agent Tools
+
+**Goal:** Enable mutation behind the ApprovalGate. Prove the system can safely edit files and run commands.
+
+**Allowed:**
+- Activating write_file, edit_file, shell behind ApprovalGate
+- Adding git_status, git_diff, run_tests tools
+- CliApprover implementation (terminal prompts for approval)
+- Context window management (TokenCounter)
+- Adding a second provider if justified (e.g., Anthropic-native for better tool calling)
+- Tests for tool execution + approval flow
+
+**Forbidden:**
+- Auto-approval of destructive operations
+- Repo-wide rewrites
+- Server, MCP, swarm, UI
+
+**Success Condition:**
+```
+tripp run "Create /tmp/test.txt with 'hello world'"
+→ ApprovalGate prompts operator
+→ Operator approves
+→ Write succeeds
+→ git_status shows new file
+→ Report documents the mutation + approval decision
+```
+
+**Required Report:** `reports/phase-2-coding-tools-report.md`
+
+---
+
+## Phase 3 — Local Server + SSE
+
+**Goal:** Real-time streaming via HTTP. Goose-style fast interactive model.
+
+**Allowed:**
+- `packages/server/` — Fastify HTTP server. Forwards internal `AsyncIterable<StreamEvent>` out as network-visible SSE.
+- SSE endpoint: `POST /reply`
+- Session endpoints: GET /sessions, GET /sessions/:id/events
+- Tool approval endpoint: POST /approvals/:id/resolve
+- Health check: GET /health
+- `packages/cli/` expansion: `tripp chat` (interactive streaming, talks to server over HTTP/SSE)
+- `ApiApprover` in `packages/server` (implements `Approver` from shared, routes through HTTP endpoint)
+
+**Forbidden:**
+- WebSocket (unless required and justified)
+- Dashboard UI (that is Phase 6)
+- MCP, swarm, external agent adapters
+
+**Success Condition:**
+```
+curl -N http://localhost:3000/reply -d '{"prompt":"hello"}'
+→ SSE stream of events
+→ Each event appears in real-time
+→ Session and run persisted
+→ Report generated
+```
+
+**Required Report:** `reports/phase-3-server-report.md`
+
+---
+
+## Phase 4 — MCP Bridge
+
+**Goal:** Load external MCP servers, import tool schemas, execute MCP tools through the same ApprovalGate.
+
+**Allowed:**
+- `packages/mcp/` — MCP client loader
+- Tool schema registry (import MCP tool definitions)
+- MCP tools flow through existing ApprovalGate
+- Logging of all MCP activity
+- Integration testing with a mock MCP server
+
+**Forbidden:**
+- MCP tools mutating core architecture
+- MCP becoming a required dependency (optional feature flag)
+- Swarm, UI, external agent adapters
+
+**Success Condition:**
+```
+tripp config add-mcp-server --name filesystem --command "mcp-fs-server"
+tripp run "List files in /tmp using the filesystem tool"
+→ MCP tool loads
+→ Tool appears in /tools endpoint
+→ Tool executes through ApprovalGate
+→ Events logged
+→ Report includes MCP tool call details
+```
+
+**Required Report:** `reports/phase-4-mcp-report.md`
+
+---
+
+## Phase 5 — Kimi-Style Swarm Runtime
+
+**Goal:** Bounded parallel workers. Orchestrator decomposes, workers execute, merger consolidates, warden validates.
+
+**Allowed:**
+- `packages/swarm/` — orchestrator, worker registry, merge logic
+- Worker roles: Planner, Researcher, Coder, Reviewer, Tester, Merger, Reporter, Warden
+- Concurrency limiter (default: 1, max: 25)
+- Result packet format (structured, not prose)
+- Conflict detection (no two workers edit same file)
+- Swarm tables in store (swarm_runs, swarm_workers)
+- `tripp swarm run "<prompt>"` CLI command
+
+**Forbidden:**
+- Default swarm size > 5
+- Unbounded worker spawning
+- Workers with unrestricted repo access
+- Auto-approval of swarm operations above small mode
+- UI (that is Phase 6)
+
+**Success Condition:**
+```
+tripp swarm run "Audit /opt/data/shared/Tripp.Reason/docs/ for consistency"
+→ Orchestrator decomposes into 3 workers: Reader, Checker, Reporter
+→ Workers execute in parallel (max 3 concurrent)
+→ Each worker returns structured packet
+→ Merger consolidates
+→ Warden reviews for scope drift
+→ Single report generated with all worker contributions
+→ Report shows PASS with per-worker details
+```
+
+**Required Report:** `reports/phase-5-swarm-report.md`
+
+---
+
+## Phase 6 — Dashboard / Control Surface
+
+**Goal:** Local web dashboard for session viewing, live streaming, approval queue, and swarm monitoring.
+
+**Allowed:**
+- Vite + React web app
+- Session list with search
+- Live event stream (connects to SSE)
+- Tool approval queue
+- Swarm run viewer with worker cards
+- Report viewer
+- Provider/model settings page
+
+**Forbidden:**
+- Electron (local web only)
+- Cloud-hosted dashboard
+- Plugin marketplace
+- User management / multi-tenant
+- Remote access features
+
+**Success Condition:**
+```
+tripp dashboard --port 3001
+→ Browser opens http://localhost:3001
+→ Session list visible
+→ Click session → see events stream live
+→ Approval queue shows pending operations
+→ Approve/deny from browser
+→ Swarm runs visible with per-worker status
+```
+
+**Required Report:** `reports/phase-6-dashboard-report.md`
+
+---
+
+## Phase 7 — OpenClaw + Hermes Integration
+
+**Goal:** Tripp.Reason can dispatch work to OpenClaw and Hermes as bounded workers, receive structured result packets, and incorporate their output.
+
+**Allowed:**
+- OpenClaw worker adapter (ACP or API bridge)
+- Hermes worker adapter (sandboxed creative lane)
+- Warden review pass for external worker output
+- Doctrine/memory retrieval for context packaging
+- Integration with shared-agent-bus for crew communication
+
+**Forbidden:**
+- Replacing OpenClaw or Hermes internal logic
+- Giving Hermes unrestricted write access
+- Bypassing ApprovalGate for external workers
+- Crew agents spawning other crew agents without limits
+
+**Success Condition:**
+```
+tripp swarm run "Implement provider retry logic" --with openclaw,coder --with hermes,explorer
+→ Planner decomposes
+→ OpenClaw worker: implement retry logic
+→ Hermes worker: explore alternative patterns
+→ Warden reviews both outputs
+→ Merger consolidates
+→ Single report with worker contributions identified by agent
+→ Eddie approves final merge
+```
+
+**Required Report:** `reports/phase-7-integration-report.md`
+
+---
+
+## Phase Dependency Graph
+
+```
+Step 0 → Phase 1 → Phase 2 → Phase 3 → Phase 4 → Phase 5 → Phase 6 → Phase 7
+           │                    │                    │
+           │                    │                    └→ Phase 7 needs swarm + server
+           │                    └→ Phase 6 needs server
+           └→ Minimum viable: Phase 1 alone is useful
+```
+
+Phase 1 alone gives the crew a working coding agent with reports.
+Everything after Phase 1 is enhancement, not prerequisite.
+
+
+======================================================================
+ FILE 4/4: reports/STEP_0_DOCTRINE_REPORT.md (PATCHED)
+======================================================================
+
+# Step 0 Doctrine Report
+
+## PHASE
+Step 0 — Doctrine / Architecture / Roadmap Lock
+
+## STATUS
+PATCHED PASS
+
+## FILES CREATED
+
+| # | File | Path |
+|---|------|------|
+| 1 | DOCTRINE.md | `/opt/data/shared/Tripp.Reason/docs/DOCTRINE.md` |
+| 2 | ARCHITECTURE.md | `/opt/data/shared/Tripp.Reason/docs/ARCHITECTURE.md` |
+| 3 | ROADMAP.md | `/opt/data/shared/Tripp.Reason/docs/ROADMAP.md` |
+| 4 | This report | `/opt/data/shared/Tripp.Reason/reports/STEP_0_DOCTRINE_REPORT.md` |
+
+**Total files in clean-room repo:** 4
+**Total source files:** 0
+**Total packages created:** 0
+**Total dependencies installed:** 0
+
+## SCOPE COMPLIANCE
+
+✅ No implementation scaffold created
+✅ No `packages/` directory exists
+✅ No `package.json` created
+✅ No `pnpm-workspace.yaml` created
+✅ No `tsconfig` files created
+✅ No source code files created
+✅ No `node_modules/` or dependency installs
+✅ No server, CLI, provider, MCP, swarm, or UI stubs
+
+The clean-room repo contains only `docs/` and `reports/` with Markdown files.
+
+## CLEAN-ROOM COMPLIANCE
+
+✅ Goose audit used only as requirements extraction reference
+✅ No Goose source code copied
+✅ No Goose branding preserved
+✅ No Goose folder structure replicated
+✅ Tripp.Reason defined as its own system with its own contracts
+
+**Reference materials consulted (read-only):**
+- Goose deep audit (FINAL-AUDIT-REPORT.md, lean-harness-plan.md)
+- Legacy fork at `/opt/data/shared/Tripp.Reason.Legacy/`
+- Eddie's overhaul document (Tripp.Reason Overhaul.txt)
+- Provider tier analysis for Ollama Cloud models
+
+## BOUNDARIES LOCKED
+
+### Identity Boundaries
+- Tripp.Reason is a coordinator/runtime, not a worker or chatbot
+- Not Goose, not a fork, not a provider zoo
+- Amplifies OpenClaw/Hermes, does not replace them
+
+### Architectural Boundaries
+- 9 packages, strict dependency direction (shared is leaf, core depends only on shared via interfaces)
+- **All cross-package contracts live in `packages/shared`** (ProviderAdapter, Tool, ToolDispatcher, Approver, ApprovalRequest, ApprovalResult, ProviderRequest, ProviderResponse, StreamEvent). Core and other packages import them — never redefine them.
+- Core knows nothing about specific providers, tools, or approvers
+- SQLite is the single persistence layer
+- Every run produces a Markdown report — not optional
+
+### Phase 1 Scope Boundaries
+- One provider: openai-compatible only
+- Active tools: list_dir, read_file, search (read-only)
+- Gated tools: write_file, edit_file, shell (contract-only)
+- `packages/cli/` exists with `tripp run "<prompt>"` only — single-shot, talks to core directly, no HTTP
+- No swarm, no MCP, no UI, no server, no external agent adapters
+- **Streaming distinction:** internal provider `AsyncIterable<StreamEvent>` allowed in ReasonLoop. HTTP/SSE server streaming forbidden. Network-exposed streaming enters in Phase 3.
+- Success condition: `tripp run` → stream → events → session → report.md
+
+### Provider Boundaries
+- Max 5 providers ever, 1 in Phase 1
+- OpenAI-compatible covers Ollama Cloud, OpenRouter, any OpenAI-shaped endpoint
+- Explicit list of providers that will never be added
+
+### Swarm Boundaries
+- Default: 1 worker (solo)
+- Max: 25 workers (requires manual approval)
+- Workers role-bounded, return structured packets
+- Not available until Phase 5
+
+### Approval Boundaries
+- Two classes: safe (no approval) vs gated (requires approval)
+- All mutation gated by default
+- Approver contract lives in shared; implemented by `CliApprover` (packages/cli) in Phase 1 and `ApiApprover` (packages/server) in Phase 3+
+
+### Repo Boundaries
+- No full-repo rewrites
+- No destructive shell without approval
+- All file touches logged
+- Workdir boundary enforced
+
+### Clean-Room Boundary
+- Legacy fork is read-only reference at `/opt/data/shared/Tripp.Reason.Legacy/`
+- New repo at `/opt/data/shared/Tripp.Reason/`
+- No copying Goose code, only extracting patterns
+
+## OPEN QUESTIONS
+
+| # | Question | Risk if Unresolved | Recommended Resolution |
+|---|----------|-------------------|----------------------|
+| 1 | Should Drizzle or raw `better-sqlite3` be used for the store? | Low — both work | Use Drizzle for type safety; raw SQL fallback if perf needed |
+| 2 | Should events be persisted before or after emission? | Medium — affects crash recovery | Persist before emit (no events lost); implement in Phase 1 |
+| 3 | Should `RunManager` be a class or a set of functions? | Low — style preference | Class for Phase 1; refactor to functions if it stays simple |
+| 4 | Should the report template be configurable or fixed? | Low | Fixed in Phase 1; configurable in Phase 3+ |
+| 5 | ApprovalGate timeout — how long before auto-deny? | Medium | Default 5min timeout, configurable |
+| 6 | Should the Ollama Cloud API key live in `.env` or in config.yaml? | Low | `.env` for runtime, config.yaml references env var |
+
+**None of these block Phase 1 scaffold.** They can be resolved during implementation.
+
+## PATCHES APPLIED
+
+The following surgical corrections were applied during Step 0A:
+
+1. **Shared contract ownership clarified**
+   - `packages/shared` is now explicitly the single source of all cross-package contracts: `ProviderAdapter`, `Tool`, `ToolDispatcher`, `Approver`, `ApprovalRequest`, `ApprovalResult`, `ProviderRequest`, `ProviderResponse`, `StreamEvent`, plus all Zod schemas.
+   - ARCHITECTURE.md previously implied `ProviderAdapter` was defined in either `core` or `providers`. Corrected: both packages only _implement_ or _consume_ the contract defined in `shared`.
+   - Added explicit import rule: no package defines its own duplicate of a shared contract.
+   - ApprovalGate and Provider Adapter contract sections now have ownership callouts and package-level implementation notes (`CliApprover` in `packages/cli`, `ApiApprover` in `packages/server`, `OpenAICompatibleProvider` in `packages/providers`).
+
+2. **Phase 1 CLI scope clarified**
+   - `packages/cli/` is now explicitly in Phase 1 with `tripp run "<prompt>"` only — single-shot, talks to core directly, no HTTP.
+   - Phase 3 CLI expansion (`tripp chat` and interactive streaming) explicitly called out as Phase 3+.
+   - Added explicit forbidden: "`tripp chat` or any interactive/streaming CLI command (that is Phase 3+)".
+   - Monorepo layout comment for `cli` updated to reflect the split.
+
+3. **Provider streaming vs HTTP/SSE streaming clarified**
+   - Added explicit "Streaming distinction" section in ARCHITECTURE.md after the Minimum Phase 1 Runtime Flow.
+   - Phase 1: internal provider async streaming allowed (`AsyncIterable<StreamEvent>`, in-process only).
+   - Phase 1: HTTP/SSE server streaming forbidden (no Fastify, no listener, no external consumer).
+   - Phase 3: Fastify exposes `/reply` as SSE endpoint, forwarding the internal stream to external clients.
+   - ROADMAP.md Phase 1 Forbidden list updated: "HTTP server, SSE endpoints, Fastify, any network-exposed streaming (that is Phase 3)".
+   - ROADMAP.md Phase 3 Allowed list updated: server "Forwards internal AsyncIterable<StreamEvent> out as network-visible SSE."
+
+## PHASE 1 READINESS
+
+**Phase 1 scaffold is APPROVED to begin upon Eddie's confirmation.**
+
+All three Step 0 planning artifacts are now internally consistent:
+
+- ✅ Contract ownership has a single source of truth (`packages/shared`)
+- ✅ CLI existence in Phase 1 is explicit and scoped
+- ✅ Internal streaming vs network streaming is unambiguous
+- ✅ Phase 1 success condition is achievable within declared scope
+- ✅ No forbidden work is implied by any allowed work
+- ✅ Clean-room boundary remains intact (no code exists)
+
+**Blocks remaining before scaffold:**
+- None from doctrine/architecture/roadmap.
+- Eddie's explicit greenlight is the only remaining gate.
+
+**Recommended action on greenlight:**
+Begin Phase 1 with `packages/shared/` — Zod schemas + all cross-package type/interface exports — as commit #1, per the commit sequence in NEXT STEP.
+
+## NEXT STEP
+
+### Recommended: Human + Tripp review of the three doctrine docs
+
+**Review criteria (per Eddie):**
+> "Would these docs stop an eager agent from accidentally rebuilding Goose with a new logo?"
+
+**After approval:**
+1. Phase 1 scaffold begins
+2. First commit: monorepo skeleton + `packages/shared/` with Zod schemas
+3. Second commit: `packages/store/` with SQLite schema
+4. Third commit: `packages/providers/` with OpenAICompatibleProvider
+5. Fourth commit: `packages/core/` with ReasonLoop
+6. Fifth commit: `packages/tools/` with read-only tools
+7. Sixth commit: CLI wiring + first successful `tripp run`
+
+**Before Phase 1 begins, Eddie should confirm:**
+- [ ] DOCTRINE.md reviewed and approved
+- [ ] ARCHITECTURE.md reviewed and approved
+- [ ] ROADMAP.md reviewed and approved
+- [ ] Provider choice confirmed (openai-compatible first)
+- [ ] Report template confirmed
+
+---
+
+*Step 0 complete. Clean-room boundary intact. No code exists. Waiting for review.*

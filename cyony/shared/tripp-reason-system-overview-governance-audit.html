@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+<title>Tripp.Reason — System Overview & Governance Audit</title>
+<style>
+  :root {
+    --bg: #0d1117;
+    --surface: #161b22;
+    --border: #30363d;
+    --text: #c9d1d9;
+    --muted: #8b949e;
+    --green: #3fb950;
+    --yellow: #d2991d;
+    --red: #f85149;
+    --blue: #58a6ff;
+    --purple: #bc8cff;
+    --accent: #79c0ff;
+    --code-bg: #1c2128;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    padding: 16px;
+    max-width: 800px;
+    margin: 0 auto;
+    font-size: 15px;
+  }
+  h1 { font-size: 1.4em; margin: 0 0 8px 0; color: var(--accent); line-height: 1.3; }
+  h2 { font-size: 1.15em; margin: 24px 0 10px 0; color: var(--accent); border-bottom: 1px solid var(--border); padding-bottom: 6px; }
+  h3 { font-size: 1em; margin: 16px 0 6px 0; color: var(--blue); }
+  .meta { color: var(--muted); font-size: 0.85em; margin-bottom: 16px; }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 0.78em; font-weight: 600; margin: 0 2px; }
+  .badge-green { background: #1a3a2a; color: var(--green); }
+  .badge-yellow { background: #3a2e1a; color: var(--yellow); }
+  .badge-red { background: #3a1a1a; color: var(--red); }
+  .badge-blue { background: #1a2a3a; color: var(--blue); }
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px 16px;
+    margin: 12px 0;
+    overflow-x: auto;
+  }
+  pre {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 10px 12px;
+    font-size: 0.8em;
+    overflow-x: auto;
+    white-space: pre-wrap;
+    word-break: break-word;
+    margin: 8px 0;
+    line-height: 1.4;
+  }
+  code { font-family: 'SF Mono', 'Fira Code', monospace; font-size: 0.88em; }
+  table { width: 100%; border-collapse: collapse; margin: 8px 0; font-size: 0.9em; }
+  th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--border); }
+  th { color: var(--muted); font-weight: 500; font-size: 0.82em; }
+  .decision-box {
+    background: #1a3a2a;
+    border: 1px solid var(--green);
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin: 16px 0;
+    font-weight: 600;
+    color: var(--green);
+    font-size: 0.95em;
+    text-align: center;
+  }
+  .section-nav { font-size: 0.85em; color: var(--muted); margin: 4px 0 12px 0; }
+  .check { color: var(--green); }
+  .warn { color: var(--yellow); }
+  hr { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
+  ul, ol { padding-left: 20px; margin: 6px 0; }
+  li { margin: 3px 0; }
+  strong { color: #e6edf3; }
+  .footer { text-align: center; color: var(--muted); font-size: 0.8em; margin-top: 32px; padding-top: 16px; border-top: 1px solid var(--border); }
+</style>
+</head>
+<body>
+
+<h1>🔧 Tripp.Reason<br>System Overview &amp; Governance Audit</h1>
+<p class="meta">
+  <strong>Generated:</strong> 2026-06-06 &nbsp;|&nbsp; <strong>Assigned:</strong> Cyony<br>
+  <strong>Repo:</strong> github.com/eOnoes/Tripp.reason &nbsp;|&nbsp; <strong>Branch:</strong> master &nbsp;|&nbsp; <strong>HEAD:</strong> 19538f7
+</p>
+
+<div class="decision-box">
+  TRIPP_REASON_SYSTEM_OVERVIEW_AUDIT_COMPLETE — 535/535 TESTS — 0 VIOLATIONS
+</div>
+
+<!-- 1. EXECUTIVE SUMMARY -->
+<h2>1. Executive Summary</h2>
+<p>Tripp.Reason is a lean, local-first agent runtime for coding agents, prompt routing, tool execution, swarm coordination, and audit-backed task completion. It is currently in a <strong>fake/manual-only posture</strong> — all live transport, real agent dispatch, and shared-bus mutation are gated behind ApprovalGate.</p>
+<div class="card">
+  <span class="badge badge-green">GREEN</span> across all 14 packages<br>
+  <span class="badge badge-green">535/535</span> tests passing<br>
+  <span class="badge badge-green">0</span> typecheck errors<br>
+  <span class="badge badge-blue">CONTRACT</span> internal-fake-manual-only<br>
+  <span class="badge badge-blue">MUTATION</span> none (hardcoded)
+</div>
+
+<!-- 2. PACKAGE INVENTORY -->
+<h2>2. Package Inventory (14)</h2>
+<div class="card">
+  <table>
+    <tr><th>Package</th><th>Role</th></tr>
+    <tr><td><code>@tripp-os/agent-bus</code></td><td>Trace ledger, file-bus, schemas, event validation</td></tr>
+    <tr><td><code>@tripp-os/contracts</code></td><td>Smoke tests, shared contract verification</td></tr>
+    <tr><td><code>cli</code></td><td>CLI entry, dry run harness, agents command, handoff lane</td></tr>
+    <tr><td><code>core</code></td><td>ApprovalGate, runtime safety, mutation guards</td></tr>
+    <tr><td><code>external-agents</code></td><td>External trace schemas, file-bus, ledger</td></tr>
+    <tr><td><code>mcp</code></td><td>MCP bridge contract (Phase 4A design-locked)</td></tr>
+    <tr><td><code>providers</code></td><td>LLM provider adapters</td></tr>
+    <tr><td><code>server</code></td><td>Runtime server, approval queue, transport stubs</td></tr>
+    <tr><td><code>shared</code></td><td>Shared types, contracts, schemas</td></tr>
+    <tr><td><code>store</code></td><td>Persistence layer</td></tr>
+    <tr><td><code>swarm</code></td><td>Reason loop worker, swarm coordination</td></tr>
+    <tr><td><code>tools</code></td><td>Shell tool, runTests tool, tool dispatcher</td></tr>
+  </table>
+</div>
+
+<!-- 3. VALIDATION MATRIX -->
+<h2>3. Validation Matrix</h2>
+<div class="card">
+  <table>
+    <tr><th>Package</th><th>Tests</th><th>Status</th></tr>
+    <tr><td>contracts</td><td>17</td><td><span class="check">✅</span></td></tr>
+    <tr><td>agent-bus</td><td>79</td><td><span class="check">✅</span></td></tr>
+    <tr><td>external-agents</td><td>68</td><td><span class="check">✅</span></td></tr>
+    <tr><td>CLI</td><td>371</td><td><span class="check">✅</span></td></tr>
+    <tr style="font-weight:600"><td>TOTAL</td><td>535</td><td><span class="check">✅ 0 failures</span></td></tr>
+  </table>
+  <p style="margin-top:8px"><span class="check">✅</span> Typecheck: 13/13 packages, 0 errors</p>
+</div>
+
+<!-- 4. GOVERNANCE -->
+<h2>4. Governance &amp; Safety Posture</h2>
+
+<h3>4.1 ApprovalGate</h3>
+<div class="card">
+  <strong>Position:</strong> Fail-closed. All mutation requires approval.<br>
+  <strong>Enforcement:</strong> <code>packages/core/src/approvalGate.ts</code><br>
+  <strong>Default timeout:</strong> 5 minutes (<code>DEFAULT_TIMEOUT_MS = 5 × 60 × 1000</code>)
+</div>
+
+<h3>4.2 Mutation Safety</h3>
+<div class="card">
+  <table>
+    <tr><th>Guard</th><th>Status</th></tr>
+    <tr><td><code>mutation_capability: "none"</code> — hardcoded</td><td><span class="check">✅</span></td></tr>
+    <tr><td><code>contract_classification: "internal-fake-manual-only"</code></td><td><span class="check">✅</span></td></tr>
+    <tr><td><code>FORBIDDEN_SOURCE_MODES</code> — 4 modes rejected</td><td><span class="check">✅</span></td></tr>
+    <tr><td><code>experimental_live</code> routing blocked</td><td><span class="check">✅</span></td></tr>
+    <tr><td>Shared-agent-bus mutation — 0 paths</td><td><span class="check">✅</span></td></tr>
+    <tr><td>Tripp.Control mutation — 0 paths</td><td><span class="check">✅</span></td></tr>
+    <tr><td>Tripp.OS mutation — 0 paths</td><td><span class="check">✅</span></td></tr>
+  </table>
+</div>
+
+<h3>4.3 Trace Events (27 types)</h3>
+<div class="card">
+  <code style="font-size:0.78em">packet_created, packet_read, packet_claimed, result_written, result_read, schema_validation_failed, approvalgate_required, human_decision_recorded, mutation_applied, subagent_spawned, subagent_completed, subagent_killed, subagent_audited, tools_loaded, tools_unloaded, warden_stop_issued, warden_stop_resolved, task_started, task_completed, task_failed, task_timeout, tool_timeout, approval_timeout, packet_rejected, warden_review_started, warden_verdict_recorded, live_dispatch_blocked</code>
+  <p style="margin-top:8px"><span class="check">13</span> full coverage · <span class="warn">8</span> partial · <span class="badge badge-blue">6</span> runtime-only (design-expected)</p>
+</div>
+
+<h3>4.4 Timeout Handling</h3>
+<div class="card">
+  <table>
+    <tr><th>Path</th><th>Mechanism</th></tr>
+    <tr><td>Task timeout</td><td><code>Promise.race</code> + <code>clearTimeout</code></td></tr>
+    <tr><td>Tool timeout</td><td>SIGTERM handler in shell.ts + runTests.ts</td></tr>
+    <tr><td>Approval timeout</td><td>Timeout callback in approvalQueue.ts</td></tr>
+    <tr><td>Per-tool timeouts</td><td>Configurable, bounded via dispatcher</td></tr>
+  </table>
+</div>
+
+<!-- 5. HANDOFF LANE -->
+<h2>5. Handoff Lane (6N–6V) — LOCKED</h2>
+<div class="card">
+  <pre>Trace Events → Manifest → Handoff Bundle → Operator Summary
+   6J            6L           6O                 6S
+ (38 tests)   (10 tests)   (32 tests)        (30 tests)</pre>
+</div>
+
+<div class="card">
+  <table>
+    <tr><th>Stage</th><th>Module</th><th>Lines</th><th>Tests</th></tr>
+    <tr><td>6J</td><td><code>fakeManualManifest.ts</code></td><td>338</td><td>38</td></tr>
+    <tr><td>6O</td><td><code>fakeManualHandoffBundle.ts</code></td><td>390</td><td>32</td></tr>
+    <tr><td>6S</td><td><code>fakeManualOperatorSimulation.ts</code></td><td>259</td><td>30</td></tr>
+    <tr><td>6U</td><td><code>fakeManualOperatorFixture.test.ts</code></td><td>—</td><td>23</td></tr>
+  </table>
+</div>
+
+<h3>Consumer Boundaries</h3>
+<div class="card">
+  <table>
+    <tr><th>Consumer</th><th>Permission</th></tr>
+    <tr><td>Operator (Eddie)</td><td>Read, inspect, compare, static-transfer</td></tr>
+    <tr><td>Echo</td><td>Read-only evidence, classify confidence</td></tr>
+    <tr><td>Tripp (warden)</td><td>Summary only — never raw manifest</td></tr>
+    <tr><td>Codex (Control)</td><td>Summary only — never auto-read</td></tr>
+    <tr><td>Kimi (OS)</td><td>Summary only — never cross-project proof</td></tr>
+  </table>
+</div>
+
+<h3>7 Forbidden Actions (All Consumers)</h3>
+<div class="card">
+  <ol>
+    <li>live-dispatch</li>
+    <li>bus-mutation</li>
+    <li>agent-activation</li>
+    <li>cross-project-write</li>
+    <li>auto-polling</li>
+    <li>public-api-promotion</li>
+    <li>source-of-truth-inference</li>
+  </ol>
+</div>
+
+<!-- 6. DEPENDENCIES -->
+<h2>6. Dependency Status</h2>
+<div class="card">
+  <table>
+    <tr><th>Dep</th><th>Added</th><th>Stage</th></tr>
+    <tr><td><code>@tripp-os/agent-bus → server</code></td><td>Stage 4</td><td><span class="check">✅</span></td></tr>
+    <tr><td><code>@tripp-os/agent-bus → swarm</code></td><td>Stage 4</td><td><span class="check">✅</span></td></tr>
+    <tr><td><code>@tripp-os/agent-bus → tools</code></td><td>Stage 4</td><td><span class="check">✅</span></td></tr>
+    <tr><td><code>vitest → external-agents</code></td><td>Stage 6E</td><td><span class="check">✅</span></td></tr>
+  </table>
+  <p style="margin-top:8px">No dependency drift. Lockfile frozen-compatible. <code>pnpm@9.15.9</code>, <code>Node v20.19.2</code></p>
+</div>
+
+<!-- 7. GOOSE -->
+<h2>7. Goose Backend — NOW OPERATIONAL</h2>
+<div class="card">
+  <table>
+    <tr><td><strong>Binary</strong></td><td><code>goose</code> v1.35.0 (242MB)</td></tr>
+    <tr><td><strong>Server</strong></td><td><code>goosed</code> v1.35.0 (239MB)</td></tr>
+    <tr><td><strong>Providers</strong></td><td>OpenAI, Kimi, Anthropic, Google, Groq, Ollama, XAI, DeepSeek + more</td></tr>
+    <tr><td><strong>Path</strong></td><td><code>/opt/data/home/workspace/Tripp.Reason/target/release/</code></td></tr>
+  </table>
+  <p style="margin-top:8px"><span class="check">✅</span> Built with <code>code-mode,rustls-tls,telemetry,otel,system-keyring</code>. Local inference skipped (no libclang needed). First boot → login via gpt.com subscription.</p>
+</div>
+
+<!-- 8. PHASE ROADMAP -->
+<h2>8. Phase Roadmap</h2>
+<div class="card">
+  <table>
+    <tr><td>Phase 1–2</td><td><span class="check">✅</span></td><td>Core runtime, mutation safety, timeout hardening</td></tr>
+    <tr><td>Phase 3</td><td><span class="check">✅</span></td><td>Trace events, runtime boundary</td></tr>
+    <tr><td>Phase 4</td><td>🔒</td><td>MCP bridge contract (design-locked)</td></tr>
+    <tr><td>Phase 5</td><td><span class="check">✅</span></td><td>Approval timeout schema + wiring</td></tr>
+    <tr><td>Phase 6</td><td><span class="check">✅</span></td><td>Fake/manual runtime, handoff lane (6B–6V)</td></tr>
+    <tr><td>Phase 7</td><td><span class="check">✅</span></td><td>Pre-Phase-8 closure</td></tr>
+    <tr><td>Phase 8</td><td><span class="check">✅</span></td><td>Fake transport readiness, agent separation</td></tr>
+    <tr><td>Phase 8H</td><td><span class="check">✅</span></td><td>Final closure audit (251 → 535 tests)</td></tr>
+  </table>
+</div>
+
+<!-- 9. RISKS -->
+<h2>9. Current Risks</h2>
+<div class="card">
+  <table>
+    <tr><th>Flag</th><th>Sev</th><th>Status</th></tr>
+    <tr><td><code>hasCycles</code> detection deferred</td><td><span class="badge badge-green">Low</span></td><td>Hardcoded false, documented</td></tr>
+    <tr><td>3 confidence types reserved</td><td><span class="badge badge-green">Low</span></td><td>Schema-stable, not yet produced</td></tr>
+    <tr><td>Echo handoff integration</td><td><span class="badge badge-blue">Info</span></td><td>Deferred by design</td></tr>
+    <tr><td>Live transport untested</td><td><span class="badge badge-blue">Info</span></td><td>Gated, all defaults = fake/manual</td></tr>
+    <tr><td>Codex in Tripp.Control</td><td><span class="badge badge-blue">Info</span></td><td>Separate lane, no interference</td></tr>
+    <tr><td>Echo still on C: drive</td><td><span class="badge badge-blue">Info</span></td><td>Pending D: migration</td></tr>
+  </table>
+</div>
+
+<!-- 10. QUICK REFERENCE -->
+<h2>10. Quick Reference</h2>
+<div class="card">
+  <table>
+    <tr><td><strong>Repo</strong></td><td><code>/opt/data/shared/Tripp.Reason</code></td></tr>
+    <tr><td><strong>GitHub</strong></td><td><code>github.com/eOnoes/Tripp.reason</code></td></tr>
+    <tr><td><strong>Goose</strong></td><td><code>/opt/data/home/workspace/Tripp.Reason</code></td></tr>
+    <tr><td><strong>Reports</strong></td><td>34 reports in <code>reports/</code></td></tr>
+    <tr><td><strong>Git HEAD</strong></td><td><code>19538f7</code> on <code>master</code></td></tr>
+    <tr><td><strong>ApprovalGate</strong></td><td><code>packages/core/src/approvalGate.ts</code></td></tr>
+    <tr><td><strong>Dry run</strong></td><td><code>packages/cli/src/agentsCommand.ts</code></td></tr>
+  </table>
+</div>
+
+<div class="decision-box">
+  TRIPP_REASON_SYSTEM_OVERVIEW_AUDIT_COMPLETE<br>
+  535/535 TESTS · 0 VIOLATIONS · HANDOFF LANE LOCKED
+</div>
+
+<div class="footer">
+  Generated by Cyony 🔧 · 2026-06-06 · Tripp.Reason v1.35.0
+</div>
+
+</body>
+</html>

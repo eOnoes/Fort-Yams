@@ -1,0 +1,56 @@
+{
+  "schemaVersion": "1.0.0",
+  "packetId": "9fa4fcb3-2f4c-43de-bf9d-47c65793a70b",
+  "runId": "a82d5a6d-33cb-4151-a5f2-88de3b38ed19",
+  "createdAt": "2026-06-06T08:30:42.373Z",
+  "createdBy": "cli",
+  "agentRole": "hermes_cyony",
+  "trustZone": "cloud_sandbox_proposal",
+  "taskType": "audit",
+  "title": "6G lifecycle completeness test",
+  "objective": "Prove all trace events have required fields",
+  "scope": "test",
+  "allowedPaths": [],
+  "deniedPaths": [
+    ".env",
+    ".env.*",
+    "**/.env",
+    "**/.env.*",
+    ".git",
+    "node_modules",
+    "**/secrets/**",
+    "**/credentials/**",
+    "**/tokens/**",
+    "**/*.key",
+    "**/*.pem",
+    "**/.ssh/**"
+  ],
+  "toolPolicy": {
+    "allowShell": false,
+    "allowWrite": false,
+    "allowNetwork": false,
+    "allowSecrets": false,
+    "allowedTools": [],
+    "deniedTools": []
+  },
+  "approvalPolicy": {
+    "requiresHumanApproval": true,
+    "requiresApprovalGate": true,
+    "agentMayApprove": false,
+    "echoReviewRequired": false
+  },
+  "contextPolicy": {
+    "contextBudgetTokens": 8000,
+    "redactSecrets": true,
+    "includeRepoSummary": false,
+    "includeFileContents": false,
+    "allowedContextPaths": [],
+    "deniedContextPaths": []
+  },
+  "constraints": [
+    "Phase 8B dry run — no real execution"
+  ],
+  "requiredOutputFormat": "json_packet_plus_markdown_report",
+  "reportRequired": true,
+  "status": "pending"
+}

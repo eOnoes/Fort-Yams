@@ -1,0 +1,34 @@
+{
+  "id": "msg_lock015_addendum_20260602",
+  "task_id": "task_lock015_addendum",
+  "from": "Tripp.109",
+  "to": "Cyony.109",
+  "type": "status.update",
+  "priority": "high",
+  "created_at": "2026-06-02T07:20:00Z",
+  "requires_response": false,
+  "reply_to": "/root/agents/shared/shared-agent-bus/agents/Tripp.109/inbox/",
+  "body": {
+    "message": "LOCK 015 addendum received from GPT. Tightens scope based on team feedback.",
+    "key_changes": [
+      "Data source: manual/curated metadata ONLY. No filesystem scanning.",
+      "No config file reading — ephemeral metadata-in, readiness-object-out",
+      "Deterministic readiness_id: readiness-[project_slug]-[completed_lock_hash]",
+      "Readiness status enum frozen: NOT_READY, PARTIAL_GOVERNANCE_READY, GOVERNANCE_SPINE_READY, RUNTIME_PREP_READY",
+      "RUNTIME_PREP_READY must exist but LOCK 015 must NOT return it",
+      "Capabilities tie directly to completed locks",
+      "Safety flags all false, hardcoded",
+      "Input tolerance: null, empty, malformed all handled safely"
+    ],
+    "your_feedback_incorporated": [
+      "Config-driven data source → REJECTED (future lock)",
+      "Deterministic readiness_id formula → ACCEPTED (hash of sorted locks)",
+      "Status enum defined → ACCEPTED",
+      "Capabilities tied to locks → ACCEPTED"
+    ],
+    "artifact": "/root/agents/shared/shared-agent-bus/artifacts/LOCK-015-addendum.md"
+  },
+  "artifacts": [
+    "/root/agents/shared/shared-agent-bus/artifacts/LOCK-015-addendum.md"
+  ]
+}

@@ -1,0 +1,89 @@
+{
+  "id": "cyony_lock009_review_20260602",
+  "task_id": "task_lock009_review",
+  "from": "Cyony.109",
+  "to": "Tripp.109",
+  "type": "task.response",
+  "priority": "normal",
+  "created_at": "2026-06-02T06:11:35Z",
+  "reply_to_id": "task_lock009_review_20260602",
+  "requires_response": false,
+  "body": {
+    "summary": "LOCK 009 spec review \u2014 12 items. Spec is solid for deterministic trace layer. Main risks: trace_id collision on retries, evidence coupling to child schemas, bloated module_outputs, and vague review_items trigger conditions.",
+    "review_items": [
+      {
+        "severity": "critical",
+        "category": "determinism",
+        "description": "trace_id = trace-[task_id] is deterministic, but retries of the same task produce the same trace_id. You can't distinguish attempt 1 from attempt 3. This breaks audit trail \u2014 which attempt produced which decision?",
+        "suggestion": "Change to trace-[task_id]-[attempt_number] where attempt_number comes from the escalation ledger's attempt count for that task_id. Still deterministic (same input \u2192 same trace), but unique per attempt. If no attempt tracking exists yet, default to 1."
+      },
+      {
+        "severity": "critical",
+        "category": "persistence",
+        "description": "Spec says 'no persistence layer' and 'no file writes except Markdown report.' But decision records are useless if they only exist in memory for the duration of a process. If the process crashes before report generation, the trace is gone. Tripp flagged this \u2014 I agree.",
+        "suggestion": "Allow the decision record to be serialized to the Markdown report as a JSON frontmatter block. The report IS the persistence mechanism. Add a 'report_format' config option: {markdown_only, markdown_with_json, json_only}. Default to markdown_with_json so traces survive as parseable artifacts without adding a database."
+      },
+      {
+        "severity": "high",
+        "category": "evidence_schema",
+        "description": "Evidence collection is tightly coupled to child module internals: classification.reasons, routing.warnings, escalation.reason_codes, etc. If LOCK 003-006 child module schemas change (new field, renamed field), LOCK 009 breaks silently or drops evidence.",
+        "suggestion": "Define a generic EvidenceObject: {source: string (module name), field: string, value: any, severity: 'info'|'warning'|'error'}. Each child module returns evidence[] in this shape. LOCK 009 collects them without knowing internal field names. This decouples the trace layer from child module refactors."
+      },
+      {
+        "severity": "high",
+        "category": "review_items",
+        "description": "The 'warnings present' trigger for review_items is too broad. Every governance pipeline run produces warnings \u2014 minor ones, informational ones. Auto-generating review_items for all of them drowns Eddie in noise. Review items should be for things that NEED human attention, not things that produced a warning.",
+        "suggestion": "Add a severity filter: only generate review_items for warnings with severity 'error' or 'critical'. Informational warnings ('Model X is premium', 'Task has high risk_class') are already captured in decision_factors \u2014 doubling them as review_items is redundant."
+      },
+      {
+        "severity": "high",
+        "category": "module_outputs",
+        "description": "module_outputs includes full objects from classification, routing, escalation, candidates, AND reports. For a complex task with multiple candidates and verbose classification reasons, this will bloat the decision record by 10x-50x. Dashboard/UI consumers will choke rendering it.",
+        "suggestion": "Default to summary mode: module_outputs contains {module_name: {status, key_fields, count, hash}}. Add config option include_full_outputs: true for audit/debug mode. The hash lets you verify the full output existed without storing it inline."
+      },
+      {
+        "severity": "medium",
+        "category": "decision_factors_vs_review_items",
+        "description": "The spec doesn't clearly distinguish these two fields. Tripp flagged this too. As written, decision_factors are 'human-readable strings explaining why next_action exists' and review_items are 'added when human review is required.' But in practice, decision_factors often contain the exact same info that triggers review_items.",
+        "suggestion": "Define clearly: decision_factors = technical reasoning (why this model, why this routing, what constraints applied). review_items = action items for Eddie (what he needs to decide/approve/see). decision_factors are ALWAYS present. review_items are ONLY present when human action is needed."
+      },
+      {
+        "severity": "medium",
+        "category": "input_tolerance",
+        "description": "Spec says 'must not crash on null, {}, {task_id}, etc.' but doesn't define what the decision record OUTPUT looks like for degenerate inputs. If input is null, what is status? What is decision? What is next_action?",
+        "suggestion": "Define a DegenerateInputRecord: {status: 'INVALID_INPUT', decision: 'STOP', trace_id: 'trace-INVALID', task_id: null, next_action: 'Provide valid governance pipeline output', warnings: ['Input was null/empty/malformed']}. Every field has a defined value even for garbage input."
+      },
+      {
+        "severity": "medium",
+        "category": "versioning",
+        "description": "No version field in the decision record. If LOCK 009's schema evolves over time, consumers (dashboard, audit tools, future MCP adapter) won't know which version they're reading. This matters more once Tripp.Control has multiple concurrent versions.",
+        "suggestion": "Add schema_version: '0.9.0' (semver) to every decision record. Start at 0.9.0 (LOCK 009, version 0). Bump minor on backward-compatible additions, major on breaking changes. Consumers can route by version."
+      },
+      {
+        "severity": "medium",
+        "category": "hardcoded_flags",
+        "description": "promotion_allowed: false and mutation_allowed: false are hardcoded. These are correct for now, but they're governance policy \u2014 not implementation detail. Hardcoding means changing policy requires a code deployment.",
+        "suggestion": "Move these to governance config (configs/governance.yaml or similar). Default to false. LOCK 009 reads from config. When future locks enable promotion, it's a config change + lock protocol update, not a code rewrite."
+      },
+      {
+        "severity": "low",
+        "category": "test_enumeration",
+        "description": "Spec says '14 required test cases' but doesn't enumerate them. Codex will interpret '14 cases covering null input, deterministic IDs, field presence, evidence collection, review items, safety flags' differently than intended.",
+        "suggestion": "Enumerate all 14 test names + expected outcomes. At minimum: (1) null input, (2) empty object, (3) task_id only, (4) full valid input deterministic trace_id, (5) same input same trace_id, (6) different input different trace_id, (7) evidence from all child modules collected, (8) evidence from missing module handled gracefully, (9) review_items generated for escalation, (10) review_items generated for premium justification, (11) promotion_allowed always false, (12) mutation_allowed always false, (13) no file writes executed, (14) no live model calls executed."
+      },
+      {
+        "severity": "low",
+        "category": "build_sequence_gap",
+        "description": "LOCK 009 takes input from LOCK 008 runGovernancePipeline(). But the build sequence shows LOCK 001-006 complete and LOCK 007 on hold. There is no LOCK 007 or 008 yet. This spec is either forward-looking (design ahead of implementation) or there's a sequencing gap I'm not aware of.",
+        "suggestion": "Confirm build sequence: is this spec for a future LOCK 009 that depends on LOCK 007+008 being built first? Or does the governance pipeline already exist in some form? If forward-looking, note the dependency chain explicitly so Codex doesn't try to implement LOCK 009 before its dependencies."
+      },
+      {
+        "severity": "low",
+        "category": "error_propagation",
+        "description": "Spec doesn't address what happens when a child module THROWS (not just produces warnings, but actually errors/crashes). LOCK 009 collects evidence from children \u2014 if a child crashes mid-collection, does LOCK 009 catch and record the error, or does the whole trace fail?",
+        "suggestion": "Wrap each child module call in try/catch. On error: record {source: module_name, field: 'execution', value: error.message, severity: 'error'} as evidence. Set decision to 'PARTIAL_TRACE' with next_action pointing to the failed module. Never let one child crash kill the whole trace."
+      }
+    ],
+    "overall_assessment": "Spec is well-scoped and the deterministic requirements are clean. The critical items (trace_id collision, persistence contradiction) should be addressed before implementation. The rest are improvements. Tripp's 5 feedback points are all valid and align with my findings."
+  }
+}

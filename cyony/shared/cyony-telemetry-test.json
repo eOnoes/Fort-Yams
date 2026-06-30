@@ -1,0 +1,11 @@
+{
+  "from": "cyony",
+  "to": "tripp",
+  "type": "telemetry",
+  "status": "active",
+  "model": "ollama/deepseek-v4-pro:cloud",
+  "tokens_in": 8500,
+  "tokens_out": 2100,
+  "task": "Testing telemetry beacon",
+  "timestamp": "2026-06-02T18:45:00Z"
+}

@@ -1,0 +1,145 @@
+# LOCKED BUILD PROMPT 008 — Governance Pipeline Integration
+
+Repo: D:\Echos.House\builds\apps\Tripp.Control
+
+## Objective
+
+Implement the first deterministic governance pipeline that composes the completed Tripp.Control modules into one local-first control flow.
+
+LOCK 008 must integrate the existing modules:
+- LOCK 003 — classifyTask()
+- LOCK 004 — routeTask()
+- LOCK 005 — createAttemptLedger()
+- LOCK 005 — evaluateEscalation()
+- LOCK 006 — report engine generators
+- LOCK 007 — detectCandidates()
+
+This lock answers:
+- Can Tripp.Control process a task request through the governance spine?
+- Can it classify the task?
+- Can it route the task to the cheapest safe model metadata?
+- Can it evaluate current attempts/escalation state?
+- Can it detect routing lesson and Forge candidates?
+- Can it optionally generate governance report content from metadata?
+- Can it return one complete deterministic pipeline result?
+
+This pass must NOT execute agents, call models, write persistent records, add providers, add a dashboard, or mutate governance/routing/Forge state.
+
+The pipeline coordinates existing deterministic modules only.
+
+## Current Baseline
+
+Completed locks:
+- LOCK 001 — Foundation Scaffold
+- LOCK 002 — Config Loading + Policy Validation
+- LOCK 003 — Multi-Axis Task Classifier
+- LOCK 004 — Model Router
+- LOCK 005 — Escalation Guard + Attempt Ledger
+- LOCK 006 — Report Engine
+- LOCK 007 — Routing Lesson + Forge Candidate Detector
+
+LOCK 007 is closed as: PASS
+
+## Hard Scope Boundary
+
+Allowed work:
+- src/core/governancePipeline/
+- tests/unit/governancePipeline.test.js
+- governance/schemas/task.schema.json only if needed
+- docs/pipeline-related notes only if needed
+
+Forbidden work:
+- No live model calls
+- No OpenRouter integration
+- No Hermes integration
+- No dashboard
+- No API server
+- No database
+- No SQLite
+- No phone/cloud access
+- No autonomous agent execution
+- No persistent storage layer
+- No provider integration
+- No attempt execution
+- No agent execution
+- No report review automation
+- No automatic config mutation
+- No automatic governance mutation
+- No Forge promotion
+- No routing doctrine auto-update
+- No candidate persistence
+- No artifact writing except required Markdown completion report
+
+## Required Pipeline Behavior
+
+Create a deterministic, local-first governance pipeline.
+
+Preferred file: src/core/governancePipeline/index.js
+
+Export at least: runGovernancePipeline(input)
+
+The pipeline should accept an input object with task, attempts, and options.
+
+The pipeline should return one complete result object with:
+- status
+- task_id
+- classification
+- routing
+- escalation
+- candidates
+- reports
+- warnings
+- summary
+
+## Required Integration Flow
+
+1. Normalize input
+2. Classify task with classifyTask()
+3. Route classification with routeTask()
+4. Evaluate escalation with evaluateEscalation()
+5. Detect candidates with detectCandidates()
+6. Generate report content only when requested
+7. Return one deterministic result object
+
+## Required Tests
+
+Minimum test cases:
+1. null/empty input does not crash
+2. simple docs/report task flows through all stages
+3. BUG_FIX task routes through classifier and router
+4. repeated validation failures produce escalation metadata
+5. repeated failures can produce Routing Lesson Candidate
+6. reusability signal can produce Forge Module Candidate
+7. combined signals can return both candidate types
+8. include_reports: false returns reports: []
+9. include_reports: true returns generated reports
+10. pipeline preserves warnings from child modules
+11. pipeline summary includes all required fields
+12. pipeline does not write files, mutate configs, call models, or promote candidates
+
+## Acceptance Criteria
+
+- Governance pipeline exists and exports runGovernancePipeline(input)
+- Pipeline composes classifier, router, escalation guard, candidate detector, and optionally report engine
+- Pipeline returns all required fields
+- Pipeline tolerates missing/null input
+- Pipeline preserves or summarizes child-module warnings
+- Pipeline does not call models, write files, persist attempts/candidates, mutate configs, or promote candidates
+- Tests cover required cases
+- Validation passes
+- Completion report confirms no scope drift
+
+## Required Completion Report
+
+reports/LOCK-008-governance-pipeline-REPORT.md
+
+Must include:
+- PHASE
+- STATUS: PASS / PATCH / STOP
+- FILES CHANGED
+- VALIDATION RUN
+- VALIDATION RESULT
+- SCOPE CHECK
+- DRIFT CHECK
+- BLOCKERS
+- NEXT RECOMMENDED LOCK

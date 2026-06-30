@@ -1,0 +1,4 @@
+packages:
+  - "packages/*"
+  - "packages/@tripp-os/*"
+  - "apps/*"

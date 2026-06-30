@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tripp.Control — Pamphlet</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;1,6..72,300&display=swap');
+
+:root {
+  --bg: #0b0b09;
+  --paper: #11110e;
+  --ink: #c4c0b4;
+  --dim: #4a4840;
+  --muted: #706c60;
+  --green: #8aaa50;
+  --amber: #b09048;
+  --red: #b05850;
+  --rule: #1c1a16;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+html, body { height:100%; overflow:hidden; background:var(--bg); }
+
+body {
+  font-family: 'Newsreader', Georgia, serif;
+  color: var(--ink);
+  display: flex;
+  justify-content: center;
+  height: 100vh;
+}
+
+.broadsheet {
+  width: min(1000px, 100%);
+  display: grid;
+  grid-template-columns: 1fr 1px 1fr 1px 1fr;
+  height: 100vh;
+  overflow-y: auto;
+}
+.broadsheet::-webkit-scrollbar { width: 2px; }
+.broadsheet::-webkit-scrollbar-track { background: transparent; }
+.broadsheet::-webkit-scrollbar-thumb { background: #1a1814; }
+
+.col {
+  padding: 32px 24px 48px;
+  overflow-y: visible;
+}
+.rule {
+  background: linear-gradient(180deg, transparent 4%, var(--rule) 20%, var(--rule) 80%, transparent 96%);
+  width: 1px;
+}
+
+.masthead {
+  grid-column: 1 / -1;
+  padding: 24px 24px 16px;
+  border-bottom: 1px solid var(--rule);
+  margin-bottom: 0;
+}
+.masthead .vol {
+  font-size: 10px;
+  color: var(--dim);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+.masthead h1 {
+  font-family: 'Newsreader', serif;
+  font-size: 38px;
+  font-weight: 300;
+  letter-spacing: -0.02em;
+  margin: 0;
+  line-height: 1;
+}
+
+.section-head {
+  font-size: 9px;
+  font-weight: 400;
+  color: var(--green);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  margin: 20px 0 10px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--rule);
+}
+
+.entry {
+  margin-bottom: 14px;
+  padding-left: 14px;
+  border-left: 2px solid var(--rule);
+}
+.entry .name {
+  font-size: 15px;
+  font-weight: 400;
+  color: var(--ink);
+  margin-bottom: 2px;
+}
+.entry .spec {
+  font-size: 12px;
+  color: var(--muted);
+  font-style: italic;
+  line-height: 1.4;
+}
+.entry .spec .good { color: var(--green); font-style: normal; }
+.entry .spec .warn { color: var(--amber); font-style: normal; }
+.entry .spec .bad  { color: var(--red); font-style: normal; }
+
+.gate-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 0;
+  border-bottom: 1px dotted var(--rule);
+  font-size: 13px;
+}
+.gate-row:last-child { border-bottom: none; }
+.gate-row .gv { font-size: 18px; font-weight: 300; }
+.gate-row .gn { font-size: 10px; color: var(--dim); text-transform: uppercase; letter-spacing: 0.1em; }
+
+.forbid {
+  margin-top: 16px;
+  font-size: 10px;
+  color: var(--dim);
+  font-style: italic;
+  line-height: 1.6;
+}
+.forbid span { text-decoration: line-through; text-decoration-color: rgba(176,88,80,0.4); }
+
+.footnote {
+  margin-top: 40px;
+  font-size: 10px;
+  color: var(--dim);
+  font-style: italic;
+  padding-top: 12px;
+  border-top: 1px solid var(--rule);
+}
+
+@media (max-width: 700px) {
+  .broadsheet { grid-template-columns: 1fr; }
+  .rule { display: none; }
+}
+</style>
+</head>
+<body>
+
+<div class="broadsheet">
+
+<div class="masthead">
+  <div class="vol">Vol. I &middot; No. 1 &middot; Static Edition &middot; 8 June 2026</div>
+  <h1>Tripp.Control</h1>
+</div>
+
+<!-- Column 1: Gates + Runtime/Safety -->
+<div class="col">
+  <div class="section-head">Gates</div>
+  <div class="gate-row"><span class="gn">Safety</span><span class="gv" style="color:var(--green)">5</span><span class="gn">GATED</span></div>
+  <div class="gate-row"><span class="gn">Approval</span><span class="gv" style="color:var(--green)">4</span><span class="gn">GATED</span></div>
+  <div class="gate-row"><span class="gn">Mutation</span><span class="gv" style="color:var(--red)">✕</span><span class="gn">LOCKED</span></div>
+
+  <div class="section-head">Runtime &amp; Safety</div>
+
+  <div class="entry">
+    <div class="name">Runtime Status <span style="font-size:10px;color:var(--dim)">t1</span></div>
+    <div class="spec"><span class="good">risk: low</span> · confirm: no · approve: no · mutation: no</div>
+    <div class="spec" style="font-size:10px">cockpit.view.changed · cockpit.panel.selected</div>
+  </div>
+
+  <div class="entry">
+    <div class="name">Safety Control <span style="font-size:10px;color:var(--amber)">t5</span></div>
+    <div class="spec"><span class="bad">risk: high</span> · <span class="good">confirm: yes</span> · approve: no</div>
+    <div class="spec" style="font-size:10px">intent.* · confirmation.* · panic.*</div>
+  </div>
+
+  <div class="entry">
+    <div class="name">Health &amp; Contract <span style="font-size:10px;color:var(--dim)">t0</span></div>
+    <div class="spec"><span class="good">risk: low</span> · display-only</div>
+  </div>
+</div>
+
+<div class="rule"></div>
+
+<!-- Column 2: Queue, Packet, Adapter, Trace, Approval -->
+<div class="col">
+  <div class="section-head">Queue &amp; Packet</div>
+
+  <div class="entry">
+    <div class="name">Queue Snapshot <span style="font-size:10px;color:var(--dim)">t1</span></div>
+    <div class="spec">read-only filter or view change</div>
+  </div>
+
+  <div class="entry">
+    <div class="name">Packet Lifecycle <span style="font-size:10px;color:var(--amber)">t3</span></div>
+    <div class="spec"><span class="warn">risk: guarded</span> · <span class="good">confirm: yes</span></div>
+    <div class="spec" style="font-size:10px">intent.* · confirmation.*</div>
+  </div>
+
+  <div class="entry">
+    <div class="name">Adapter Registry <span style="font-size:10px;color:var(--dim)">t1</span></div>
+    <div class="spec">read-only</div>
+  </div>
+
+  <div class="section-head">Trace &amp; Approval</div>
+
+  <div class="entry">
+    <div class="name">Trace Viewer <span style="font-size:10px;color:var(--dim)">t1</span></div>
+    <div class="spec">read-only filter or view change</div>
+  </div>
+
+  <div class="entry">
+    <div class="name">Approval Queue <span style="font-size:10px;color:var(--amber)">t4</span></div>
+    <div class="spec"><span class="warn">risk: guarded</span> · <span class="good">confirm: yes · approve: true</span></div>
+  </div>
+
+  <div class="entry">
+    <div class="name">Adapter Readback <span style="font-size:10px;color:var(--dim)">t1</span></div>
+    <div class="spec">read-only</div>
+  </div>
+</div>
+
+<div class="rule"></div>
+
+<!-- Column 3: Deferred + Boundaries -->
+<div class="col">
+  <div class="section-head">Deferred</div>
+
+  <div class="entry" style="border-left-color:var(--red)">
+    <div class="name">Adapter Run <span style="font-size:10px;color:var(--red)">t6</span></div>
+    <div class="spec"><span class="bad">no live adapter gate exists</span></div>
+  </div>
+
+  <div class="entry" style="border-left-color:var(--red)">
+    <div class="name">Reports <span style="font-size:10px;color:var(--red)">t6</span></div>
+    <div class="spec"><span class="bad">no approved report contract</span></div>
+  </div>
+
+  <div class="entry" style="border-left-color:var(--red)">
+    <div class="name">Forge Candidate Review <span style="font-size:10px;color:var(--red)">t6</span></div>
+    <div class="spec"><span class="bad">no candidate contract</span></div>
+  </div>
+
+  <div class="section-head">Boundaries</div>
+  <div class="spec" style="font-size:12px;color:var(--muted);line-height:1.5">
+    Presentation mode: framework-free static cockpit viewer. No runtime mutation. No package changes.
+  </div>
+  <div class="forbid">
+    <span>runtime-mutation</span> <span>approval-submission</span> <span>panic-execution</span> <span>adapter-execution</span> <span>live-agent-execution</span> <span>network-transport</span> <span>server-api-route</span> <span>dom-event-binding</span>
+  </div>
+
+  <div class="footnote">
+    This page reads nothing, writes nothing, calls nothing. Static snapshot. End of briefing.
+  </div>
+</div>
+
+</div>
+
+</body>
+</html>

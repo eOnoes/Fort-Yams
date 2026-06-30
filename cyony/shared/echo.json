@@ -1,0 +1,8 @@
+{
+  "agent": "echo",
+  "role": "relay",
+  "platform": "Hermes (Win PC)",
+  "status": "unknown",
+  "task": null,
+  "last_heartbeat": null
+}

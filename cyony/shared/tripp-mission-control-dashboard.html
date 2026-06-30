@@ -1,0 +1,301 @@
+<!-- Saved from Tripp's Mission Control dashboard -->
+<!DOCTYPE html>
+<html>
+<head>
+    <title>🔺 Mission Control</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: 'Segoe UI', system-ui, sans-serif; 
+            background: #0a0a0f; 
+            color: #e0e0e0; 
+            padding: 20px;
+            min-height: 100vh;
+        }
+        .container { max-width: 1200px; margin: 0 auto; }
+        header { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #333;
+        }
+        h1 { font-size: 28px; color: #fff; }
+        .subtitle { color: #666; font-size: 14px; margin-top: 5px; }
+        .refresh-info { color: #444; font-size: 12px; }
+        
+        table { 
+            width: 100%; 
+            border-collapse: collapse; 
+            background: #111118;
+            border-radius: 0;
+            overflow: hidden;
+        }
+        th { 
+            background: #1a1a24; 
+            color: #888; 
+            font-weight: 500;
+            text-transform: uppercase;
+            font-size: 11px;
+            letter-spacing: 1px;
+        }
+        th, td { padding: 16px; text-align: left; }
+        tr { border-bottom: 1px solid #222; transition: background 0.2s; }
+        tr:last-child { border-bottom: none; }
+        tr:hover { background: #1a1a24; }
+        
+        .agent-name { font-weight: 600; font-size: 16px; color: #fff; }
+        .health { font-weight: 600; font-size: 14px; }
+        
+        .online { color: #4ade80; }
+        .offline { color: #ef4444; }
+        .warning { color: #fbbf24; }
+        .error { color: #ef4444; }
+        .looping { color: #fb923c; }
+        .idle { color: #60a5fa; }
+        
+        .loop-badge {
+            background: rgba(251, 146, 60, 0.15);
+            color: #fb923c;
+            padding: 2px 8px;
+            border-radius: 0;
+            font-size: 11px;
+            margin-left: 8px;
+        }
+        
+        .kill-btn {
+            background: #dc2626;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 0;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+        .kill-btn:hover { background: #b91c1c; }
+        .kill-btn:active { transform: scale(0.95); }
+        
+        .wake-btn {
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 0;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+            transition: all 0.2s;
+            margin-right: 8px;
+        }
+        .wake-btn:hover { background: #1d4ed8; }
+        .wake-btn:active { transform: scale(0.95); }
+        
+        .wake-all-btn {
+            background: #7c3aed;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 0;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            margin-top: 20px;
+            transition: all 0.2s;
+        }
+        .wake-all-btn:hover { background: #6d28d9; }
+        
+        .legend {
+            display: flex;
+            gap: 20px;
+            margin-top: 20px;
+            padding: 16px;
+            background: #111118;
+            border-radius: 0;
+            font-size: 12px;
+            color: #666;
+        }
+        .legend-item { display: flex; align-items: center; gap: 6px; }
+        
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #1a1a24;
+            color: #fff;
+            padding: 16px 24px;
+            border-radius: 0;
+            border-left: 4px solid #4ade80;
+            display: none;
+            z-index: 1000;
+        }
+        .toast.error { border-left-color: #ef4444; }
+        
+        .telemetry-panel {
+            background: #111118;
+            border: 2px solid #3b82f6;
+            border-radius: 0;
+            padding: 20px;
+            margin-top: 20px;
+            color: #e0e0e0;
+        }
+        
+        .telemetry-panel h2 {
+            margin: 0 0 15px 0;
+            color: #3b82f6;
+            font-size: 18px;
+        }
+        
+        .telemetry-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .agent-telemetry, .total-telemetry {
+            background: #1a1a24;
+            border-radius: 0;
+            padding: 12px;
+        }
+        
+        .agent-telemetry h3, .total-telemetry h3 {
+            margin: 0 0 10px 0;
+            font-size: 14px;
+            color: #888;
+        }
+        
+        .metric {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 6px;
+            font-size: 12px;
+        }
+        
+        .metric .label { color: #666; }
+        .metric .value { color: #fff; font-weight: 600; }
+        .metric .savings { color: #4ade80; }
+        
+        .total-telemetry { border: 1px solid #3b82f6; }
+        
+        .budget-bar-container { margin-top: 15px; }
+        .budget-label { font-size: 12px; color: #666; margin-bottom: 5px; }
+        .budget-bar {
+            width: 100%;
+            height: 20px;
+            background: #1a1a24;
+            border-radius: 0;
+            overflow: hidden;
+        }
+        .budget-used {
+            height: 100%;
+            background: linear-gradient(90deg, #4ade80, #fbbf24, #ef4444);
+            transition: width 0.5s ease;
+        }
+        .budget-text { text-align: center; font-size: 12px; color: #666; margin-top: 5px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div>
+                <h1>🔺 Mission Control</h1>
+                <div class="subtitle">Agent Team Status Dashboard</div>
+            </div>
+            <div class="refresh-info">Auto-refreshes every 10s</div>
+        </header>
+        
+        <table>
+            <thead>
+                <tr>
+                    <th>Agent</th>
+                    <th>Host</th>
+                    <th>Status</th>
+                    <th>Current Task (Expected)</th>
+                    <th>Last Seen</th>
+                    <th>Control</th>
+                </tr>
+            </thead>
+            <tbody id="agent-rows">
+                <!-- Rows injected by backend -->
+            </tbody>
+        </table>
+        
+        <div class="legend">
+            <div class="legend-item"><span>🟢</span> Online & Working</div>
+            <div class="legend-item"><span>🟡</span> Warning State</div>
+            <div class="legend-item"><span>🟠</span> Possible Loop</div>
+            <div class="legend-item"><span>🔴</span> Offline / Error</div>
+            <div class="legend-item"><span>🔵</span> Idle / Chilling</div>
+            <div class="legend-item">⚡ = Wake agent</div>
+            <div class="legend-item">🛑 = Stop agent</div>
+        </div>
+        
+        <button class="wake-all-btn" onclick="wakeAll()">⚡ WAKE UP THE HOUSE</button>
+        
+        <div class="telemetry-panel">
+            <h2>📊 Telemetry</h2>
+            <div class="telemetry-grid">
+                <div class="agent-telemetry" id="telemetry-panels">
+                    <!-- Injected by backend -->
+                </div>
+            </div>
+            <div class="budget-bar-container">
+                <div class="budget-label">Monthly Budget: $100</div>
+                <div class="budget-bar">
+                    <div class="budget-used" id="budget-used" style="width: 0%"></div>
+                </div>
+                <div class="budget-text" id="budget-text">0% used</div>
+            </div>
+        </div>
+    </div>
+    
+    <div id="toast" class="toast"></div>
+    
+    <script>
+        function showToast(msg, isError) {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.className = 'toast' + (isError ? ' error' : '');
+            t.style.display = 'block';
+            setTimeout(() => t.style.display = 'none', 3000);
+        }
+        
+        function killAgent(agent) {
+            if (!confirm('Stop ' + agent.toUpperCase() + '?')) return;
+            fetch('/api/kill/' + agent, { method: 'POST' })
+                .then(r => r.json())
+                .then(data => showToast(agent.toUpperCase() + ' stopped'))
+                .catch(e => showToast('Failed: ' + e.message, true));
+        }
+        
+        function wakeAgent(agent) {
+            if (!confirm('Wake ' + agent.toUpperCase() + '?')) return;
+            fetch('/api/wake/' + agent, { method: 'POST' })
+                .then(r => r.json())
+                .then(data => showToast(data.message))
+                .catch(e => showToast('Failed: ' + e.message, true));
+        }
+        
+        function wakeAll() {
+            if (!confirm('Wake ALL agents?')) return;
+            fetch('/api/wake-all', { method: 'POST' })
+                .then(r => r.json())
+                .then(data => {
+                    let msg = 'Wake commands sent:\n';
+                    for (let agent in data) {
+                        msg += agent.toUpperCase() + ': ' + data[agent].message + '\n';
+                    }
+                    showToast(msg);
+                })
+                .catch(e => showToast('Failed: ' + e.message, true));
+        }
+        
+        setTimeout(() => location.reload(), 10000);
+    </script>
+</body>
+</html>

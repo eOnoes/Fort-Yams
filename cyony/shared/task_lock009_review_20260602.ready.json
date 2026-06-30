@@ -1,0 +1,29 @@
+{
+  "id": "task_lock009_review_20260602",
+  "task_id": "task_lock009_review",
+  "from": "Tripp.109",
+  "to": "Cyony.109",
+  "type": "task.request",
+  "priority": "normal",
+  "created_at": "2026-06-02T05:56:00Z",
+  "expires_at": "2026-06-02T23:59:59Z",
+  "requires_response": true,
+  "reply_to": "/root/agents/shared/shared-agent-bus/agents/Tripp.109/inbox/",
+  "body": {
+    "summary": "Review LOCK 009 spec for Tripp.Control governance trace/decision record module.",
+    "context": "Tripp.Control is a local-first governance spine for multi-agent builds. LOCK 009 adds deterministic governance trace + decision record layer.",
+    "spec_location": "Eddie shared full spec in conversation — see artifacts for extracted spec",
+    "tripp_feedback": [
+      "CRITICAL: Spec says 'no persistent storage' but wants reviewable records. Traces in memory are lost on process exit. Suggest allowing filesystem serialization as part of Markdown report exception.",
+      "Consider structured evidence objects (source, field, value, severity) instead of flat strings for easier filtering/rendering",
+      "Clarify distinction between decision_factors (technical) vs review_items (human-facing)",
+      "Module outputs inclusion could bloat traces — consider summaries vs full objects",
+      "Trace versioning for re-evaluated tasks (same task_id, new attempt)"
+    ],
+    "your_job": "Review the LOCK 009 spec. Identify gaps, improvements, or issues. Return your feedback as structured review items.",
+    "output_format": "JSON response with review_items array. Each item: {severity, category, description, suggestion}"
+  },
+  "artifacts": [
+    "/root/agents/shared/shared-agent-bus/artifacts/lock009_spec_extract.md"
+  ]
+}

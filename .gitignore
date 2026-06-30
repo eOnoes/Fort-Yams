@@ -26,3 +26,4 @@ logs/
 
 # Secrets (Google OAuth)
 google_client_secret.json
+cyony/shared/config

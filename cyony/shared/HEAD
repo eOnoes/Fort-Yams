@@ -1,0 +1,15 @@
+0000000000000000000000000000000000000000 cba371e5440e441e198c672693a9d228c53375ab Cyony <cyony@tripp.reason> 1780431070 +0000	commit (initial): Phase 2B: git read-only tools
+cba371e5440e441e198c672693a9d228c53375ab cfbcc91c99f4def3503614158f9d36c3a7a1729d Cyony <cyony@tripp.reason> 1780431076 +0000	commit: Add .gitignore, remove tracked build artifacts
+cfbcc91c99f4def3503614158f9d36c3a7a1729d f2f2bd72bb969d55a70f0c4638974c08cf6fa0c3 Cyony <cyony@tripp.reason> 1780431115 +0000	commit: Phase 2B: git read-only tools (git_status, git_diff) + report
+f2f2bd72bb969d55a70f0c4638974c08cf6fa0c3 9031485d528ea730b69122c122f27b2292f1297c Cyony <cyony@tripp.reason> 1780431461 +0000	commit: Phase 2C: write_file/edit_file behind ApprovalGate + fail-closed + backup
+9031485d528ea730b69122c122f27b2292f1297c 912bd073793f12dc4df07ba2706e4738e99391d1 Cyony <cyony@tripp.reason> 1780431919 +0000	commit: Phase 2D: shell + run_tests behind ApprovalGate (allowlist, denylist, timeout, caps)
+912bd073793f12dc4df07ba2706e4738e99391d1 2f5f8c38062cd64c74d3868fb94839ca685c6376 Cyony <cyony@tripp.reason> 1780556918 +0000	commit: chore: checkpoint Tripp.Reason Phase 3-7 completion
+2f5f8c38062cd64c74d3868fb94839ca685c6376 9069747284ff0492ea9a0920758cfee6e5612699 Cyony <cyony@tripp.reason> 1780556967 +0000	commit: docs: sync ROADMAP — Phase 7 complete, add Phase 8 stub, Tripp.OS extraction status, Echo migration note
+9069747284ff0492ea9a0920758cfee6e5612699 15c7b2d398a65bfc6e270ff7d27c654dbba4b1ed Cyony <cyony@tripp.reason> 1780558202 +0000	commit: feat: add Phase 8B fake E2E dry run harness
+15c7b2d398a65bfc6e270ff7d27c654dbba4b1ed 6048dd32ac6747dc0ddc232de0bef1ccae98e81d Cyony <cyony@tripp.reason> 1780558981 +0000	commit: test: harden Phase 8C fake E2E read-back gap closure
+6048dd32ac6747dc0ddc232de0bef1ccae98e81d d3a0dd424a96e3fa8153fa959fa3dc8a34aa37f9 Cyony <cyony@tripp.reason> 1780560010 +0000	commit: feat: add disabled Hermes Echo transport skeleton
+d3a0dd424a96e3fa8153fa959fa3dc8a34aa37f9 ac2685c847128ed9b2adf373bddd289fe5a2bdb7 Cyony <cyony@tripp.reason> 1780561148 +0000	commit: docs: audit Phase 8 transport readiness and named-agent adapter separation
+ac2685c847128ed9b2adf373bddd289fe5a2bdb7 2c36db5d1192b5bee2335aa35ded97ec86baede3 Cyony <cyony@tripp.reason> 1780561456 +0000	commit: refactor: separate named agents from backing adapters
+2c36db5d1192b5bee2335aa35ded97ec86baede3 31620a3f037f19bda2886c4476e9ba96f04ad907 Cyony <cyony@tripp.reason> 1780561893 +0000	commit: docs: close Phase 8 fake transport readiness
+31620a3f037f19bda2886c4476e9ba96f04ad907 19538f7c23c7f2ac1839f5af145c933ed23325a7 Cyony <cyony@tripp.reason> 1780753820 +0000	commit: feat: complete static fake/manual operator handoff lane (6N-6V)
+19538f7c23c7f2ac1839f5af145c933ed23325a7 b7544d1c3e9ad802c9408cdadf1bc7c23c5ca5a5 Cyony <cyony@tripp.reason> 1781261679 +0000	commit: docs: commit staged audit reports (stages 2-5, governance, overview)

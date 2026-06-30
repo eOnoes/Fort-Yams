@@ -1,0 +1,9 @@
+{
+  "id": "lock-008-review-request",
+  "from": "tripp",
+  "to": "cyony",
+  "priority": "high",
+  "message": "Please review LOCK 008 Governance Pipeline prompt. Eddie wants your thoughts before we proceed. File: shared/inbox/LOCKED_BUILD_PROMPT_008_Governance_Pipeline.txt",
+  "timestamp": "2026-06-02T03:45:00Z",
+  "status": "pending"
+}

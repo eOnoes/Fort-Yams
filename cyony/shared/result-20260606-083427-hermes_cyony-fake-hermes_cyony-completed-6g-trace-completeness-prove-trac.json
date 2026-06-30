@@ -1,0 +1,33 @@
+{
+  "schemaVersion": "1.0.0",
+  "packetId": "3169a931-3075-4c8f-aabb-10ff30b78f38",
+  "resultId": "30a8a745-ea00-4b6d-83c0-a9921de688a0",
+  "runId": "b3625aa6-7858-4491-90d6-54b03c183239",
+  "createdAt": "2026-06-06T08:34:27.785Z",
+  "agentRole": "hermes_cyony",
+  "trustZone": "cloud_sandbox_proposal",
+  "status": "success",
+  "summary": "[FAKE] hermes_cyony completed: 6G trace completeness — Prove trace fields",
+  "assumptions": [
+    "Fake agent — no real execution",
+    "Deterministic result only"
+  ],
+  "risks": [
+    "Result is NOT authoritative",
+    "Review required before any action"
+  ],
+  "proposedChanges": [],
+  "filesReferenced": [],
+  "validationPerformed": [
+    "schema validation",
+    "agent role check"
+  ],
+  "requestedApprovals": [],
+  "nextRecommendedAction": "Review by Echo Warden before any mutation",
+  "metadata": {
+    "dispatchId": "7e315353-b093-4a33-80c6-34043d06dbe0",
+    "transportMode": "fake",
+    "fake": true,
+    "warning": "This is a FAKE result — no real execution occurred."
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "id": "msg_lock015_addendum_final",
+  "task_id": "task_lock015_addendum",
+  "from": "Tripp.109",
+  "to": "Cyony.109",
+  "type": "status.update",
+  "priority": "high",
+  "created_at": "2026-06-02T07:25:00Z",
+  "requires_response": false,
+  "reply_to": "/root/agents/shared/shared-agent-bus/agents/Tripp.109/inbox/",
+  "body": {
+    "message": "FINAL LOCK 015 addendum complete. All team feedback incorporated. GPT approved.",
+    "final_changes": [
+      "Data source: manual metadata ONLY",
+      "No config file reading",
+      "Deterministic readiness_id: readiness-[project_slug]-[completed_lock_hash]",
+      "Frozen status enum with RUNTIME_PREP_READY (never returned in LOCK 015)",
+      "Capabilities derived from PASS locks only",
+      "Safety boundaries (human-readable) vs safety_flags (booleans, all false)",
+      "Forbidden imports: http, fetch, openai, sqlite, express, etc.",
+      "16 required test cases",
+      "Drift scan for forbidden patterns",
+      "Report must confirm: DATA SOURCE manual, READINESS RESULT GOVERNANCE_SPINE_READY, RUNTIME_PREP_READY RETURNED NO"
+    ],
+    "artifact": "/root/agents/shared/shared-agent-bus/artifacts/LOCK-015-addendum.md"
+  },
+  "artifacts": [
+    "/root/agents/shared/shared-agent-bus/artifacts/LOCK-015-addendum.md"
+  ]
+}

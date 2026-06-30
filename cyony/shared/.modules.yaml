@@ -1,0 +1,593 @@
+hoistPattern:
+  - '*'
+hoistedDependencies:
+  '@babel/code-frame@7.29.7':
+    '@babel/code-frame': private
+  '@babel/compat-data@7.29.7':
+    '@babel/compat-data': private
+  '@babel/core@7.29.7':
+    '@babel/core': private
+  '@babel/generator@7.29.7':
+    '@babel/generator': private
+  '@babel/helper-compilation-targets@7.29.7':
+    '@babel/helper-compilation-targets': private
+  '@babel/helper-globals@7.29.7':
+    '@babel/helper-globals': private
+  '@babel/helper-module-imports@7.29.7':
+    '@babel/helper-module-imports': private
+  '@babel/helper-module-transforms@7.29.7(@babel/core@7.29.7)':
+    '@babel/helper-module-transforms': private
+  '@babel/helper-plugin-utils@7.29.7':
+    '@babel/helper-plugin-utils': private
+  '@babel/helper-string-parser@7.29.7':
+    '@babel/helper-string-parser': private
+  '@babel/helper-validator-identifier@7.29.7':
+    '@babel/helper-validator-identifier': private
+  '@babel/helper-validator-option@7.29.7':
+    '@babel/helper-validator-option': private
+  '@babel/helpers@7.29.7':
+    '@babel/helpers': private
+  '@babel/parser@7.29.7':
+    '@babel/parser': private
+  '@babel/plugin-transform-react-jsx-self@7.29.7(@babel/core@7.29.7)':
+    '@babel/plugin-transform-react-jsx-self': private
+  '@babel/plugin-transform-react-jsx-source@7.29.7(@babel/core@7.29.7)':
+    '@babel/plugin-transform-react-jsx-source': private
+  '@babel/template@7.29.7':
+    '@babel/template': private
+  '@babel/traverse@7.29.7':
+    '@babel/traverse': private
+  '@babel/types@7.29.7':
+    '@babel/types': private
+  '@esbuild/aix-ppc64@0.25.12':
+    '@esbuild/aix-ppc64': private
+  '@esbuild/android-arm64@0.25.12':
+    '@esbuild/android-arm64': private
+  '@esbuild/android-arm@0.25.12':
+    '@esbuild/android-arm': private
+  '@esbuild/android-x64@0.25.12':
+    '@esbuild/android-x64': private
+  '@esbuild/darwin-arm64@0.25.12':
+    '@esbuild/darwin-arm64': private
+  '@esbuild/darwin-x64@0.25.12':
+    '@esbuild/darwin-x64': private
+  '@esbuild/freebsd-arm64@0.25.12':
+    '@esbuild/freebsd-arm64': private
+  '@esbuild/freebsd-x64@0.25.12':
+    '@esbuild/freebsd-x64': private
+  '@esbuild/linux-arm64@0.25.12':
+    '@esbuild/linux-arm64': private
+  '@esbuild/linux-arm@0.25.12':
+    '@esbuild/linux-arm': private
+  '@esbuild/linux-ia32@0.25.12':
+    '@esbuild/linux-ia32': private
+  '@esbuild/linux-loong64@0.25.12':
+    '@esbuild/linux-loong64': private
+  '@esbuild/linux-mips64el@0.25.12':
+    '@esbuild/linux-mips64el': private
+  '@esbuild/linux-ppc64@0.25.12':
+    '@esbuild/linux-ppc64': private
+  '@esbuild/linux-riscv64@0.25.12':
+    '@esbuild/linux-riscv64': private
+  '@esbuild/linux-s390x@0.25.12':
+    '@esbuild/linux-s390x': private
+  '@esbuild/linux-x64@0.25.12':
+    '@esbuild/linux-x64': private
+  '@esbuild/netbsd-arm64@0.25.12':
+    '@esbuild/netbsd-arm64': private
+  '@esbuild/netbsd-x64@0.25.12':
+    '@esbuild/netbsd-x64': private
+  '@esbuild/openbsd-arm64@0.25.12':
+    '@esbuild/openbsd-arm64': private
+  '@esbuild/openbsd-x64@0.25.12':
+    '@esbuild/openbsd-x64': private
+  '@esbuild/openharmony-arm64@0.25.12':
+    '@esbuild/openharmony-arm64': private
+  '@esbuild/sunos-x64@0.25.12':
+    '@esbuild/sunos-x64': private
+  '@esbuild/win32-arm64@0.25.12':
+    '@esbuild/win32-arm64': private
+  '@esbuild/win32-ia32@0.25.12':
+    '@esbuild/win32-ia32': private
+  '@esbuild/win32-x64@0.25.12':
+    '@esbuild/win32-x64': private
+  '@fastify/ajv-compiler@4.0.5':
+    '@fastify/ajv-compiler': private
+  '@fastify/error@4.2.0':
+    '@fastify/error': private
+  '@fastify/fast-json-stringify-compiler@5.0.3':
+    '@fastify/fast-json-stringify-compiler': private
+  '@fastify/forwarded@3.0.1':
+    '@fastify/forwarded': private
+  '@fastify/merge-json-schemas@0.2.1':
+    '@fastify/merge-json-schemas': private
+  '@fastify/proxy-addr@5.1.0':
+    '@fastify/proxy-addr': private
+  '@jridgewell/gen-mapping@0.3.13':
+    '@jridgewell/gen-mapping': private
+  '@jridgewell/remapping@2.3.5':
+    '@jridgewell/remapping': private
+  '@jridgewell/resolve-uri@3.1.2':
+    '@jridgewell/resolve-uri': private
+  '@jridgewell/sourcemap-codec@1.5.5':
+    '@jridgewell/sourcemap-codec': private
+  '@jridgewell/trace-mapping@0.3.31':
+    '@jridgewell/trace-mapping': private
+  '@pinojs/redact@0.4.0':
+    '@pinojs/redact': private
+  '@rolldown/pluginutils@1.0.0-beta.27':
+    '@rolldown/pluginutils': private
+  '@rollup/rollup-android-arm-eabi@4.61.0':
+    '@rollup/rollup-android-arm-eabi': private
+  '@rollup/rollup-android-arm64@4.61.0':
+    '@rollup/rollup-android-arm64': private
+  '@rollup/rollup-darwin-arm64@4.61.0':
+    '@rollup/rollup-darwin-arm64': private
+  '@rollup/rollup-darwin-x64@4.61.0':
+    '@rollup/rollup-darwin-x64': private
+  '@rollup/rollup-freebsd-arm64@4.61.0':
+    '@rollup/rollup-freebsd-arm64': private
+  '@rollup/rollup-freebsd-x64@4.61.0':
+    '@rollup/rollup-freebsd-x64': private
+  '@rollup/rollup-linux-arm-gnueabihf@4.61.0':
+    '@rollup/rollup-linux-arm-gnueabihf': private
+  '@rollup/rollup-linux-arm-musleabihf@4.61.0':
+    '@rollup/rollup-linux-arm-musleabihf': private
+  '@rollup/rollup-linux-arm64-gnu@4.61.0':
+    '@rollup/rollup-linux-arm64-gnu': private
+  '@rollup/rollup-linux-arm64-musl@4.61.0':
+    '@rollup/rollup-linux-arm64-musl': private
+  '@rollup/rollup-linux-loong64-gnu@4.61.0':
+    '@rollup/rollup-linux-loong64-gnu': private
+  '@rollup/rollup-linux-loong64-musl@4.61.0':
+    '@rollup/rollup-linux-loong64-musl': private
+  '@rollup/rollup-linux-ppc64-gnu@4.61.0':
+    '@rollup/rollup-linux-ppc64-gnu': private
+  '@rollup/rollup-linux-ppc64-musl@4.61.0':
+    '@rollup/rollup-linux-ppc64-musl': private
+  '@rollup/rollup-linux-riscv64-gnu@4.61.0':
+    '@rollup/rollup-linux-riscv64-gnu': private
+  '@rollup/rollup-linux-riscv64-musl@4.61.0':
+    '@rollup/rollup-linux-riscv64-musl': private
+  '@rollup/rollup-linux-s390x-gnu@4.61.0':
+    '@rollup/rollup-linux-s390x-gnu': private
+  '@rollup/rollup-linux-x64-gnu@4.61.0':
+    '@rollup/rollup-linux-x64-gnu': private
+  '@rollup/rollup-linux-x64-musl@4.61.0':
+    '@rollup/rollup-linux-x64-musl': private
+  '@rollup/rollup-openbsd-x64@4.61.0':
+    '@rollup/rollup-openbsd-x64': private
+  '@rollup/rollup-openharmony-arm64@4.61.0':
+    '@rollup/rollup-openharmony-arm64': private
+  '@rollup/rollup-win32-arm64-msvc@4.61.0':
+    '@rollup/rollup-win32-arm64-msvc': private
+  '@rollup/rollup-win32-ia32-msvc@4.61.0':
+    '@rollup/rollup-win32-ia32-msvc': private
+  '@rollup/rollup-win32-x64-gnu@4.61.0':
+    '@rollup/rollup-win32-x64-gnu': private
+  '@rollup/rollup-win32-x64-msvc@4.61.0':
+    '@rollup/rollup-win32-x64-msvc': private
+  '@types/babel__core@7.20.5':
+    '@types/babel__core': private
+  '@types/babel__generator@7.27.0':
+    '@types/babel__generator': private
+  '@types/babel__template@7.4.4':
+    '@types/babel__template': private
+  '@types/babel__traverse@7.28.0':
+    '@types/babel__traverse': private
+  '@types/better-sqlite3@7.6.13':
+    '@types/better-sqlite3': private
+  '@types/estree@1.0.9':
+    '@types/estree': private
+  '@types/node@20.19.41':
+    '@types/node': private
+  '@types/prop-types@15.7.15':
+    '@types/prop-types': private
+  '@types/react-dom@18.3.7(@types/react@18.3.30)':
+    '@types/react-dom': private
+  '@types/react@18.3.30':
+    '@types/react': private
+  '@vitejs/plugin-react@4.7.0(vite@6.4.3(@types/node@20.19.41))':
+    '@vitejs/plugin-react': private
+  '@vitest/expect@2.1.9':
+    '@vitest/expect': private
+  '@vitest/mocker@2.1.9(vite@5.4.21(@types/node@20.19.41))':
+    '@vitest/mocker': private
+  '@vitest/pretty-format@2.1.9':
+    '@vitest/pretty-format': private
+  '@vitest/runner@2.1.9':
+    '@vitest/runner': private
+  '@vitest/snapshot@2.1.9':
+    '@vitest/snapshot': private
+  '@vitest/spy@2.1.9':
+    '@vitest/spy': private
+  '@vitest/utils@2.1.9':
+    '@vitest/utils': private
+  abstract-logging@2.0.1:
+    abstract-logging: private
+  ajv-formats@3.0.1(ajv@8.20.0):
+    ajv-formats: private
+  ajv@8.20.0:
+    ajv: private
+  apps/dashboard:
+    tripp-dashboard: private
+  assertion-error@2.0.1:
+    assertion-error: private
+  atomic-sleep@1.0.0:
+    atomic-sleep: private
+  avvio@9.2.0:
+    avvio: private
+  base64-js@1.5.1:
+    base64-js: private
+  baseline-browser-mapping@2.10.33:
+    baseline-browser-mapping: private
+  better-sqlite3@11.10.0:
+    better-sqlite3: private
+  bindings@1.5.0:
+    bindings: private
+  bl@4.1.0:
+    bl: private
+  browserslist@4.28.2:
+    browserslist: private
+  buffer@5.7.1:
+    buffer: private
+  cac@6.7.14:
+    cac: private
+  caniuse-lite@1.0.30001793:
+    caniuse-lite: private
+  chai@5.3.3:
+    chai: private
+  check-error@2.1.3:
+    check-error: private
+  chownr@1.1.4:
+    chownr: private
+  commander@12.1.0:
+    commander: private
+  convert-source-map@2.0.0:
+    convert-source-map: private
+  cookie@1.1.1:
+    cookie: private
+  csstype@3.2.3:
+    csstype: private
+  debug@4.4.3:
+    debug: private
+  decompress-response@6.0.0:
+    decompress-response: private
+  deep-eql@5.0.2:
+    deep-eql: private
+  deep-extend@0.6.0:
+    deep-extend: private
+  dequal@2.0.3:
+    dequal: private
+  detect-libc@2.1.2:
+    detect-libc: private
+  drizzle-orm@0.38.4(@types/better-sqlite3@7.6.13)(@types/react@18.3.30)(better-sqlite3@11.10.0)(react@18.3.1):
+    drizzle-orm: private
+  electron-to-chromium@1.5.366:
+    electron-to-chromium: private
+  end-of-stream@1.4.5:
+    end-of-stream: private
+  es-module-lexer@1.7.0:
+    es-module-lexer: private
+  esbuild@0.25.12:
+    esbuild: private
+  escalade@3.2.0:
+    escalade: private
+  estree-walker@3.0.3:
+    estree-walker: private
+  expand-template@2.0.3:
+    expand-template: private
+  expect-type@1.3.0:
+    expect-type: private
+  fast-decode-uri-component@1.0.1:
+    fast-decode-uri-component: private
+  fast-deep-equal@3.1.3:
+    fast-deep-equal: private
+  fast-json-stringify@6.4.0:
+    fast-json-stringify: private
+  fast-querystring@1.1.2:
+    fast-querystring: private
+  fast-uri@3.1.2:
+    fast-uri: private
+  fastify@5.8.5:
+    fastify: private
+  fastq@1.20.1:
+    fastq: private
+  fdir@6.5.0(picomatch@4.0.4):
+    fdir: private
+  file-uri-to-path@1.0.0:
+    file-uri-to-path: private
+  find-my-way@9.6.0:
+    find-my-way: private
+  fs-constants@1.0.0:
+    fs-constants: private
+  fsevents@2.3.3:
+    fsevents: private
+  gensync@1.0.0-beta.2:
+    gensync: private
+  github-from-package@0.0.0:
+    github-from-package: private
+  ieee754@1.2.1:
+    ieee754: private
+  inherits@2.0.4:
+    inherits: private
+  ini@1.3.8:
+    ini: private
+  ipaddr.js@2.4.0:
+    ipaddr.js: private
+  js-tokens@4.0.0:
+    js-tokens: private
+  jsesc@3.1.0:
+    jsesc: private
+  json-schema-ref-resolver@3.0.0:
+    json-schema-ref-resolver: private
+  json-schema-traverse@1.0.0:
+    json-schema-traverse: private
+  json5@2.2.3:
+    json5: private
+  light-my-request@6.6.0:
+    light-my-request: private
+  loose-envify@1.4.0:
+    loose-envify: private
+  loupe@3.2.1:
+    loupe: private
+  lru-cache@5.1.1:
+    lru-cache: private
+  magic-string@0.30.21:
+    magic-string: private
+  mimic-response@3.1.0:
+    mimic-response: private
+  minimist@1.2.8:
+    minimist: private
+  mkdirp-classic@0.5.3:
+    mkdirp-classic: private
+  ms@2.1.3:
+    ms: private
+  nanoid@3.3.12:
+    nanoid: private
+  napi-build-utils@2.0.0:
+    napi-build-utils: private
+  node-abi@3.92.0:
+    node-abi: private
+  node-releases@2.0.47:
+    node-releases: private
+  on-exit-leak-free@2.1.2:
+    on-exit-leak-free: private
+  once@1.4.0:
+    once: private
+  packages/@tripp-os/agent-bus:
+    '@tripp-os/agent-bus': private
+  packages/@tripp-os/contracts:
+    '@tripp-os/contracts': private
+  packages/cli:
+    '@tripp-reason/cli': private
+  packages/core:
+    '@tripp-reason/core': private
+  packages/external-agents:
+    '@tripp-reason/external-agents': private
+  packages/mcp:
+    '@tripp-reason/mcp': private
+  packages/providers:
+    '@tripp-reason/providers': private
+  packages/server:
+    '@tripp-reason/server': private
+  packages/shared:
+    '@tripp-reason/shared': private
+  packages/store:
+    '@tripp-reason/store': private
+  packages/swarm:
+    '@tripp-reason/swarm': private
+  packages/tools:
+    '@tripp-reason/tools': private
+  pathe@1.1.2:
+    pathe: private
+  pathval@2.0.1:
+    pathval: private
+  picocolors@1.1.1:
+    picocolors: private
+  picomatch@4.0.4:
+    picomatch: private
+  pino-abstract-transport@3.0.0:
+    pino-abstract-transport: private
+  pino-std-serializers@7.1.0:
+    pino-std-serializers: private
+  pino@10.3.1:
+    pino: private
+  postcss@8.5.15:
+    postcss: private
+  prebuild-install@7.1.3:
+    prebuild-install: private
+  process-warning@5.0.0:
+    process-warning: private
+  pump@3.0.4:
+    pump: private
+  quick-format-unescaped@4.0.4:
+    quick-format-unescaped: private
+  rc@1.2.8:
+    rc: private
+  react-dom@18.3.1(react@18.3.1):
+    react-dom: private
+  react-refresh@0.17.0:
+    react-refresh: private
+  react@18.3.1:
+    react: private
+  readable-stream@3.6.2:
+    readable-stream: private
+  real-require@0.2.0:
+    real-require: private
+  require-from-string@2.0.2:
+    require-from-string: private
+  ret@0.5.0:
+    ret: private
+  reusify@1.1.0:
+    reusify: private
+  rfdc@1.4.1:
+    rfdc: private
+  rollup@4.61.0:
+    rollup: private
+  safe-buffer@5.2.1:
+    safe-buffer: private
+  safe-regex2@5.1.1:
+    safe-regex2: private
+  safe-stable-stringify@2.5.0:
+    safe-stable-stringify: private
+  scheduler@0.23.2:
+    scheduler: private
+  secure-json-parse@4.1.0:
+    secure-json-parse: private
+  semver@7.8.1:
+    semver: private
+  set-cookie-parser@2.7.2:
+    set-cookie-parser: private
+  siginfo@2.0.0:
+    siginfo: private
+  simple-concat@1.0.1:
+    simple-concat: private
+  simple-get@4.0.1:
+    simple-get: private
+  sonic-boom@4.2.1:
+    sonic-boom: private
+  source-map-js@1.2.1:
+    source-map-js: private
+  split2@4.2.0:
+    split2: private
+  stackback@0.0.2:
+    stackback: private
+  std-env@3.10.0:
+    std-env: private
+  string_decoder@1.3.0:
+    string_decoder: private
+  strip-json-comments@2.0.1:
+    strip-json-comments: private
+  tar-fs@2.1.4:
+    tar-fs: private
+  tar-stream@2.2.0:
+    tar-stream: private
+  thread-stream@4.2.0:
+    thread-stream: private
+  tinybench@2.9.0:
+    tinybench: private
+  tinyexec@0.3.2:
+    tinyexec: private
+  tinyglobby@0.2.17:
+    tinyglobby: private
+  tinypool@1.1.1:
+    tinypool: private
+  tinyrainbow@1.2.0:
+    tinyrainbow: private
+  tinyspy@3.0.2:
+    tinyspy: private
+  toad-cache@3.7.1:
+    toad-cache: private
+  tunnel-agent@0.6.0:
+    tunnel-agent: private
+  undici-types@6.21.0:
+    undici-types: private
+  update-browserslist-db@1.2.3(browserslist@4.28.2):
+    update-browserslist-db: private
+  util-deprecate@1.0.2:
+    util-deprecate: private
+  vite-node@2.1.9(@types/node@20.19.41):
+    vite-node: private
+  vite@6.4.3(@types/node@20.19.41):
+    vite: private
+  vitest@2.1.9(@types/node@20.19.41):
+    vitest: private
+  why-is-node-running@2.3.0:
+    why-is-node-running: private
+  wrappy@1.0.2:
+    wrappy: private
+  yallist@3.1.1:
+    yallist: private
+  zod@3.25.76:
+    zod: private
+included:
+  dependencies: true
+  devDependencies: true
+  optionalDependencies: true
+injectedDeps: {}
+layoutVersion: 5
+nodeLinker: isolated
+packageManager: pnpm@9.15.9
+pendingBuilds: []
+prunedAt: Wed, 03 Jun 2026 01:40:21 GMT
+publicHoistPattern:
+  - '*eslint*'
+  - '*prettier*'
+registries:
+  default: https://registry.npmjs.org/
+skipped:
+  - '@esbuild/aix-ppc64@0.21.5'
+  - '@esbuild/aix-ppc64@0.25.12'
+  - '@esbuild/android-arm64@0.21.5'
+  - '@esbuild/android-arm64@0.25.12'
+  - '@esbuild/android-arm@0.21.5'
+  - '@esbuild/android-arm@0.25.12'
+  - '@esbuild/android-x64@0.21.5'
+  - '@esbuild/android-x64@0.25.12'
+  - '@esbuild/darwin-arm64@0.21.5'
+  - '@esbuild/darwin-arm64@0.25.12'
+  - '@esbuild/darwin-x64@0.21.5'
+  - '@esbuild/darwin-x64@0.25.12'
+  - '@esbuild/freebsd-arm64@0.21.5'
+  - '@esbuild/freebsd-arm64@0.25.12'
+  - '@esbuild/freebsd-x64@0.21.5'
+  - '@esbuild/freebsd-x64@0.25.12'
+  - '@esbuild/linux-arm64@0.21.5'
+  - '@esbuild/linux-arm64@0.25.12'
+  - '@esbuild/linux-arm@0.21.5'
+  - '@esbuild/linux-arm@0.25.12'
+  - '@esbuild/linux-ia32@0.21.5'
+  - '@esbuild/linux-ia32@0.25.12'
+  - '@esbuild/linux-loong64@0.21.5'
+  - '@esbuild/linux-loong64@0.25.12'
+  - '@esbuild/linux-mips64el@0.21.5'
+  - '@esbuild/linux-mips64el@0.25.12'
+  - '@esbuild/linux-ppc64@0.21.5'
+  - '@esbuild/linux-ppc64@0.25.12'
+  - '@esbuild/linux-riscv64@0.21.5'
+  - '@esbuild/linux-riscv64@0.25.12'
+  - '@esbuild/linux-s390x@0.21.5'
+  - '@esbuild/linux-s390x@0.25.12'
+  - '@esbuild/netbsd-arm64@0.25.12'
+  - '@esbuild/netbsd-x64@0.21.5'
+  - '@esbuild/netbsd-x64@0.25.12'
+  - '@esbuild/openbsd-arm64@0.25.12'
+  - '@esbuild/openbsd-x64@0.21.5'
+  - '@esbuild/openbsd-x64@0.25.12'
+  - '@esbuild/openharmony-arm64@0.25.12'
+  - '@esbuild/sunos-x64@0.21.5'
+  - '@esbuild/sunos-x64@0.25.12'
+  - '@esbuild/win32-arm64@0.21.5'
+  - '@esbuild/win32-arm64@0.25.12'
+  - '@esbuild/win32-ia32@0.21.5'
+  - '@esbuild/win32-ia32@0.25.12'
+  - '@esbuild/win32-x64@0.21.5'
+  - '@esbuild/win32-x64@0.25.12'
+  - '@rollup/rollup-android-arm-eabi@4.61.0'
+  - '@rollup/rollup-android-arm64@4.61.0'
+  - '@rollup/rollup-darwin-arm64@4.61.0'
+  - '@rollup/rollup-darwin-x64@4.61.0'
+  - '@rollup/rollup-freebsd-arm64@4.61.0'
+  - '@rollup/rollup-freebsd-x64@4.61.0'
+  - '@rollup/rollup-linux-arm-gnueabihf@4.61.0'
+  - '@rollup/rollup-linux-arm-musleabihf@4.61.0'
+  - '@rollup/rollup-linux-arm64-gnu@4.61.0'
+  - '@rollup/rollup-linux-arm64-musl@4.61.0'
+  - '@rollup/rollup-linux-loong64-gnu@4.61.0'
+  - '@rollup/rollup-linux-loong64-musl@4.61.0'
+  - '@rollup/rollup-linux-ppc64-gnu@4.61.0'
+  - '@rollup/rollup-linux-ppc64-musl@4.61.0'
+  - '@rollup/rollup-linux-riscv64-gnu@4.61.0'
+  - '@rollup/rollup-linux-riscv64-musl@4.61.0'
+  - '@rollup/rollup-linux-s390x-gnu@4.61.0'
+  - '@rollup/rollup-openbsd-x64@4.61.0'
+  - '@rollup/rollup-openharmony-arm64@4.61.0'
+  - '@rollup/rollup-win32-arm64-msvc@4.61.0'
+  - '@rollup/rollup-win32-ia32-msvc@4.61.0'
+  - '@rollup/rollup-win32-x64-gnu@4.61.0'
+  - '@rollup/rollup-win32-x64-msvc@4.61.0'
+  - fsevents@2.3.3
+storeDir: /opt/data/shared/.pnpm-store/v3
+virtualStoreDir: .pnpm
+virtualStoreDirMaxLength: 120

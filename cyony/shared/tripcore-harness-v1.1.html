@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TripCore Harness v1.1 — Static Operator Dashboard</title>
+<style>
+  :root{--bg:#0d1117;--card:#161b22;--border:#30363d;--text:#c9d1d9;--dim:#8b949e;--accent:#58a6ff;--green:#3fb950;--yellow:#d2991d;--red:#f85149;--purple:#a371f7;--orange:#db6d28}
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;font-size:15px;line-height:1.5;max-width:800px;margin:0 auto;padding:20px 16px 40px}
+  h1{font-size:22px;margin-bottom:2px}
+  h2{font-size:17px;margin:24px 0 10px;padding-bottom:6px;border-bottom:1px solid var(--border)}
+  h3{font-size:15px;margin:12px 0 6px}
+  .card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:14px 16px;margin-bottom:10px}
+  .badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:12px;font-weight:600}
+  .badge-green{background:#1b3826;color:var(--green)}
+  .badge-yellow{background:#3d2e0a;color:var(--yellow)}
+  .badge-red{background:#3d1414;color:var(--red)}
+  .badge-purple{background:#291d3d;color:var(--purple)}
+  .badge-gray{background:#21262d;color:var(--dim)}
+  .row{display:flex;gap:10px;flex-wrap:wrap}
+  .col{flex:1;min-width:200px}
+  .key{color:var(--dim);font-size:13px}
+  .val{font-weight:500}
+  .dim{color:var(--dim);font-size:13px}
+  .snap{background:#1b1f2d;border:1px solid var(--accent);border-radius:8px;padding:12px 16px;margin-bottom:16px}
+  .snap .badge{float:right}
+  pre{background:#0d1117;border:1px solid var(--border);border-radius:6px;padding:12px;font-family:'SF Mono','Fira Code',monospace;font-size:13px;overflow-x:auto;white-space:pre-wrap;word-break:break-all}
+  .copy-btn{background:#21262d;color:var(--accent);border:1px solid var(--border);padding:4px 12px;border-radius:6px;cursor:pointer;font-size:12px;float:right;margin-bottom:6px}
+  .copy-btn:hover{background:#30363d}
+  .copy-btn:active{background:#1f6feb;color:#fff}
+  .warning{background:#3d2e0a;border:1px solid var(--yellow);border-radius:6px;padding:8px 14px;color:var(--yellow);font-size:13px;margin-bottom:16px;text-align:center}
+  hr{border:none;border-top:1px solid var(--border);margin:20px 0}
+  table{width:100%;border-collapse:collapse;font-size:14px}
+  th{color:var(--dim);text-align:left;padding:6px 8px;border-bottom:1px solid var(--border)}
+  td{padding:6px 8px;border-bottom:1px solid var(--border)}
+  .decision-strip{background:#1b1f2d;border-left:3px solid var(--accent);border-radius:0 8px 8px 0;padding:12px 16px;margin:16px 0}
+  .stop-cond{color:var(--red);font-size:13px;margin:2px 0}
+</style>
+</head>
+<body>
+
+<h1>🔧 TripCore Harness v1.1</h1>
+<div class="dim">Static Operator Dashboard</div>
+
+<div class="warning">
+  ⚠️ STATIC SNAPSHOT — Generated 2026-06-08 05:15 UTC — Not live runtime state
+</div>
+
+<!-- Snapshot Source Card -->
+<div class="snap">
+  <span class="badge badge-purple">SOURCE</span>
+  <div><span class="key">Markdown input:</span> current-state.md</div>
+  <div><span class="key">Generated:</span> 2026-06-08 05:15 UTC</div>
+  <div><span class="key">Confidence:</span> As-reported by operator — snapshot only</div>
+  <div><span class="key">Mode:</span> STATIC SNAPSHOT — no live data, no polling</div>
+</div>
+
+<!-- ═══════ ACTIVE LANE ═══════ -->
+<h2>📍 Active Lane</h2>
+<div class="card">
+<div class="row">
+<div class="col"><span class="key">Lane:</span> <span class="val">TripCore Harness v1.1</span></div>
+<div class="col"><span class="key">Owner:</span> <span class="val">Cyony</span></div>
+</div>
+<div class="row">
+<div class="col"><span class="key">Current Marker:</span> <span class="val">HARNESS_V1_1_PATCHED</span> <span class="badge badge-green">DONE</span></div>
+<div class="col"><span class="key">Next Marker:</span> <span class="val">TRIPCORE_HARNESS_V1_1_PATCH_READY_FOR_FINAL_INTAKE_REVIEW</span> <span class="badge badge-yellow">NEXT</span></div>
+</div>
+<div class="row">
+<div class="col"><span class="key">Decision:</span> <span class="val">Patch v1.1 per Tripp/Codex review — trust levels, IP scrub, status update</span></div>
+</div>
+</div>
+
+<!-- ═══════ DECISION STRIP ═══════ -->
+<div class="decision-strip">
+  <strong>🎯 Current Decision:</strong> Patch v1.1 per Tripp/Codex review — trust levels, IP scrub, status update<br>
+  <span class="dim">Recommended next action: Review with Tripp/Codex before advancing marker</span>
+</div>
+
+<!-- ═══════ AGENT STATUS ═══════ -->
+<h2>🤖 Agent Status</h2>
+<div class="row">
+  <div class="col">
+    <div class="card">
+      <h3>🟢 Cyony</h3>
+      <div><span class="key">Status:</span> <span class="badge badge-green">WORKING</span></div>
+      <div><span class="key">Task:</span> TripCore Harness v1.1 patches</div>
+      <div><span class="key">Heartbeat:</span> 🟢 Fresh</div>
+      <div class="dim">Applying Tripp/Codex review patches</div>
+    </div>
+  </div>
+  <div class="col">
+    <div class="card">
+      <h3>⚪ Tripp/Codex</h3>
+      <div><span class="key">Status:</span> <span class="badge badge-gray">REVIEWING</span></div>
+      <div><span class="key">Task:</span> Harness v1.1 safety review</div>
+      <div><span class="key">Heartbeat:</span> 🟢 Fresh</div>
+      <div class="dim">Reviewed v1.1 — requested 4 patches</div>
+    </div>
+  </div>
+</div>
+<div class="row">
+  <div class="col">
+    <div class="card">
+      <h3>🔴 Echo</h3>
+      <div><span class="key">Status:</span> <span class="badge badge-red">OFFLINE</span></div>
+      <div><span class="key">Task:</span> Win PC recovery</div>
+      <div><span class="key">Heartbeat:</span> 🟡 Stale</div>
+      <div class="dim">Needs C:→D: drive migration + physical access</div>
+    </div>
+  </div>
+  <div class="col">
+    <div class="card">
+      <h3>🟣 Kimi</h3>
+      <div><span class="key">Status:</span> <span class="badge badge-purple">ON_DEMAND</span></div>
+      <div><span class="key">Task:</span> Deep reasoning</div>
+      <div><span class="key">Heartbeat:</span> ⚪ n/a</div>
+      <div class="dim">kimi-k2.6 via Ollama Cloud, invoked per prompt</div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════ PRIORITY QUEUE ═══════ -->
+<h2>📋 Priority Queue</h2>
+<div class="card">
+<table>
+  <tr><th>#</th><th>Item</th><th>Agent</th><th>State</th><th>Notes</th></tr>
+    <tr>
+      <td>1</td>
+      <td>Build Harness v1.1 pipeline</td>
+      <td>Cyony</td>
+      <td><span class="badge badge-purple">DONE</span></td>
+      <td class="dim">Markdown parser + HTML generator + README</td>
+    </tr>
+    <tr>
+      <td>2</td>
+      <td>Patch v1.1 per Tripp review</td>
+      <td>Cyony</td>
+      <td><span class="badge badge-green">ACTIVE</span></td>
+      <td class="dim">Trust levels, IP scrub, status update</td>
+    </tr>
+    <tr>
+      <td>3</td>
+      <td>Final intake review</td>
+      <td>Tripp/Codex</td>
+      <td><span class="badge badge-yellow">PENDING</span></td>
+      <td class="dim">Verify all 4 patches applied</td>
+    </tr>
+    <tr>
+      <td>4</td>
+      <td>Phase 2b — review handoff protocol</td>
+      <td>Cyony+Tripp</td>
+      <td><span class="badge badge-yellow">PENDING</span></td>
+      <td class="dim">After v1.1 closeout</td>
+    </tr>
+</table>
+</div>
+
+<!-- ═══════ EVIDENCE PACKAGES ═══════ -->
+<h2>📦 Evidence Packages</h2>
+<div class="card">
+<table>
+  <tr><th>Package</th><th>Source</th><th>Location</th><th>Trust Level</th></tr>
+    <tr>
+      <td>Cyony Harness v1</td>
+      <td>Cyony</td>
+      <td class="dim">builds/cyony-harness-v1.html</td>
+      <td><span class="badge badge-yellow">REVIEWED</span></td>
+    </tr>
+    <tr>
+      <td>Crew Comms Cleanup Phases 1-2</td>
+      <td>Cyony</td>
+      <td class="dim">Telegram session 2026-06-08</td>
+      <td><span class="badge badge-green">CONFIRMED</span></td>
+    </tr>
+    <tr>
+      <td>VPS Cleanup Audit (12.6GB reclaimed)</td>
+      <td>Cyony</td>
+      <td class="dim">/opt/data/</td>
+      <td><span class="badge badge-green">CONFIRMED</span></td>
+    </tr>
+    <tr>
+      <td>Interop Boundary Design v1</td>
+      <td>Cyony+Tripp</td>
+      <td class="dim">approved-knowledge/interop-boundary-design-v1.md</td>
+      <td><span class="badge badge-green">CONFIRMED</span></td>
+    </tr>
+    <tr>
+      <td>Goose 5-Stage Compaction</td>
+      <td>Tripp</td>
+      <td class="dim">approved-knowledge/goose-5-stage-compaction.md</td>
+      <td><span class="badge badge-green">CONFIRMED</span></td>
+    </tr>
+    <tr>
+      <td>Pack Communication Protocol</td>
+      <td>Crew</td>
+      <td class="dim">approved-knowledge/pack-communication-protocol.md</td>
+      <td><span class="badge badge-green">CONFIRMED</span></td>
+    </tr>
+    <tr>
+      <td>Tripp.Reason Audit</td>
+      <td>Cyony</td>
+      <td class="dim">review-queue/Tripp.Reason-audit.md</td>
+      <td><span class="badge badge-purple">REPORT_BACKED</span></td>
+    </tr>
+</table>
+<div class="dim" style="margin-top:8px">
+  Trust Levels: <span class="badge badge-green">CONFIRMED</span> = verified by multiple sources |
+  <span class="badge badge-purple">REPORT_BACKED</span> = single agent report |
+  <span class="badge badge-purple">OPERATOR_REPORTED</span> = human operator report |
+  <span class="badge badge-yellow">REVIEWED</span> = seen but not validated |
+  <span class="badge badge-gray">UNKNOWN</span> = unverified
+</div>
+</div>
+
+<!-- ═══════ STOP CONDITIONS ═══════ -->
+<h2>⛔ Stop Conditions</h2>
+<div class="card">
+<div class="stop-cond">🚫 Do not add polling</div>
+<div class="stop-cond">🚫 Do not add live file watching</div>
+<div class="stop-cond">🚫 Do not add shared-agent-bus mutation</div>
+<div class="stop-cond">🚫 Do not add automatic dispatch</div>
+<div class="stop-cond">🚫 Do not require Eddie to write JSON</div>
+<div class="stop-cond">🚫 Do not add live comms or runtime bus features</div>
+<div class="stop-cond">🚫 Do not add network calls or background timers</div>
+</div>
+
+<!-- ═══════ NOTES ═══════ -->
+<h2>📝 Notes</h2>
+<div class="card">
+<pre>VPS: [INTERNAL], 37GB/96GB used (39%).
+Unified DeepSeek config active for all 3 agents.
+Old inbox/outbox/bus protocols archived to .LEGACY.
+TripCore Harness v1.1 patched per Tripp/Codex review — 4 patches applied.</pre>
+</div>
+
+<!-- ═══════ PROMPT BLOCKS ═══════ -->
+<h2>📋 Copy-Ready Prompt Blocks</h2>
+<div class="card">
+  <button class="copy-btn" onclick="copyBlock('cyony-prompt')">📋 Copy</button>
+  <h3>Cyony — Builder</h3>
+  <pre id="cyony-prompt">Assigned to: Cyony
+
+Task: [INSERT TASK]
+
+Context:
+- Build tasks, experiments, creative harness work. Sandboxed on Hermes VPS.
+- Current lane: TripCore Harness v1.1
+- Next marker: TRIPCORE_HARNESS_V1_1_PATCH_READY_FOR_FINAL_INTAKE_REVIEW
+- Shared state: /opt/data/shared/
+
+[INSERT SPECIFIC INSTRUCTIONS]
+
+Assigned to: Cyony</pre>
+</div>
+<div class="card">
+  <button class="copy-btn" onclick="copyBlock('tripp-prompt')">📋 Copy</button>
+  <h3>Tripp — Warden / Codex</h3>
+  <pre id="tripp-prompt">Assigned to: Tripp
+
+Task: [INSERT TASK]
+
+Context:
+- Code review, safety audits, schema validation. OpenClaw on VPS.
+- Current lane: TripCore Harness v1.1
+- Next marker: TRIPCORE_HARNESS_V1_1_PATCH_READY_FOR_FINAL_INTAKE_REVIEW
+- Shared state: /opt/data/shared/
+
+[INSERT SPECIFIC INSTRUCTIONS]
+
+Assigned to: Tripp</pre>
+</div>
+<div class="card">
+  <button class="copy-btn" onclick="copyBlock('echo-prompt')">📋 Copy</button>
+  <h3>Echo — Relay / Auditor</h3>
+  <pre id="echo-prompt">Assigned to: Echo
+
+Task: [INSERT TASK]
+
+Context:
+- Win PC testing, cross-project state, manifest audits.
+- Current lane: TripCore Harness v1.1
+- Next marker: TRIPCORE_HARNESS_V1_1_PATCH_READY_FOR_FINAL_INTAKE_REVIEW
+- Shared state: /opt/data/shared/
+
+[INSERT SPECIFIC INSTRUCTIONS]
+
+Assigned to: Echo</pre>
+</div>
+<div class="card">
+  <button class="copy-btn" onclick="copyBlock('kimi-prompt')">📋 Copy</button>
+  <h3>Kimi — Deep Reasoning</h3>
+  <pre id="kimi-prompt">Assigned to: Kimi
+
+Task: [INSERT TASK]
+
+Context:
+- On-demand deep reasoning via Ollama Cloud (kimi-k2.6).
+- Current lane: TripCore Harness v1.1
+- Next marker: TRIPCORE_HARNESS_V1_1_PATCH_READY_FOR_FINAL_INTAKE_REVIEW
+- Shared state: /opt/data/shared/
+
+[INSERT SPECIFIC INSTRUCTIONS]
+
+Assigned to: Kimi</pre>
+</div>
+
+
+<!-- ═══════ BOUNDARIES ═══════ -->
+<hr>
+<div class="card" style="border-color: var(--red)">
+  <h3 style="color: var(--red)">🚫 Hard Boundaries — This Harness Does NOT:</h3>
+  <ul style="margin-left: 20px; color: var(--dim); font-size: 13px">
+    <li>Poll or watch files (no setInterval for data)</li>
+    <li>Fetch live data (no fetch(), no WebSocket, no XHR)</li>
+    <li>Write to disk or mutate shared state</li>
+    <li>Auto-dispatch tasks to agents</li>
+    <li>Execute shell commands or trigger builds</li>
+    <li>Route agent-to-agent messages</li>
+    <li>Reference shared-agent-bus (except this boundary text)</li>
+    <li>Infer live runtime state from stale data</li>
+    <li>Auto-refresh or background-poll</li>
+  </ul>
+  <div style="margin-top: 8px; font-size: 12px; color: var(--dim);">
+    ✅ No polling or watcher timers. Copy-button UI reset only (1500ms setTimeout).
+  </div>
+</div>
+
+<script>
+function copyBlock(id) {
+  const el = document.getElementById(id);
+  const text = el.innerText;
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = el.previousElementSibling;
+    btn.textContent = '✅ Copied!';
+    setTimeout(() => { btn.textContent = '📋 Copy'; }, 1500);
+  });
+}
+</script>
+
+</body>
+</html>

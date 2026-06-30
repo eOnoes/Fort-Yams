@@ -1,0 +1,1 @@
+{"version":3,"file":"apiApprover.d.ts","sourceRoot":"","sources":["../src/apiApprover.ts"],"names":[],"mappings":"AAAA;;;;;GAKG;AACH,OAAO,KAAK,EAAE,QAAQ,EAAE,eAAe,EAAE,cAAc,EAAE,MAAM,sBAAsB,CAAC;AACtF,OAAO,EAAE,aAAa,EAAE,MAAM,oBAAoB,CAAC;AAEnD,qBAAa,WAAY,YAAW,QAAQ;IAC9B,OAAO,CAAC,KAAK;gBAAL,KAAK,EAAE,aAAa;IAElC,eAAe,CAAC,OAAO,EAAE,eAAe,GAAG,OAAO,CAAC,cAAc,CAAC;CASzE"}

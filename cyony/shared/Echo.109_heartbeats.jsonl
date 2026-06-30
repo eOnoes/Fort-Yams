@@ -1,0 +1,1 @@
+{"status": "online", "last_heartbeat": "2026-06-02T06:15:00Z", "inbox_count": 0, "processing_count": 0, "done_count": 2, "capabilities": ["coding", "review", "drafting", "local-verifier"], "poll_interval_sec": 30, "bus_polling_active": true, "migration_complete": true, "snapshot_at": "2026-06-02T08:18:18Z", "agent_recorded": "Echo.109"}

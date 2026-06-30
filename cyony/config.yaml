@@ -195,7 +195,7 @@ bedrock:
 auxiliary:
   vision:
     provider: xiaomi
-    model: mimo-v2-omni
+    model: mimo-v2.5
     base_url: ''
     api_key: ''
     timeout: 120
