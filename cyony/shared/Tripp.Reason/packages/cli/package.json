@@ -1,0 +1,29 @@
+{
+  "name": "@tripp-reason/cli",
+  "version": "0.1.0",
+  "type": "module",
+  "bin": {
+    "tripp": "./dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@tripp-reason/shared": "workspace:*",
+    "@tripp-reason/store": "workspace:*",
+    "@tripp-reason/core": "workspace:*",
+    "@tripp-reason/providers": "workspace:*",
+    "@tripp-reason/tools": "workspace:*",
+    "@tripp-reason/server": "workspace:*",
+    "@tripp-reason/mcp": "workspace:*",
+    "@tripp-reason/swarm": "workspace:*",
+    "@tripp-reason/external-agents": "workspace:*",
+    "commander": "^12.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "vitest": "^2.1.0"
+  }
+}

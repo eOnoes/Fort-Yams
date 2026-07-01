@@ -1,1 +1,0 @@
-{"version":3,"file":"readOnlyApprover.js","sourceRoot":"","sources":["../src/readOnlyApprover.ts"],"names":[],"mappings":"AAQA,MAAM,OAAO,gBAAgB;IAC3B,KAAK,CAAC,eAAe,CAAC,OAAwB;QAC5C,OAAO;YACL,QAAQ,EAAE,KAAK;YACf,MAAM,EAAE,SAAS,OAAO,CAAC,QAAQ,gHAAgH;SAClJ,CAAC;IACJ,CAAC;CACF"}

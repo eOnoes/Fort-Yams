@@ -64,6 +64,15 @@ Reminder: Rotate this token now at github.com/settings/tokens
 - Never commit `.env` files (add to `.gitignore`)
 - Never hardcode credentials even in "test" or "example" code
 - Never paste credentials into chat — use environment variable references
+- Never ASK users to paste credentials into chat (2026-06-29 lesson: asked Eddie for X API Client ID/Secret via Telegram — he pasted them, then we both realized this was wrong)
+
+## If a User Pastes Credentials in Chat
+
+1. **Immediately tell them to delete the message**
+2. **Do NOT read, parse, or use the credentials from chat**
+3. **Direct them to screenshot instead** — screenshots are less copy-pasteable than raw text
+4. **Or direct them to paste directly into terminal** on their own machine
+5. **Remind:** Telegram messages persist in chat history even after "delete for me"
 
 ## .gitignore Additions
 

@@ -1,7 +1,7 @@
 ---
 name: sidequest-hq
-description: "SideQuest HQ — personal command center PWA for Eddie. Click-to-enter auth (no password). Manages vehicles, rental properties, expenses, contacts, documents, reminders, and AI chat agent (Scout/Cyony)."
-tags: [nextjs, pwa, offline-first, mobile, sidequest, auth]
+description: "SideQuest HQ — personal command center PWA for Eddie. Click-to-enter auth (no password). Manages vehicles, rental properties, expenses, contacts, documents, reminders, and AI chat agent (Cyony)."
+tags: [nextjs, pwa, offline-first, mobile, sidequest, auth, cyony]
 ---
 
 # SideQuest HQ (SQHQ)
@@ -12,7 +12,7 @@ Complete architecture spec: `SPECS/SQHQ-BUILD-SPEC.md` in the repo.
 
 **Key finding:** DB schema (20+ tables), API routes, types, and client store are all COMPLETE. The work is wiring hardcoded workspace UIs to real data, not rebuilding from scratch.
 
-**Workflow:** Cyony (architect) writes specs in `SPECS/` → Echo (builder with Codex) executes → Cyony audits. Phase prompts are separate files.
+**Workflow:** Cyony writes patch specs in `PATCHES/` → Codex builds → Cyony audits → git push → deploy. See [references/patch-workflow.md](references/patch-workflow.md) for the full 6-step workflow, Codex prompt template, audit checklist, and pitfalls.
 
 **Phase Status:** Phase 1 (Error Boundaries) ✅ DONE. Phase 2 (Wire Workspaces + PDF Viewer) 📝 prompt ready. Phases 3-5 (PWA, Push, Polish) ⏳ pending.
 

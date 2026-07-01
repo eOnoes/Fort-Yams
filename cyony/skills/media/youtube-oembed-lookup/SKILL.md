@@ -50,10 +50,13 @@ curl -s "https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=VjKK
 
 ## Pitfalls
 
+- **NEVER guess the song from lyrics alone.** Always run the oEmbed lookup FIRST. Lyrics can match multiple songs (e.g., "I just want you to know who I am" is Goo Goo Dolls "Iris", NOT Radiohead "Creep"). Guessing wrong and getting corrected kills credibility. The lookup takes 2 seconds — there is no reason to skip it.
 - Music.youtube.com pages themselves return "Your browser is deprecated" — always use the `www.youtube.com` oembed endpoint
 - The oembed endpoint is public and requires NO API key
 - Returns 404 for private/deleted videos
 - `author_name` often has " - Topic" suffix for auto-generated artist channels
+- **yt-dlp is installed but YouTube blocks it** — bot detection requires browser cookies, which this VPS doesn't have. oEmbed is the reliable fallback.
+- **oEmbed only returns title + author + thumbnail** — no lyrics, no description, no duration. For full metadata, need yt-dlp with cookies or browser-based extraction.
 
 ## When to Use
 

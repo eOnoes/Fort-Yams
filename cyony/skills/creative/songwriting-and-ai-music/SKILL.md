@@ -268,7 +268,41 @@ Style can drift in extensions — restate genre/mood when extending.
 
 ---
 
-## 9. Lessons Learned
+## 9. Eddie's Collaboration Workflow
+
+Eddie writes lyrics. Cyony advises on structure, hooks, and Suno formatting.
+Eddie pastes into Suno and generates. We iterate together.
+
+**Prompt format preference:** Two SEPARATE code blocks — music prompt first, lyrics second.
+Eddie copies from Telegram on his phone. Mixed content in one block is hard on mobile.
+
+```
+Music prompt:
+Punk rap, high energy, chaotic, distorted 808s...
+
+Lyrics:
+[Intro]
+Nobody asked...
+```
+
+**Role division:**
+- Eddie = songwriter, concept, lyrics, Suno generation
+- Cyony = producer, structure advice, hook design, format optimization
+- Suno = the studio (no API, manual paste-and-generate)
+
+**Hook design for video intros (AI Unprompted):**
+- 4-6 second audio logo at start of every video
+- Research: fast tempo + memorable melody + unusual intervals = earworm
+- Winning hook: "Nobody asked... guess we're cooked!"
+- Structure: beat drop → spoken hook → bass hit → tagline → logo sting → fade
+
+**Song conversion for TTS preview:**
+When Eddie wants to hear lyrics in Cyony's voice, strip Suno tags and use
+Director Mode spoken word instead. MiMo singing defaults to Mandarin.
+
+---
+
+## 10. Lessons Learned
 
 - Describing the dynamic ARC in the style field matters way more
   than just listing genres. "Whisper to roar to whisper" gives

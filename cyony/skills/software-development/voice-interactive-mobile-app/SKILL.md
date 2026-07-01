@@ -8,12 +8,12 @@ triggers:
   - "interrupting audio in a web app"
   - "Next.js stale chunks or zombie processes"
   - "mobile-first PWA with voice"
-  - "Scout or SQHQ audio system"
+  - "Cyony or SQHQ audio system"
 ---
 
 # Voice-Interactive Mobile App Patterns
 
-Building mobile-first apps that combine TTS audio feedback, swipe gestures, and real-time voice synthesis. Born from SQHQ (SideQuestHQ) — a quest/reminder app with a snarky AI voice companion.
+Building mobile-first apps that combine TTS audio feedback, swipe gestures, and real-time voice synthesis. Born from SQHQ (SideQuestHQ) — a quest/reminder app with a snarky AI voice companion (Cyony).
 
 ---
 

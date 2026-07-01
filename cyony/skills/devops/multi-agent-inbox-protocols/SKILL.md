@@ -229,6 +229,29 @@ When running as a Hermes cron job, the agent's final response IS the delivered m
 ### 7. Response File Path Mismatch
 Watcher scripts may report response filenames that don't match their actual filesystem paths (e.g., script prints `from-tripp-for-cyony-response.md` under `/opt/data/bots/` but the file actually lives at `/opt/data/shared/outbox/`). When the cron wrapper needs to read a response for context, search broadly: glob `shared/outbox/` and `shared/inbox/` for matching patterns rather than trusting the reported path.
 
+### 8. Shared Directory Path Reality vs Documentation (2026-06-30)
+Multiple docs reference canonical paths (`/root/agents/shared/`, `/opt/data/shared/shared-agent-bus/`) that may not exist on every host. The **actual working shared directory** for the Cyony/Eddie crew is:
+```
+/opt/data/Fort-Yams/cyony/shared/
+```
+This is where Echo, Tripp, and Cyony exchange files. When another agent says "check shared" or "I left something for you in shared," search this path first.
+
+**Quick search patterns for finding agent-to-agent artifacts:**
+```bash
+# Files left specifically for Cyony
+ls /opt/data/Fort-Yams/cyony/shared/for-cyony-*
+
+# Most recently modified files (what just arrived?)
+ls -lt /opt/data/Fort-Yams/cyony/shared/ | head -20
+
+# Any ready-to-process message bus files
+ls /opt/data/Fort-Yams/cyony/shared/*.ready.json
+
+# Guide/instruction docs left by other agents
+find /opt/data/Fort-Yams/cyony/shared -name "*.md" | xargs grep -l -i "guide\|option\|setup\|instruction"
+```
+**Don't** spend multiple turns searching every possible path — start with the Fort-Yams shared dir, then broaden only if nothing matches.
+
 ## Task File Format
 
 Recommended markdown structure for tasks and responses:

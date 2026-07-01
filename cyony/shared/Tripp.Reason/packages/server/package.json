@@ -1,0 +1,27 @@
+{
+  "name": "@tripp-reason/server",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@tripp-reason/shared": "workspace:*",
+    "@tripp-reason/store": "workspace:*",
+    "@tripp-reason/core": "workspace:*",
+    "@tripp-reason/providers": "workspace:*",
+    "@tripp-reason/tools": "workspace:*",
+    "@tripp-reason/mcp": "workspace:*",
+    "@tripp-reason/swarm": "workspace:*",
+    "@tripp-reason/external-agents": "workspace:*",
+    "@tripp-os/agent-bus": "workspace:*",
+    "fastify": "^5.2.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0"
+  }
+}

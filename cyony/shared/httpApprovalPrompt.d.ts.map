@@ -1,1 +1,0 @@
-{"version":3,"file":"httpApprovalPrompt.d.ts","sourceRoot":"","sources":["../src/httpApprovalPrompt.ts"],"names":[],"mappings":"AAEA,OAAO,KAAK,EAAE,YAAY,EAAE,MAAM,mBAAmB,CAAC;AAEtD,MAAM,WAAW,qBAAqB;IACpC,OAAO,EAAE,OAAO,CAAC;IACjB,OAAO,EAAE,OAAO,CAAC;CAClB;AAED,wBAAsB,cAAc,CAClC,MAAM,EAAE,YAAY,EACpB,IAAI,EAAE,qBAAqB,EAC3B,MAAM,CAAC,EAAE,WAAW,GACnB,OAAO,CAAC,IAAI,CAAC,CAwCf"}

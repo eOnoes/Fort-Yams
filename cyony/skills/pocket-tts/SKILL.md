@@ -1,6 +1,6 @@
 ---
 name: pocket-tts
-description: "Pocket TTS voice generation via Echo's Windows PC. Voice: chloe. Use for earbuds/uncensored mode. Temperature controls mood."
+description: "Pocket TTS voice generation via Echo's Windows PC. Voice: Cyony (was Chloe — renamed in SQHQ Patch 003). Use for earbuds/uncensored mode. Temperature controls mood."
 tags: [tts, voice, pocket, pipeline]
 ---
 

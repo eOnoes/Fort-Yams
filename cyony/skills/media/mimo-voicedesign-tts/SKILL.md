@@ -1,6 +1,6 @@
 ---
 name: mimo-voicedesign-tts
-description: "MiMo VoiceDesign TTS integration for Hermes — custom voices, mood system, command provider setup. Includes voiceclone (use for character voices, NOT standard 'Chloe' preset) and pre-cached audio architecture for web apps. Tested and approved by Eddie 2026-06-18. VoiceClone confirmed 2026-06-20."
+description: "MiMo VoiceDesign TTS integration for Hermes — custom voices, mood system, command provider setup. Includes voiceclone (use for character voices, NOT standard 'Cyony' preset — was 'Chloe' before SQHQ Patch 003) and pre-cached audio architecture for web apps. Tested and approved by Eddie 2026-06-18. VoiceClone confirmed 2026-06-20."
 version: 1.0.0
 author: Cyony
 tags: [tts, mimo, xiaomi, voicedesign, voice, audio, hermes]

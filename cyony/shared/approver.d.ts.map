@@ -1,1 +1,0 @@
-{"version":3,"file":"approver.d.ts","sourceRoot":"","sources":["../src/approver.ts"],"names":[],"mappings":"AAAA;;;;;;GAMG;AAGH,OAAO,KAAK,EAAE,QAAQ,EAAE,eAAe,EAAE,cAAc,EAAE,MAAM,sBAAsB,CAAC;AAEtF,qBAAa,WAAY,YAAW,QAAQ;IACpC,eAAe,CAAC,SAAS,EAAE,eAAe,GAAG,OAAO,CAAC,cAAc,CAAC;CA0B3E"}

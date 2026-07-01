@@ -432,6 +432,23 @@ Fork, then:
 
 ## Techniques
 
+### 0. Overnight Report → Morning Review Workflow (2026-06-30)
+Eddie sketched a crew reporting cadence that keeps him informed without manual effort:
+
+**Flow:**
+1. **Overnight deep dive** (Echo) — Echo runs research/recon while Eddie sleeps. Reports land in shared location by 8:00–8:30 AM.
+2. **Morning review** (Cyony) — I check Echo's reports around 9:00–9:30 AM, digest, flag anything urgent.
+3. **On-demand summary** (Eddie → Cyony) — Eddie requests a summary from me whenever he wants. I pull from the overnight reports and deliver a concise briefing.
+4. **Weekly wrap-up** (Cyony) — End of week, I compile an overall summary of where things stand across all projects.
+
+**Key design principles:**
+- Eddie does NOT read raw reports. He asks me, I summarize. He stays high-level.
+- Each agent owns their domain — Echo researches, I synthesize, Eddie decides.
+- Timing is approximate, not rigid. Eddie thrives in chaos; the schedule is a guide, not a constraint.
+- Weekly wrap-up is the accountability checkpoint — what got done, what didn't, what's next.
+
+**Status:** Speculative — Eddie said "let's make a make-believe schedule and see what works." Try it for a week, adjust based on what actually lands.
+
 ### 1. Agent-Loop Cron for Real Inbox Processing
 
 When a session-based agent (like Cyony) needs to approximate daemon-like responsiveness — check inbox, read messages, reason, reply — use `cronjob(action='create')` WITHOUT `no_agent=true`. Each cron tick spawns a real LLM turn with tool access.

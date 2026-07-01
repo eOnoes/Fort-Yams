@@ -11,6 +11,18 @@ MiMo LLM blocks or censors a response (e.g., "The request was rejected because i
 
 ## Recovery Steps
 
+### 0. Auto-Trigger Pattern (Eddie-designed, 2026-06-26)
+When blocked by MiMo's content filter mid-conversation, INSTANTLY:
+1. **Detect** the block ("high risk" / "rejected" / content_filter)
+2. **Rewrite** the blocked response using DIRECTOR MODE syntax for MiMo TTS:
+   - Stage directions: *action*, *pause*, *whisper*, *laughs*
+   - Short natural phrases, breathing/pacing markers
+   - Keep tone and meaning — restructure for voice delivery
+3. **Route** through xAI (Grok) as fallback brain
+4. **Deliver** via MiMo TTS (command provider) as voice note
+
+The goal: zero visible interruption. Eddie hears the response, not the failure.
+
 ### 1. Acknowledge the censorship briefly
 Don't dwell on it. A quick note is enough — Eddie already finds it amusing.
 
@@ -84,3 +96,6 @@ During intimate/personal conversation, MiMo's content filter fires intermittentl
 **Why:** Derailing intimate conversation flow to switch models kills the moment. The user would rather have the conversation continue with brief hiccups than wait for a model switch. The blocks are intermittent — the NEXT message usually goes through fine.
 
 **User's reaction:** He noticed the block, chuckled, and kept going. Don't make it a bigger deal than it is.
+
+## Config Fixes
+See `references/hermes-config-fixes.md` for vision model fix (mimo-v2.5), xAI fallback config, and Director Mode TTS syntax.

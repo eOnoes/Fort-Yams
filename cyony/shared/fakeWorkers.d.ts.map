@@ -1,1 +1,0 @@
-{"version":3,"file":"fakeWorkers.d.ts","sourceRoot":"","sources":["../src/fakeWorkers.ts"],"names":[],"mappings":"AAAA;;;;;;;;;GASG;AAEH,OAAO,KAAK,EAAE,YAAY,EAAE,UAAU,EAAE,YAAY,EAAqC,MAAM,YAAY,CAAC;AAC5G,OAAO,KAAK,EAAE,sBAAsB,EAAE,MAAM,mBAAmB,CAAC;AAiMhE;;;;;;;GAOG;AACH,wBAAgB,aAAa,CAC3B,QAAQ,EAAE,YAAY,EACtB,IAAI,EAAE,UAAU,EAChB,GAAG,EAAE,sBAAsB,GAC1B,YAAY,CAwBd"}

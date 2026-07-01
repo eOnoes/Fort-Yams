@@ -392,6 +392,8 @@ xurl --app staging /2/users/me             # one-off against staging
 | `CreditsDepleted` | $0 balance on X API | Buy credits (min $5) in Developer Console → Billing |
 | `media processing failed` on image upload | Default category is `amplify_video` | Add `--category tweet_image --media-type image/png` |
 | Two "Client Secret" values in X dashboard | UI bug — first is actually Client ID | Confirm on the "Keys and tokens" page; ID ends in `MTpjaQ` |
+| User trying to access developer portal from X mobile app | The X app does NOT have the developer portal | Must use a web browser (Safari/Chrome) on phone or desktop, NOT the X app |
+| User pasted credentials in chat | Security violation — agent asked for secrets in plaintext | Agent should NEVER request credentials in chat. User must set up auth manually on their own machine. If user sends credentials unprompted, tell them to delete the message and redo setup properly. |
 
 ---
 

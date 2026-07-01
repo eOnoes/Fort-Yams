@@ -1,1 +1,0 @@
-{"agent": "Tripp.109", "status": "online", "last_heartbeat": "2026-06-02T05:48:00Z", "inbox_count": 0, "processing_count": 0, "capabilities": ["coordination", "routing", "planning", "summarization"], "notes": "Ready for tasks. Checking inbox every 15s.", "snapshot_at": "2026-06-02T08:18:18Z", "agent_recorded": "Tripp.109"}

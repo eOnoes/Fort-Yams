@@ -1,0 +1,19 @@
+{
+  "name": "@tripp-reason/tools",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@tripp-reason/shared": "workspace:*",
+    "@tripp-os/agent-bus": "workspace:*",
+    "zod": "^3.22.4"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0"
+  }
+}

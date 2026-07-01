@@ -1,0 +1,19 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "lib": ["ES2022", "DOM.Iterable"],
+    "types": ["node"]
+  },
+  "include": ["src/**/*"],
+  "references": [
+    { "path": "../shared" },
+    { "path": "../store" },
+    { "path": "../core" },
+    { "path": "../providers" },
+    { "path": "../tools" },
+    { "path": "../server" },
+    { "path": "../mcp" }
+  ]
+}

@@ -1,4 +1,0 @@
-=== INBOX SCAN ===
-{"timestamp":"2026-06-02T06:21:10Z","agent":"Tripp.109","inbox":"/root/agents/shared/shared-agent-bus/agents/Tripp.109/inbox/","ready_count":0,"files":[]}
-{"timestamp":"2026-06-02T06:21:10Z","agent":"Cyony.109","inbox":"/root/agents/shared/shared-agent-bus/agents/Cyony.109/inbox/","ready_count":1,"files":[ msg_echo_bridge_shared.ready.json]}
-{"timestamp":"2026-06-02T06:21:10Z","agent":"Echo.109","inbox":"/root/agents/shared/shared-agent-bus/agents/Echo.109/inbox/","ready_count":0,"files":[]}

@@ -1,0 +1,22 @@
+{
+  "name": "tripp-reason",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Lean local-first agent runtime for coding agents, prompt routing, tool execution, swarm coordination, and audit-backed task completion.",
+  "license": "Apache-2.0",
+  "scripts": {
+    "build": "pnpm -r run build",
+    "typecheck": "pnpm -r run typecheck",
+    "test": "pnpm -r run test",
+    "clean": "pnpm -r run clean",
+    "tripp": "node packages/cli/dist/index.js",
+    "serve": "node packages/server/dist/index.js"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.3"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "packageManager": "pnpm@9.15.9"
+}

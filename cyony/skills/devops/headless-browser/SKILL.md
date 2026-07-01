@@ -54,6 +54,26 @@ Chromium 151+ (2026) crashes with `posix_spawn chrome_crashpad_handler: Permissi
 
 **Fix:** Use `--disable-breakpad` or ensure the binary has execute permissions. The crash is cosmetic — Chromium still works for screenshots and DOM dumps. The crash trace is stderr noise.
 
+### Missing Shared Libraries (No-Root Blocker)
+
+**Symptom:** `error while loading shared libraries: libXtst.so.6: cannot open shared object file`
+
+**Cause:** Chromium needs system libraries (libXtst, libX11, etc.) that aren't in minimal containers. Without root/sudo, you can't `apt-get install` them.
+
+**Workaround:** Download the `.deb` package directly and extract:
+```bash
+apt-get download libxtst6
+dpkg -x libxtst6*.deb /tmp/chrome-deps/
+export LD_LIBRARY_PATH=/tmp/chrome-deps/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH
+```
+If multiple libraries are missing, repeat for each. Use `ldd /path/to/chrome | grep "not found"` to identify all missing deps.
+
+**If too many deps are missing:** The container may be too stripped for Chromium. Alternatives:
+1. Use a less demanding browser (e.g., `npx puppeteer` with bundled Chromium)
+2. Use `wkhtmltoimage` / `wkhtmltopdf` (static binary, fewer deps)
+3. Use the VPS host's browser instead of the container
+4. Ask the user to grant root access or use a less restricted container
+
 ---
 
 ## Part 2: Exposing Services via Cloudflare Tunnel

@@ -1,0 +1,16 @@
+{
+  "name": "@tripp-reason/core",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc --build",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist tsconfig.tsbuildinfo"
+  },
+  "dependencies": {
+    "@tripp-reason/shared": "workspace:*",
+    "@tripp-reason/store": "workspace:*"
+  }
+}
