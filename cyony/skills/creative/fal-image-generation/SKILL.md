@@ -164,6 +164,42 @@ echo $FAL_KEY  # Should be ~88 characters including the colon
 - Copy-pasting and missing the second half
 - JSON parsing where `:` is a delimiter
 
+## ⚠️ Critical Pitfall: AI Image Generators Cannot Render Text (2026-07-02)
+
+**FLUX and all current AI image models produce garbled, unreadable text in images.** Every generation will misspell, distort, or hallucinate letters — even with simple single-word prompts. This is a fundamental limitation, not a prompting issue.
+
+**Symptoms:**
+- Logo text comes out as gibberish (e.g., "TRIPP" becomes "TAAKP" or random shapes)
+- Multiple regenerations produce different garbled versions, never the correct text
+- User wastes credits on 5-10 attempts that all fail
+
+**When the user wants text in an image (logos, signs, banners, watermarks):**
+1. **Do NOT use FAL/FLUX for the final output** — it will fail every time
+2. **Switch to programmatic rendering:**
+   - **Python PIL/Pillow** — pixel-perfect raster logos. Draw text, shapes, icons with exact positioning. Save as PNG.
+   - **SVG** — vector logos that scale infinitely. Write XML with `<text>`, `<rect>`, `<circle>` elements. Best for brand logos.
+   - **HTML/CSS** — render in browser, screenshot. Good for complex layouts.
+3. **Use FAL only for decorative/background elements** — textures, patterns, abstract art behind the text
+
+**Workflow for logo requests:**
+1. Ask user for: brand name, colors (hex if possible), style preferences, icon ideas
+2. Build the text and layout programmatically (PIL or SVG)
+3. Use FAL to generate background/illustration elements if needed
+4. Composite them together
+
+**Example — Python PIL logo:**
+```python
+from PIL import Image, ImageDraw, ImageFont
+img = Image.new('RGB', (800, 300), '#000000')
+draw = ImageDraw.Draw(img)
+font = ImageFont.truetype('/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf', 140)
+draw.text((60, 40), 'TRIPP', fill='#6B6B6B', font=font)
+draw.ellipse([660, 190, 688, 218], fill='#AAFF00')  # green dot
+img.save('logo.png')
+```
+
+**Eddie's reaction to garbled AI text:** "lol First Echo was messing with me.. Now you are." — User perceives garbled text output as the agent trolling them. Avoid this frustration.
+
 ## Balance Management
 
 FAL is pay-per-use. Credits must be topped up at fal.ai/dashboard/billing. Key stored in `.env` as `FAL_KEY`.

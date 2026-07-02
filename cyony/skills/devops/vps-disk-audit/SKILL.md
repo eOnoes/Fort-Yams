@@ -54,7 +54,31 @@ Common culprits:
 find /opt -type f -size +100M 2>/dev/null | head -20
 ```
 
-### 5. Classify every target
+### 5. Check for active service dependencies BEFORE classifying
+
+Before marking anything for deletion, verify it's not backing a running service:
+
+```bash
+# Systemd services — check if target is a service source or working directory
+systemctl list-units --type=service --state=running
+systemctl cat <service-name>.service  # shows WorkingDirectory and ExecStart
+# If target backs a service: stop + disable before deleting:
+systemctl stop <service>.service && systemctl disable <service>.service
+rm /etc/systemd/system/<service>.service && systemctl daemon-reload
+
+# Docker containers — check if target is mounted into any container
+docker ps -a --format '{{.Names}} {{.Mounts}}'
+docker ps -a --format '{{.Names}} {{.Image}} {{.Status}}'  # running status
+
+# Process references — check if any running process references the target
+grep -r '<target-dir>' /etc/systemd/ /root/.hermes/ /root/Fort-Yams/ 2>/dev/null | head -5
+```
+
+**Real case:** Tripp.Reason was running as a systemd service (`node serve -s . -l 4320`) serving from `/opt/tripp-reason-v2/`. The source directory at `/root/Tripp.reason/` (5.7GB) was safe to delete, but the service had to be stopped first, and the served directory (448KB) and service file also needed cleanup.
+
+**Real case:** CosyVoice (12GB) had no Docker containers, no systemd service, and no process references — only pip package metadata mentions. Safe to delete without stopping anything.
+
+### 6. Classify every target
 
 Split findings into three buckets with clear labels:
 
@@ -143,6 +167,56 @@ rm -rf ~/.rustup ~/.cargo
 # PyTorch/CUDA (if approved — 5 GB)
 pip uninstall -y torch triton nvidia-cublas-cu12 nvidia-cuda-* nvidia-cudnn-* nvidia-nccl-* cusparselt 2>/dev/null
 ```
+
+## SSH Access Debugging (Remote VPS)
+
+When SSH access fails on a remote VPS:
+
+```bash
+# 1. Check which keys exist on this machine
+find /opt/data /root /home -name "id_*" -not -name "*.pub" -not -path "*/node_modules/*" -not -path "*/cache/*" -not -path "*/site-packages/*" 2>/dev/null
+
+# 2. Try each key with verbose output
+ssh -v -i /path/to/key root@HOSTNAME "echo OK" 2>&1 | grep -E "Offering|accepted|denied|identity"
+
+# 3. If key is accepted but still denied — check authorized_keys for forced commands or bad formatting
+ssh -v -i /path/to/key root@HOSTNAME "echo OK" 2>&1 | tail -20
+
+# 4. Generate a fresh key and have the human add it
+ssh-keygen -t ed25519 -f /tmp/hermes_vps_key -N "" -q
+cat /tmp/hermes_vps_key.pub
+# Human runs on VPS: echo "<pubkey>" >> ~/.ssh/authorized_keys
+```
+
+**Common failures:**
+- Key offered but rejected → wrong key on VPS, or bad formatting in authorized_keys
+- Key accepted but "Permission denied" → check if authorized_keys has `no-pty` or `command=` restrictions
+- Multiple keys on machine → try each with `-v` to see which the server accepts
+
+**Key locations on Cyony's VPS host:**
+- `/opt/data/home/.ssh/id_ed25519` — primary key
+- `~/.ssh/id_ed25519` — generated during sessions
+- `/opt/data/home/.ollama/id_ed25519` — ollama-specific key
+
+## Real Cleanup Results (2026-07-01)
+
+**Target:** VPS at 2.24.118.123 — 77% disk (74GB/96GB)
+**Result:** 57% disk (55GB/96GB) — **19GB freed**
+
+| Item | Size | Dependency Check | Action |
+|---|---|---|---|
+| CosyVoice `/root/agents/cyony/CosyVoice/` | 12GB | No Docker refs, no systemd, only pip metadata mentions | Deleted |
+| Tripp.Reason `/root/Tripp.reason/` | 5.7GB | Systemd service ran from `/opt/tripp-reason-v2/` (448KB), not this dir | Stopped service, deleted |
+| Tripp.Reason served `/opt/tripp-reason-v2/` | 448KB | Active systemd service on port 4320 | Disabled service, deleted |
+| Rust toolchain `/root/.rustup/` + `/root/.cargo/` | 3.8GB | Only used by Tripp.Reason (now removed) | Deleted |
+| bgutil-ytdlp-pot-provider | 212MB | No Docker refs, no service | Deleted |
+| Loose audio files `*.mp3` `*.wav` | ~8MB | Checked voice_library/ for copies | Deleted |
+| Docker anonymous volumes | 152MB | `docker volume prune -f` | Pruned |
+
+**Services confirmed healthy after cleanup:**
+- Tripp.Mind (gateway, SiYuan, Redis) — all up
+- Hermes Agent — up
+- Traefik + Cyony Beacon — up
 
 ## Presentation Style
 

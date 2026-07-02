@@ -38,6 +38,22 @@ rg -n '(?i)(api[_-]?key\s*[:=]\s*["\x27][A-Za-z0-9_\-]{12,}|sk-[A-Za-z0-9]{20,}|
 - Auth headers: `Authorization: Bearer ...`, `X-API-Key: ...`
 - Connection strings: `postgres://user:pass@...`, `mongodb://user:pass@...`
 
+## 🔴 API Key Testing — Don't Blame the Key
+
+When an API returns 401/Invalid API Key, **do NOT immediately tell the user their key is wrong**. The issue is almost always HOW you're testing it, not the key itself.
+
+**Common false-negative patterns:**
+1. **SSH strips `$`** — keys containing `$` get mangled when passed through SSH shell commands. Test with Python, not curl-through-SSH.
+2. **Shell quoting** — curl commands with nested quotes can corrupt the Authorization header. Use `-H "Authorization: Bearer *** with proper escaping.
+3. **Placeholder in .env** — the `.env` file might have `REPLACE_ME` or `***` from initial setup, not the real key. Read the actual file contents first.
+
+**Correct testing pattern:**
+1. Read the key from the file: `grep API_KEY /path/to/.env`
+2. Test with a Python script (not curl) that uses `urllib.request` with proper headers
+3. If the test works but the app doesn't, the issue is in how the app loads the env var, not the key
+
+**Eddie's correction (2026-07-01):** "Almost everytime you tell me this about a key, it is bc of how we try to call it. It is HIDING itself on the call." — He's right. Diagnose the test method before blaming the key.
+
 ## If a Secret is Found
 
 1. **Block the commit** — do not proceed

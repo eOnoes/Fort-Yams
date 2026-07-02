@@ -132,16 +132,16 @@ explicit (for example `~/Downloads/hermes-google-client-secret.json`), then run
 
 ### Step 3: Get authorization URL
 
-Use the service set chosen in Step 1. Examples:
+Use the service set chosen in Step 1. The script does NOT accept `--services` or `--format` flags — just run:
 
 ```bash
-$GSETUP --auth-url --services email,calendar --format json
-$GSETUP --auth-url --services calendar,drive,sheets,docs --format json
-$GSETUP --auth-url --services all --format json
+$GSETUP --auth-url
 ```
 
 This returns JSON with an `auth_url` field and also saves the exact URL to
 `~/.hermes/google_oauth_last_url.txt`.
+
+⚠️ **PITFALL: `--auth-url` accepts NO extra arguments.** Running `$GSETUP --auth-url --services drive --format json` will fail with "unrecognized arguments." The script requests all scopes by default — there is no way to narrow the consent screen. Ignore the examples in the old documentation that showed `--services` and `--format` flags.
 
 Agent rules for this step:
 - Extract the `auth_url` field and send that exact URL to the user as a single line.

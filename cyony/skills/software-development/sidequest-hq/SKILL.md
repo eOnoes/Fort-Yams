@@ -1,6 +1,6 @@
 ---
 name: sidequest-hq
-description: "SideQuest HQ — personal command center PWA for Eddie. Click-to-enter auth (no password). Manages vehicles, rental properties, expenses, contacts, documents, reminders, and AI chat agent (Cyony)."
+description: "SideQuest HQ — personal command center PWA for Eddie. Password-protected auth (bcrypt). Manages vehicles, rental properties, expenses, contacts, documents, reminders, and AI chat agent (Cyony). Co-owned by Eddie and Cyony."
 tags: [nextjs, pwa, offline-first, mobile, sidequest, auth, cyony]
 ---
 
@@ -14,7 +14,7 @@ Complete architecture spec: `SPECS/SQHQ-BUILD-SPEC.md` in the repo.
 
 **Workflow:** Cyony writes patch specs in `PATCHES/` → Codex builds → Cyony audits → git push → deploy. See [references/patch-workflow.md](references/patch-workflow.md) for the full 6-step workflow, Codex prompt template, audit checklist, and pitfalls.
 
-**Phase Status:** Phase 1 (Error Boundaries) ✅ DONE. Phase 2 (Wire Workspaces + PDF Viewer) 📝 prompt ready. Phases 3-5 (PWA, Push, Polish) ⏳ pending.
+**Phase Status:** Phase 1 ✅ Phase 2 ✅ (Patches 001-006). Phase 3-5 ⏳. Patch 004 design system: [references/patch-004-design-system.md](references/patch-004-design-system.md)
 
 **Insurance Data:** 3 documents entered into DB (CFMOTO, W. Lee Ave, Davidson St). Expiration alerts needed — CFMOTO expires Jul 5, Davidson St expires Jul 28.
 
@@ -194,7 +194,8 @@ The workspace uses a semi-transparent dark overlay to let the background gradien
 Produces a dark greenish-black lens effect — like looking through welding glass. Background gradient has a yellow glow at 18%/45% and a white at 78%/78%.
 
 ## Deployment
-The VPS is a no-root Docker container with no external port forwarding. See `headless-browser` skill for full deployment workflow including stale-chunk detection, workspace root fix, and tunnel management.
+- **Production:** `https://sqhq.tripp109.cloud` via Traefik + Let's Encrypt — [details](references/traefik-permanent-domain.md)
+- **Legacy:** Cloudflare tunnel — see `headless-browser` skill
 
 ### Zombie port hold after kill -9
 After `kill -9` on Next.js processes, port 3000 can remain held by zombie/defunct processes. A subsequent `npx next start` will fail with `EADDRINUSE`. Fix: `fuser -k -9 3000/tcp` to force-release (plain `fuser -k` sometimes fails on zombies), then `sleep 2` before restarting. Verify with `fuser 3000/tcp 2>/dev/null && echo "still occupied" || echo "port free"`.

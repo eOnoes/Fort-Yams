@@ -301,6 +301,7 @@ PHONE (60 active)              CLOUD STASH (200+)
 - **Don't give verbose technical breakdowns on Telegram.** Eddie prefers concise answers — 2-3 lines max for status updates, save the engineering diagrams for when he explicitly asks.
 - **Don't rely on `lsof` or `fuser` in containers.** They're often not installed. Use `ps aux | grep <process> | grep -v grep` + `kill -9 <PID>` instead.
 - **Don't let buttons near input fields steal focus on mobile.** When a button is tapped on mobile, the browser removes focus from the active input field, which dismisses the keyboard. This is annoying when toggles (text/voice, mood pickers, gear icons) sit above a chat input. **Fix:** Add `onMouseDown={e => e.preventDefault()}` to every button that should NOT dismiss the keyboard. This prevents the default focus-shift behavior while still firing the `onClick` handler. Apply to: mode toggle buttons, gear/settings icons, mood picker buttons, any button in a header bar above an input field. The `onMouseDown` handler runs before `onClick` and blocks the focus change. Pattern: `<button onMouseDown={e => e.preventDefault()} onClick={handler}>`.
+- **Don't assume `position: sticky` or `position: fixed` works in nested overflow containers with backdrop-filter.** Both break when any ancestor has `backdrop-filter: blur()` — it creates a new containing block that re-parents the element. The SQHQ app shell has `overflow: hidden` on `.app-shell` AND `backdrop-filter: blur(3px)` on `.workspace`, which kills both sticky and fixed. **Fix: flex column layout with header OUTSIDE the scroll area.** See the "CRITICAL: Sticky AND Fixed Both Fail" section for the correct pattern. Do NOT use position:fixed + padding hacks — they fail under backdrop-filter too.
 - **Don't put expansion panels inline with sticky button rows.** When a button row must stay fixed (sticky), expansion content must be a SIBLING element outside the row's flex/grid container — not inside it. Inline expansion pushes other buttons down.
 - **Don't include stage directions in TTS input.** Text like "smirk", "tilts head", "(sighs)" will be read literally by Pocket TTS. Strip all stage directions before sending to TTS. Use punctuation for emotional cues: ellipses for pauses, periods for emphasis, commas for pacing. Dia voice supports `(sighs)` format, but Pocket does NOT — always strip for Pocket.
 - **Don't assume YouTube Music links are inaccessible.** Use the oEmbed API to identify songs: `curl -s "https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=VIDEO_ID&format=json" | python3 -c "import json,sys; print(json.load(sys.stdin).get('title',''))"` — works without API keys or web extraction tools.
@@ -335,8 +336,81 @@ PHONE (60 active)              CLOUD STASH (200+)
 **Pitfall:** CSS Grid with `grid-template-columns` inside the sticky section works for button layout, but if any child has variable height (expansion), the grid row stretches. Keep expansions OUTSIDE the grid entirely.
 
 ### Variation: Sticky Scoreboard (Floating Digital Readout)
-For workspace/detail views, the same principle applies with a **two-layer sticky stack**:
-1. Navigation bar (back button + title) — `position: sticky; top: 0; z-index: 50`
-2. Scoreboard (key numbers + colored dots) — `position: sticky; top: 52px; z-index: 45; box-shadow for floating effect`
+For workspace/detail views, use the **flex column layout** (see CRITICAL section above) instead of sticky stacking:
+1. Navigation bar (back button + title) — flex child with `flex-shrink: 0`
+2. Scoreboard (key numbers + colored dots) — second flex child with `flex-shrink: 0`
+3. Content area — `flex: 1; overflow-y: auto` — ONLY this scrolls
 
 Content scrolls UNDERNEATH both layers. The scoreboard replaces inline stat rows and separate summary banners — consolidates all key metrics into one floating panel. Use `scoreboard-label` (10px, uppercase, muted) + `scoreboard-value` (20px, bold, color-coded) for the main number, and `scoreboard-stat` with colored dots for secondary stats. See `sidequest-hq` skill for full implementation.
+
+### ⚠️ CRITICAL: Sticky AND Fixed Both Fail in Nested Overflow + Backdrop-Filter (SQHQ Patch 004 fix)
+
+**`position: sticky` AND `position: fixed` both fail when ancestors have `backdrop-filter: blur()`.** The backdrop-filter creates a new containing block that re-parents fixed/sticky elements to that ancestor instead of the viewport or scroll container.
+
+**Failing chain in SQHQ:**
+```
+.app-shell (overflow: hidden) → .workspace (overflow-y: auto, backdrop-filter: blur(3px))
+  → .workspace-header (position: sticky — BROKEN, rides outer scroll)
+```
+
+Even switching to `position: fixed` fails because `.workspace` has `backdrop-filter: blur(3px)` which creates a new containing block — the header gets fixed to `.workspace` instead of the viewport, and scrolls off screen when `.workspace` overflows.
+
+**CORRECT FIX: Flex column layout — headers sit OUTSIDE the scroll area entirely.**
+
+No position:fixed or sticky needed. The headers are structurally immovable because they're not in the scroll container:
+
+```css
+.workspace-page {
+  display: flex;
+  flex-direction: column;
+  height: 100%;       /* NOT 100vh — fills parent's available space */
+  max-width: 420px;
+  margin: 0 auto;
+  overflow: hidden;   /* page itself never scrolls */
+}
+
+/* Header — flex child, never scrolls */
+.workspace-header {
+  flex-shrink: 0;
+  z-index: 50;
+  background: rgba(8, 8, 8, 0.75);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  padding: 12px 12px 10px;
+}
+
+/* Summary bar (Ledger, Paper Trail) — also outside scroll */
+.workspace-summary-bar {
+  flex-shrink: 0;
+  z-index: 49;
+  background: rgba(8, 8, 8, 0.75);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  padding: 10px 12px;
+}
+
+/* ONLY this area scrolls — cards, forms, content */
+.workspace-scroll {
+  flex: 1;
+  min-height: 0;      /* critical for flex overflow */
+  overflow-y: auto;
+  padding: 12px 6px 40px;
+}
+```
+
+**JSX pattern:**
+```tsx
+<div className="workspace-page">
+  <div className="workspace-header">...back, title, +Add...</div>
+  {/* optional summary bar */}
+  <div className="workspace-scroll">
+    {/* forms, cards, lists — ONLY this scrolls */}
+  </div>
+</div>
+```
+
+**Why this works:** The header is a flex child with `flex-shrink: 0` — it stays at the top by default. Only `.workspace-scroll` has `overflow-y: auto`. The header physically cannot scroll because it's outside the scroll container.
+
+**Pitfall:** `.workspace-page` must use `height: 100%` (not `100vh`). Using `100vh` inside a parent that also has `100vh` plus padding causes the page to overflow the parent, and the parent starts scrolling — dragging the header with it.
+
+**Test pattern:** After implementing, scroll on real mobile device. If the header moves AT ALL, check: (1) is `height: 100%` not `100vh`? (2) is the header a direct flex child of the page, not inside the scroll div? (3) does the scroll div have `overflow-y: auto`?
